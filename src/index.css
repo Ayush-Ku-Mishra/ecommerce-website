@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+};
+
+.sliderHome {
+    overflow: inherit;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+
+.swiper-button-prev, .swiper-button-next {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 100%;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    box-shadow: 0 1px 3px #0000001f, 0 1px 2px #0000003d !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.swiper-button-prev:hover, .swiper-button-next:hover {
+    background-color: #ef4444;
+}
+
+.swiper-button-prev:hover::after,
+.swiper-button-next:hover::after {
+  color: #fff !important;
+}
+
+
+.swiper-button-prev:after, .swiper-button-next:after {
+    font-size: 20px !important;
+    color: #000;
+    transition: color 0.3s ease;
+}
+
+.swiper {
+  overflow: visible !important;
+}
+
+.MuiTabs-indicator {
+    background-color: #db2777 !important;
+}
+
+.css-1usuzwp-MuiButtonBase-root-MuiTab-root.Mui-selected {
+  color: #db2777 !important;
+}
+
+.popularProducts button:hover svg {
+    color: #fff !important;
+}
+
+.popularProducts button:hover svg {
+    pointer-events:none
+}
+
+.navbarLinks {
+    pointer-events:visibleFill
+}
