@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import { MdZoomOutMap } from "react-icons/md";
 import { VscGitCompare } from "react-icons/vsc";
 import { FaRegHeart } from "react-icons/fa";
+import { BsCart4 } from "react-icons/bs";
 
 import { Navigation } from 'swiper/modules';
 import { Link } from 'react-router-dom';
@@ -86,6 +87,13 @@ const ProductSlider = () => {
             <span className='line-through text-gray-500 font-[16px]'>₹{product.originalPrice.toLocaleString()}</span>
             <span className='text-red-500 font-[600]'>₹{product.discountedPrice.toLocaleString()}</span>
           </div>
+
+          
+          <button className='group flex items-center w-full max-w-[97%] mx-auto gap-2  mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition'>
+            <div className='text-[15px] text-red-500 ml-5 group-hover:text-white transition'><BsCart4 /></div>
+            <div className='text-[12px] text-red-500 font-[500] group-hover:text-white transition'>ADD TO CART</div>
+          </button>
+         
         </div>
       </div>
     </SwiperSlide>

@@ -255,7 +255,7 @@ const Navbar = () => {
                 to="/beauty"
                 className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
               >
-                Beauty & Health
+                Beauty 
               </Link>
               <Link
                 to="/furnitures"

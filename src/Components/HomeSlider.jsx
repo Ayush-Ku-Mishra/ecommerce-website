@@ -3,39 +3,39 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-import { Navigation } from 'swiper/modules';
+
 import { Autoplay } from 'swiper/modules';
 
 const HomeSlider = () => {
   return (
     <div className="w-full py-2 mx-auto bg-[#fff0f5]">
-        <div className='max-w-6xl mx-auto'>
-            <Swiper spaceBetween={10} navigation={true} modules={[Navigation, Autoplay]} autoplay={{ delay: 2500, disableOnInteraction: false }} loop={true} className="sliderHome ">
-        <SwiperSlide>
-            <img src="https://serviceapi.spicezgold.com/download/1751685200593_1721277298204_banner.jpg" alt="Banner 1" className="w-full"/>
-        </SwiperSlide>
-        <SwiperSlide>
-            <div className='rounded-[20px] overflow-hidden'>
-                <img src="https://serviceapi.spicezgold.com/download/1751685183248_NewProject(6).jpg" alt="Banner 2" className='w-full'/>
-            </div>
-        </SwiperSlide>
-        <SwiperSlide>
-            <div className='rounded-[20px] overflow-hidden'>
-                <img src="https://serviceapi.spicezgold.com/download/1751685130717_NewProject(8).jpg" alt="Banner 3" className='w-full'/>
-            </div>
-        </SwiperSlide>
-        <SwiperSlide>
-            <div className='rounded-[20px] overflow-hidden'>
-                <img src="https://serviceapi.spicezgold.com/download/1748955932914_NewProject(1).jpg" alt="Banner 4" className='w-full'/>
-            </div>
-        </SwiperSlide>
-        <SwiperSlide>
-           <div className='rounded-[20px] overflow-hidden'>
-             <img src="https://serviceapi.spicezgold.com/download/1751685164864_NewProject(10).jpg" alt="Banner 5" className='w-full'/>
-           </div>
-        </SwiperSlide>
-      </Swiper>
+        <div className="w-full">
+            <Swiper
+                spaceBetween={0}
+                modules={[Autoplay]}
+                autoplay={{ delay: 2500, disableOnInteraction: false }}
+                loop={true}
+                className="sliderHome">
+                {[
+                "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                "https://i.postimg.cc/9Mh6bg2W/canva-9-EPx6fu8jq-Y.jpg",
+                "https://images.meesho.com/images/marketing/1746425994914.webp",
+                "https://serviceapi.spicezgold.com/download/1751685183248_NewProject(6).jpg",
+                "https://i.postimg.cc/CLBcZHyJ/canva-I0v7-Yqr-BXh8.jpg"
+                ].map((src, index) => (
+                <SwiperSlide key={index}>
+                    <div className="w-full h-[360px] object-cover">
+                    <img
+                        src={src}
+                        alt={`Banner ${index + 1}`}
+                        className="w-full h-full object-cover object-center"
+                    />
+                    </div>
+                </SwiperSlide>
+                ))}
+            </Swiper>
         </div>
+
 
         <div className='flex items-center justify-center gap-10 border mt-2 p-2 bg-white border-red-300 rounded-lg '>
 
