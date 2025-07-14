@@ -4,11 +4,11 @@ export const categories = [
     sub: [
       {
         name: "Men",
-        sub: ["T-Shirts", "Jeans"]
+        sub: ["T-Shirts", "Jeans", "Formal wears", "Ethnics"]
       },
       {
         name: "Women",
-        sub: ["Kurtis", "Tops", "Sarees"]
+        sub: ["Kurtis", "Tops", "Sarees", "Ethics"]
       },
       {
         name: "Kids",
@@ -20,16 +20,16 @@ export const categories = [
     name: "Electronics",
     sub: [
       {
-        name: "Mobiles",
-        sub: ["Samsung", "Apple", "Oppo", "Vivo"]
+        name: "All Watches",
+        sub: ["Digital Watch", "Analog Watch", "Smart Watch"]
       },
       {
-        name: "Laptops",
-        sub: ["Dell", "HP", "Apple", "Acer"]
+        name: "Earbuds",
+        sub: []
       },
       {
-        name: "Smart Watches",
-        sub: ["Samsung", "Apple", "Bolt"]
+        name: "Other Electrical Items",
+        sub: []
       }
     ]
   },
@@ -51,11 +51,11 @@ export const categories = [
     sub: [
       {
         name: "Men Footware",
-        sub: ["Sneakers", "Boots", "Sandals"]
+        sub: ["Sneakers", "Boots", "Sandals", "Formals", "Sports"]
       },
       {
         name: "Women Footware",
-        sub: ["Heels", "Boots", "Juttis"]
+        sub: ["Heels", "Boots", "Juttis", "Sports"]
       },
     ]
   },
@@ -67,16 +67,20 @@ export const categories = [
         sub: []
       },
       {
-        name: "Snacks",
+        name: "Snacks & Food Items",
         sub: []
       },
     ]
   },
   {
-    name: "Beauty",
+    name: "Beauty & Health",
     sub: [
       {
-        name: "Makeup",
+        name: "Medicines",
+        sub: []
+      },
+      {
+        name: "All Makeup Kits",
         sub: []
       },
       {
@@ -90,11 +94,11 @@ export const categories = [
     sub: [
       {
         name: "Living Room",
-        sub: ["Sofa"]
+        sub: []
       },
       {
-        name: "Kitchen & Dining",
-        sub: ["Kitchen Tools"]
+        name: "Kitchen & Dining Tools",
+        sub: []
       }
     ]
   },

@@ -3,7 +3,6 @@ import './App.css'
 import Navbar from './Components/Navbar'
 import Home from './Components/Home'
 import Login from './Components/Login'
-import Register from './Components/Register'
 import ProductDetails from './Components/ProductDetails'
 import Wishlist from './Components/Wishlist'
 import Cart from './Components/Cart'
@@ -15,6 +14,10 @@ import Groceries from './Components/Groceries'
 import Beauty from './Components/Beauty'
 import Furnitures from './Components/Furnitures'
 import Jewellery from './Components/Jewellery'
+import ContactUsPart from './Components/ContactUsPart'
+import Contact from './Components/Contact'
+import Help from './Components/Help'
+import ServicePage from './Components/ServicePage'
 
 const router = createBrowserRouter(
   [
@@ -35,11 +38,11 @@ const router = createBrowserRouter(
       </div>
     },
     {
-      path: '/register',
+      path: '/contactus',
       element: 
       <div>
         <Navbar/>
-        <Register/>
+        <ContactUsPart/>
       </div>
     },
     {
@@ -130,8 +133,22 @@ const router = createBrowserRouter(
         <Jewellery/>
       </div>
     },
-    {},
-    {},
+    {
+      path: '/contact',
+      element: 
+      <div>
+        <Navbar/>
+        <ContactUsPart/>
+      </div>
+    },
+    {
+      path: '/service',
+      element: 
+      <div>
+        <Navbar/>
+        <ServicePage/>
+      </div>
+    },
     {},
   ]
 )

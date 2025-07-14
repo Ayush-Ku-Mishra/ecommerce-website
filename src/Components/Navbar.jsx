@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/pickoraLogo.jpg";
 import { IoSearch } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { FaRegHeart, FaPlus } from "react-icons/fa6";
 import { FiShoppingCart } from "react-icons/fi";
 import { FaChevronDown } from "react-icons/fa";
@@ -175,12 +175,19 @@ const Navbar = () => {
                   Login
                 </Link>
                 <span>|</span>
-                <Link
-                  to="/register"
-                  className="hover:text-pink-500 transition text-[16px] font-[500] text-gray-600"
+                <NavLink
+                  to="/contactus"
+                  className={({ isActive }) =>
+                    `transition text-[16px] font-[500] 
+                   ${
+                      isActive
+                        ? "text-pink-500"
+                        : "text-gray-600 hover:text-pink-500"
+                    }`
+                  }
                 >
-                  Register
-                </Link>
+                  Help
+                </NavLink>
               </div>
               <Link
                 to="/wishlist"
@@ -215,12 +222,18 @@ const Navbar = () => {
 
             {/* Links */}
             <div className="navbarLinks flex items-center gap-6 pt-2">
-              <Link
+              <NavLink
                 to="/"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Home
-              </Link>
+              </NavLink>
               <Link
                 to="/fashion"
                 className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
@@ -255,20 +268,26 @@ const Navbar = () => {
                 to="/beauty"
                 className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
               >
-                Beauty 
+                Beauty & Health
               </Link>
               <Link
-                to="/furnitures"
+                to="/service"
                 className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
               >
-                Furnitures
+                Service
               </Link>
-              <Link
-                to="/jewellery"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+              <NavLink
+                to="/contact"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
-                Jewellery
-              </Link>
+                Contact
+              </NavLink>
             </div>
 
             {/* Delivery */}
