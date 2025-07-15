@@ -14,6 +14,7 @@
 
 body {
     overflow-x: hidden;
+    /* background-color: #f9f9f9; */
 }
 
 ::-webkit-scrollbar {
@@ -139,6 +140,32 @@ body {
   transform: translateY(-8px);
   transition: transform 0.3s ease;
 }
+
+/* Hide scrollbar visually but allow vertical scroll */
+.custom-scroll::-webkit-scrollbar {
+  width: 0px;
+}
+
+.custom-scroll {
+  -ms-overflow-style: none;  /* IE & Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.visible-scrollbar::-webkit-scrollbar {
+  width: 1px; /* small width */
+}
+
+.visible-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #f9f9f9; /* Tailwind gray-400 */
+  border-radius: 0; /* rectangular shape (no round) */
+}
+
+.visible-scrollbar::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+
+
 
 
 

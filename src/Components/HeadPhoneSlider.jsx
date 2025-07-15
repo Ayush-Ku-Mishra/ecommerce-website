@@ -14,7 +14,7 @@ import { BsCart4 } from "react-icons/bs";
 
 
 const HeadPhoneSlider = () => {
-    const Headphones = products.filter(item => item.category === "headphones");
+    const Headphones = products.filter(item => item.category.includes("headphones"));
 
   return (
     <div>

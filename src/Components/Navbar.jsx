@@ -49,85 +49,96 @@ const Navbar = () => {
       )}
 
       {/* Sidebar */}
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-[110] transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="p-4 border-b flex justify-between items-center">
-          <img src={logo} alt="Logo" className="h-6 object-contain" />
-          <button
-            className="text-gray-500 hover:text-pink-500 text-xl"
-            onClick={() => setSidebarOpen(false)}
+     <div
+  className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-[110] transform transition-transform duration-300 ${
+    sidebarOpen ? "translate-x-0" : "-translate-x-full"
+  }`}
+>
+  <div className="p-4 border-b flex justify-between items-center">
+    <img src={logo} alt="Logo" className="h-6 object-contain" />
+    <button
+      className="text-gray-500 hover:text-pink-500 text-xl"
+      onClick={() => setSidebarOpen(false)}
+    >
+      <IoCloseSharp />
+    </button>
+  </div>
+
+  <h2 className="px-4 py-3 font-semibold text-gray-800">
+    Shop By Categories
+  </h2>
+
+  <div className="overflow-y-auto h-[calc(100%-60px)]">
+    {categories.map((cat, index) => (
+      <div key={index} className="px-4 border-b">
+        {/* Main Category */}
+        <div className="flex items-center justify-between py-3">
+          <Link
+            to={`/category/${cat.name.toLowerCase()}`}
+            className="font-medium text-gray-800 hover:text-pink-600"
           >
-            <IoCloseSharp />
-          </button>
+            {cat.name}
+          </Link>
+
+          <span
+            className="cursor-pointer"
+            onClick={() =>
+              setExpandedCategory(
+                expandedCategory === cat.name ? null : cat.name
+              )
+            }
+          >
+            {expandedCategory === cat.name ? "−" : <FaPlus className="text-xs" />}
+          </span>
         </div>
 
-        <h2 className="px-4 py-3 font-semibold text-gray-800">
-          Shop By Categories
-        </h2>
-        <div className="overflow-y-auto h-[calc(100%-60px)]">
-          {categories.map((cat, index) => (
-            <div key={index} className="px-4 border-b">
-              {/* Main Category */}
-              <div
-                className="flex items-center justify-between py-3 cursor-pointer hover:bg-gray-100 transition"
-                onClick={() =>
-                  setExpandedCategory(
-                    expandedCategory === cat.name ? null : cat.name
-                  )
-                }
-              >
-                <span className="font-medium text-gray-800">{cat.name}</span>
-                {expandedCategory === cat.name ? (
-                  "−"
-                ) : (
-                  <FaPlus className="text-xs" />
-                )}
+        {/* Subcategories */}
+        {expandedCategory === cat.name &&
+          cat.sub.map((subItem, subIndex) => (
+            <div
+              key={subIndex}
+              className="ml-4 border-l border-gray-200 pl-4"
+            >
+              <div className="flex items-center justify-between py-2">
+                <Link
+                  to={`/category/${cat.name.toLowerCase()}/${subItem.name.toLowerCase()}`}
+                  className="text-sm text-gray-700 hover:text-pink-600"
+                >
+                  {subItem.name}
+                </Link>
+
+                <span
+                  className="cursor-pointer"
+                  onClick={() =>
+                    setExpandedSubcategory(
+                      expandedSubcategory === subItem.name
+                        ? null
+                        : subItem.name
+                    )
+                  }
+                >
+                  {expandedSubcategory === subItem.name ? "−" : <FaPlus className="text-xs" />}
+                </span>
               </div>
 
-              {/* Subcategories */}
-              {expandedCategory === cat.name &&
-                cat.sub.map((subItem, subIndex) => (
-                  <div
-                    key={subIndex}
-                    className="ml-4 border-l border-gray-200 pl-4"
+              {/* Sub-subcategories */}
+              {expandedSubcategory === subItem.name &&
+                subItem.sub.map((item, i) => (
+                  <Link
+                    key={i}
+                    to={`/category/${cat.name.toLowerCase()}/${subItem.name.toLowerCase()}/${item.toLowerCase()}`}
+                    className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block"
                   >
-                    <div
-                      className="flex items-center justify-between py-2 cursor-pointer text-sm text-gray-700 hover:text-pink-600"
-                      onClick={() =>
-                        setExpandedSubcategory(
-                          expandedSubcategory === subItem.name
-                            ? null
-                            : subItem.name
-                        )
-                      }
-                    >
-                      <span>{subItem.name}</span>
-                      {expandedSubcategory === subItem.name ? (
-                        "−"
-                      ) : (
-                        <FaPlus className="text-xs" />
-                      )}
-                    </div>
-
-                    {/* Sub-subcategories */}
-                    {expandedSubcategory === subItem.name &&
-                      subItem.sub.map((item, i) => (
-                        <div
-                          key={i}
-                          className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 cursor-pointer"
-                        >
-                          {item}
-                        </div>
-                      ))}
-                  </div>
+                    {item}
+                  </Link>
                 ))}
             </div>
           ))}
-        </div>
       </div>
+    ))}
+  </div>
+</div>
+
 
       {/* Sticky Wrapper */}
       <div
@@ -234,48 +245,90 @@ const Navbar = () => {
               >
                 Home
               </NavLink>
-              <Link
+              <NavLink
                 to="/fashion"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Fashion
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/electronics"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Electronics
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/bags"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Bags
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/footwear"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Footwear
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/groceries"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Groceries
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/beauty"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Beauty & Health
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/service"
-                className="hover:text-pink-600 pb-2 border-b-2 border-transparent hover:border-pink-600 transition"
+                className={({ isActive }) =>
+                  `hover:text-pink-600 pb-2 border-b-2 transition ${
+                    isActive
+                      ? "text-pink-600 border-pink-600"
+                      : "text-gray-700 border-transparent"
+                  }`
+                }
               >
                 Service
-              </Link>
+              </NavLink>
               <NavLink
                 to="/contact"
                 className={({ isActive }) =>
@@ -286,7 +339,7 @@ const Navbar = () => {
                   }`
                 }
               >
-                Contact
+                Contact Us
               </NavLink>
             </div>
 

@@ -4,11 +4,11 @@ export const categories = [
     sub: [
       {
         name: "Men",
-        sub: ["T-Shirts", "Jeans", "Formal wears", "Ethnics"]
+        sub: ["T-Shirts", "Shirts", "Jeans", "Formal wears", "Ethnics men"]
       },
       {
         name: "Women",
-        sub: ["Kurtis", "Tops", "Sarees", "Ethics"]
+        sub: ["Kurtis", "Tops", "Sarees", "Ethnics women"]
       },
       {
         name: "Kids",
@@ -38,11 +38,11 @@ export const categories = [
     sub: [
       {
         name: "Men Bags",
-        sub: ["Handbags", "Travel Bags", "Wallets"]
+        sub: ["Handbags men", "Travel Bags men", "Wallets men"]
       },
       {
         name: "Women Bags",
-        sub: ["Handbags", "Travel Bags", "Wallets"]
+        sub: ["Handbags women", "Travel Bags women", "Wallets women"]
       },
     ]
   },
@@ -51,11 +51,11 @@ export const categories = [
     sub: [
       {
         name: "Men Footware",
-        sub: ["Sneakers", "Boots", "Sandals", "Formals", "Sports"]
+        sub: ["Sneakers", "Boots men", "Sandals", "Formals", "Sports men"]
       },
       {
         name: "Women Footware",
-        sub: ["Heels", "Boots", "Juttis", "Sports"]
+        sub: ["Heels", "Boots women", "Juttis", "Sports women"]
       },
     ]
   },

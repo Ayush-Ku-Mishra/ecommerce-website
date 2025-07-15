@@ -15,7 +15,7 @@ import { products } from '../data/productItems.js';
 
 
 const ProductSlider = () => {
-  const popularProducts = products.filter(item => item.category === "popular");
+  const popularProducts = products.filter(item => item.category.includes("popular"));
     
 
   return (
