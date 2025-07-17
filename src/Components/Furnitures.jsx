@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import GridProductCategory from "./GridProductCategory";
+import FurnituresSidebarFilter from "./FurnituresSidebarFilter";
 
 const Furnitures = () => {
   return (
-    <div>
-      Furnitures Page
-    </div>
-  )
-}
+    <GridProductCategory
+      categoryName="furnitures"
+      SidebarFilterComponent={FurnituresSidebarFilter}
+    />
+  );
+};
 
-export default Furnitures
+export default Furnitures;

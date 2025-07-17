@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
-const FootwearSidebarFilter = ({
+const GroceriesSidebarFilter = ({
   categoryData,
   onRatingChange,
   onDiscountChange,
@@ -16,11 +16,7 @@ const FootwearSidebarFilter = ({
   selectedPrice = { min: 0, max: 10000 },
   brandOptions,
   selectedBrands,
-  onBrandChange,
-  colorOptions, // ✅ new
-  selectedColors, // ✅ new
-  onColorChange,
-  onApplyFilters,
+  onBrandChange, // ✅ new
   onResetFilters, // ✅ new
 }) => {
   const [priceRange, setPriceRange] = useState([
@@ -29,7 +25,6 @@ const FootwearSidebarFilter = ({
   ]);
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [brandExpanded, setBrandExpanded] = useState(false);
-  const [colorExpanded, setColorExpanded] = useState(false); // ✅ new
 
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   
@@ -43,6 +38,7 @@ const FootwearSidebarFilter = ({
         }
       }
     }, [categoryData]);
+  
 
   useEffect(() => {
     setPriceRange([selectedPrice.min, selectedPrice.max]);
@@ -67,13 +63,6 @@ const FootwearSidebarFilter = ({
       ? selectedDiscount.filter((d) => d !== discount)
       : [...selectedDiscount, discount];
     onDiscountChange(updated);
-  };
-
-  const handleColorChange = (color) => {
-    const updated = selectedColors.includes(color)
-      ? selectedColors.filter((c) => c !== color)
-      : [...selectedColors, color];
-    onColorChange(updated);
   };
 
   const handleSliderChange = (event, newValue) => {
@@ -105,77 +94,77 @@ const FootwearSidebarFilter = ({
     <div className="ml-10 space-y-6">
       {/* Category Filter */}
       <div>
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => setCategoryExpanded(!categoryExpanded)}
-              >
-                <h3 className="text-sm font-bold text-gray-800">Shop by Category</h3>
-                {categoryExpanded ? <FaChevronUp /> : <FaChevronDown />}
-              </div>
-      
-              {categoryExpanded && (
-                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 visible-scrollbar">
-                  {categoryData.sub.map((subcat, i) => (
-                    <div key={i}>
-                      {Array.isArray(subcat.sub) && subcat.sub.length > 0 ? (
-                        <>
-                          <div
-                            className="flex items-center justify-between font-semibold text-gray-800 text-[15px] mb-1 cursor-pointer"
-                            onClick={() =>
-                              setExpandedSubcategory(
-                                expandedSubcategory === subcat.name
-                                  ? null
-                                  : subcat.name
-                              )
-                            }
-                          >
-                            <span>{subcat.name}</span>
-                            <span className="text-xs">
-                              {expandedSubcategory === subcat.name ? (
-                                <FaChevronUp />
-                              ) : (
-                                <FaChevronDown />
-                              )}
-                            </span>
-                          </div>
-      
-                          {expandedSubcategory === subcat.name && (
-                            <div className="ml-2 pl-2 border-l max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
-                              {subcat.sub.map((item, j) => (
-                                <label
-                                  key={j}
-                                  className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedSubs.includes(item)}
-                                    onChange={() => handleSubChange(item)}
-                                    className="w-4 h-4"
-                                  />
-                                  <span>{item}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1">
-                          <input
-                            type="checkbox"
-                            checked={selectedSubs.includes(subcat.name)}
-                            onChange={() => handleSubChange(subcat.name)}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-[15px] font-semibold text-gray-800 mb-1">
-                            {subcat.name}
-                          </span>
-                        </label>
-                      )}
+        <div
+          className="flex justify-between items-center cursor-pointer mb-2"
+          onClick={() => setCategoryExpanded(!categoryExpanded)}
+        >
+          <h3 className="text-sm font-bold text-gray-800">Shop by Category</h3>
+          {categoryExpanded ? <FaChevronUp /> : <FaChevronDown />}
+        </div>
+
+        {categoryExpanded && (
+          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 visible-scrollbar">
+            {categoryData.sub.map((subcat, i) => (
+              <div key={i}>
+                {Array.isArray(subcat.sub) && subcat.sub.length > 0 ? (
+                  <>
+                    <div
+                      className="flex items-center justify-between font-semibold text-gray-800 text-[15px] mb-1 cursor-pointer"
+                      onClick={() =>
+                        setExpandedSubcategory(
+                          expandedSubcategory === subcat.name
+                            ? null
+                            : subcat.name
+                        )
+                      }
+                    >
+                      <span>{subcat.name}</span>
+                      <span className="text-xs">
+                        {expandedSubcategory === subcat.name ? (
+                          <FaChevronUp />
+                        ) : (
+                          <FaChevronDown />
+                        )}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+
+                    {expandedSubcategory === subcat.name && (
+                      <div className="ml-2 pl-2 border-l max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
+                        {subcat.sub.map((item, j) => (
+                          <label
+                            key={j}
+                            className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedSubs.includes(item)}
+                              onChange={() => handleSubChange(item)}
+                              className="w-4 h-4"
+                            />
+                            <span>{item}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedSubs.includes(subcat.name)}
+                      onChange={() => handleSubChange(subcat.name)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-[15px] font-semibold text-gray-800 mb-1">
+                      {subcat.name}
+                    </span>
+                  </label>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Price Filter */}
       <div>
@@ -212,53 +201,13 @@ const FootwearSidebarFilter = ({
               </label>
               <input
                 type="number"
-                value={priceRange[1] === Infinity ? '' : priceRange[1]}
+                value={priceRange[1] === Infinity ? "" : priceRange[1]}
                 onChange={(e) => handleInputChange(e, 1)}
                 className="w-20 border px-2 py-1 text-sm rounded"
               />
             </div>
           </div>
         </Box>
-      </div>
-
-      {/* Color Filter */}
-      <div>
-        <div
-          className="flex justify-between items-center cursor-pointer mb-2"
-          onClick={() => setColorExpanded(!colorExpanded)}
-        >
-          <h3 className="text-sm font-bold text-gray-800">Filter by Color</h3>
-          {colorExpanded ? <FaChevronUp /> : <FaChevronDown />}
-        </div>
-
-        <div
-          className={`space-y-2 overflow-y-auto pr-1 transition-all duration-300 visible-scrollbar ${
-            colorExpanded ? "max-h-[0px]" : "max-h-[120px]"
-          }`}
-          style={{ scrollbarWidth: "thin" }}
-        >
-          {colorOptions.map((color, i) => (
-            <label
-              key={i}
-              className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer ml-2 mb-1"
-            >
-              <input
-                type="checkbox"
-                checked={selectedColors.includes(color)}
-                onChange={() => handleColorChange(color)}
-                className="w-4 h-4"
-              />
-              <span
-                className="w-3 h-3 rounded-full inline-block border"
-                style={{
-                  backgroundColor: color.toLowerCase(),
-                  borderColor: color.toLowerCase(),
-                }}
-              ></span>
-              <span>{color}</span>
-            </label>
-          ))}
-        </div>
       </div>
 
       {/* Rating Filter */}
@@ -358,4 +307,4 @@ const FootwearSidebarFilter = ({
   );
 };
 
-export default FootwearSidebarFilter;
+export default GroceriesSidebarFilter;

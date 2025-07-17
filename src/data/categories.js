@@ -4,7 +4,7 @@ export const categories = [
     sub: [
       {
         name: "Men",
-        sub: ["T-Shirts", "Shirts", "Jeans", "Formal wears", "Ethnics men"]
+        sub: ["T-Shirts", "Shirts", "Jeans", "Formal wears","Ethnics men"]
       },
       {
         name: "Women",
@@ -24,12 +24,12 @@ export const categories = [
         sub: ["Digital Watch", "Analog Watch", "Smart Watch"]
       },
       {
-        name: "Earbuds",
-        sub: []
+        name: "Audio Devices",
+        sub: ["Headphones", "Earbuds", "Wireless Earphones", "Wired Earphones", "Neckbands"]
       },
       {
-        name: "Other Electrical Items",
-        sub: []
+        name: "Mobile Accessories",
+        sub: ["Chargers", "Power Banks", "Cables", "Phone Holders"]
       }
     ]
   },
@@ -50,11 +50,11 @@ export const categories = [
     name: "Footwear",
     sub: [
       {
-        name: "Men Footware",
+        name: "Men Footwear",
         sub: ["Sneakers", "Boots men", "Sandals", "Formals", "Sports men"]
       },
       {
-        name: "Women Footware",
+        name: "Women Footwear",
         sub: ["Heels", "Boots women", "Juttis", "Sports women"]
       },
     ]
@@ -64,7 +64,7 @@ export const categories = [
     sub: [
       {
         name: "Cooking Ingredients",
-        sub: []
+        sub: ["Oil & Ghee"]
       },
       {
         name: "Snacks & Food Items",
@@ -73,18 +73,22 @@ export const categories = [
     ]
   },
   {
-    name: "Beauty & Health",
+    name: "Beauty",
     sub: [
       {
         name: "Medicines",
         sub: []
       },
       {
-        name: "All Makeup Kits",
-        sub: []
+        name: "Makeup",
+        sub: ["Lipstick", "Foundation", "Eyeliner"]
       },
       {
-        name: "Mens care",
+        name: "Skincare",
+        sub: ["Moisturizers", "Cleansers"]
+      },
+      {
+        name: "Personal Care",
         sub: []
       }
     ]

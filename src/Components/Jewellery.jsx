@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import GridProductCategory from "./GridProductCategory";
+import JewellerySidebarFilter from "./JewellerySidebarFilter";
 
 const Jewellery = () => {
   return (
-    <div>
-      Jewellery Page
-    </div>
-  )
-}
+    <GridProductCategory
+      categoryName="jewellery"
+      SidebarFilterComponent={JewellerySidebarFilter}
+    />
+  );
+};
 
-export default Jewellery
+export default Jewellery;

@@ -9,12 +9,16 @@ import { RiMenu2Fill } from "react-icons/ri";
 import { IoRocketOutline } from "react-icons/io5";
 import { IoCloseSharp } from "react-icons/io5";
 import { categories } from "../data/categories.js";
+import { useNavigate } from "react-router-dom";
+
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
   if (sidebarOpen) {
@@ -73,12 +77,15 @@ const Navbar = () => {
       <div key={index} className="px-4 border-b">
         {/* Main Category */}
         <div className="flex items-center justify-between py-3">
-          <Link
-            to={`/category/${cat.name.toLowerCase()}`}
-            className="font-medium text-gray-800 hover:text-pink-600"
+          <span
+            onClick={() => {
+              setSidebarOpen(false);
+              navigate(`/${cat.name.toLowerCase()}`)}}
+            className="font-medium text-gray-800 hover:text-pink-600 cursor-pointer"
           >
             {cat.name}
-          </Link>
+          </span>
+
 
           <span
             className="cursor-pointer"
@@ -100,12 +107,17 @@ const Navbar = () => {
               className="ml-4 border-l border-gray-200 pl-4"
             >
               <div className="flex items-center justify-between py-2">
-                <Link
-                  to={`/category/${cat.name.toLowerCase()}/${subItem.name.toLowerCase()}`}
-                  className="text-sm text-gray-700 hover:text-pink-600"
+                <span
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    navigate(`/${cat.name.toLowerCase()}?sub=${encodeURIComponent(subItem.name)}`);
+                  }}
+                  className="text-sm text-gray-700 hover:text-pink-600 cursor-pointer"
                 >
                   {subItem.name}
-                </Link>
+                </span>
+
+
 
                 <span
                   className="cursor-pointer"
@@ -124,13 +136,16 @@ const Navbar = () => {
               {/* Sub-subcategories */}
               {expandedSubcategory === subItem.name &&
                 subItem.sub.map((item, i) => (
-                  <Link
+                  <span
                     key={i}
-                    to={`/category/${cat.name.toLowerCase()}/${subItem.name.toLowerCase()}/${item.toLowerCase()}`}
-                    className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block"
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      navigate(`/${cat.name.toLowerCase()}?sub=${encodeURIComponent(item)}`)}}
+                    className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block cursor-pointer"
                   >
                     {item}
-                  </Link>
+                  </span>
+
                 ))}
             </div>
           ))}
@@ -187,7 +202,7 @@ const Navbar = () => {
                 </Link>
                 <span>|</span>
                 <NavLink
-                  to="/contactus"
+                  to="/help"
                   className={({ isActive }) =>
                     `transition text-[16px] font-[500] 
                    ${

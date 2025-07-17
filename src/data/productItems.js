@@ -1,7 +1,7 @@
 export const products = [
   {
     id: 1,
-    category: ["popular", "fashion"],
+    category: ["popular", "fashion", "Men"],
     brand: "Campus Sutra",
     name: "Men Comfort Cuban Collar Solid Polycotton Casual Shirt",
     images: [
@@ -15,7 +15,7 @@ export const products = [
     discountedPrice: 1850,
     rating: 2,
     gender: "Men",
-    subcategory: "Shirts",
+    subcategory: ["Shirts", "Men"],
     color: "Maroon"
   },
   {
@@ -34,7 +34,7 @@ export const products = [
     discountedPrice: 1450,
     rating: 2,
     gender: "Men",
-    subcategory: "Shirts",
+    subcategory: ["Shirts", "Men"],
     color: "Navy Blue"
   },
   {
@@ -51,7 +51,7 @@ export const products = [
     discountedPrice: 1999,
     rating: 2,
     gender: "Men",
-    subcategory: "Shirts",
+    subcategory: ["Shirts", "Men"],
     color: "Pink"
   },
   {
@@ -70,7 +70,7 @@ export const products = [
     discountedPrice: 4785,
     rating: 4,
     gender: "Women",
-    subcategory: "Sarees",
+    subcategory: ["Sarees", "Women"],
     color: "Pink"
   },
   {
@@ -88,7 +88,7 @@ export const products = [
     discountedPrice: 1922,
     rating: 4,
     gender: "Women",
-    subcategory: "Sarees",
+    subcategory: ["Sarees", "Women"],
     color: "Gray"
   },
   {
@@ -107,7 +107,7 @@ export const products = [
     discountedPrice: 1850,
     rating: 4,
     gender: "Women",
-    subcategory: "Sarees",
+    subcategory: ["Sarees", "Women"],
     color: "Light Pink"
   },
   {
@@ -125,7 +125,7 @@ export const products = [
     discountedPrice: 2450,
     rating: 4,
     gender: "Women",
-    subcategory: "Sarees",
+    subcategory: ["Sarees", "Women"],
     color: "White"
   },
   {
@@ -143,7 +143,7 @@ export const products = [
     discountedPrice: 4999,
     rating: 2,
     gender: "Women",
-    subcategory: "Sarees",
+    subcategory: ["Sarees", "Women"],
     color: "Blue"
   },
   {
@@ -161,7 +161,7 @@ export const products = [
     discountedPrice: 699,
     rating: 2,
     gender: "Men",
-    subcategory: "T-Shirts",
+    subcategory: ["T-Shirts", "Men"],
     color: "Maroon"
   },
   {
@@ -180,7 +180,7 @@ export const products = [
     discountedPrice: 599,
     rating: 2,
     gender: "Men",
-    subcategory: "T-Shirts",
+    subcategory: ["T-Shirts", "Men"],
     color: "Red"
   },
   {
@@ -198,7 +198,7 @@ export const products = [
     discountedPrice: 1250,
     rating: 2,
     gender: "Women",
-    subcategory: "Tops",
+    subcategory: ["Tops", "Women"],
     color: "Velvet"
   },
   {
@@ -215,7 +215,7 @@ export const products = [
     discountedPrice: 1550,
     rating: 2,
     gender: "Women",
-    subcategory: "Tops",
+    subcategory: ["Tops", "Women"],
     color: "Black"
   },
   {
@@ -231,7 +231,7 @@ export const products = [
     originalPrice: 4035,
     discountedPrice: 3605,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Headphones", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -247,7 +247,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Headphones", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -263,7 +263,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Headphones", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -279,7 +279,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Earbuds", "Audio Devices"],
     color: "Black"
   },
   {
@@ -295,7 +295,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Earbuds", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -311,7 +311,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Headphones", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -327,7 +327,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Earbuds", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -343,7 +343,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Earbuds", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -359,7 +359,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Earbuds", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -375,7 +375,7 @@ export const products = [
     originalPrice: 7999,
     discountedPrice: 1999,
     rating: 4,
-    subcategory: "earbuds",
+    subcategory: ["Headphones", "Audio Devices"],
     color: "Maroon"
   },
   {
@@ -687,7 +687,239 @@ export const products = [
     discountedPrice: 999,
     rating: 4,
     gender: "Men",
-    subcategory: "Sneakers",
+    subcategory: ["Sneakers", "Men Footware"],
     color: "Green"
+  },
+  {
+    id: 42,
+    category: ["footwear"],
+    brand: "STYLE BADGE ",
+    name: "Premium Quality|Officewear|Rich Look|Comfortable|Partywear Derby For Men  (Black , 7)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/shoe/e/b/m/-original-imah2dbtq6dgenrq.jpeg?q=70"
+    ],
+    discount: "14%",
+    originalPrice: 999,
+    discountedPrice: 401,
+    rating: 4,
+    gender: "Men",
+    subcategory: ["Formals", "Men Footwear"],
+    color: "Black"
+  },
+  {
+    id: 43,
+    category: ["footwear"],
+    brand: "Vellinto",
+    name: "Vellinto DELIGHT Casual Boots For Men ll Synthetic Leather Boots Casuals For Men  (Brown , 7)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/shoe/w/z/i/-original-imahd2pyfbdmvxfh.jpeg?q=70"
+    ],
+    discount: "14%",
+    originalPrice: 1999,
+    discountedPrice: 598,
+    rating: 4,
+    gender: "Men",
+    subcategory: ["Boots men", "Men Footwear"],
+    color: "Brown"
+  },
+  {
+    id: 44,
+    category: ["footwear"],
+    brand: "SHOETOPIA ",
+    name: "Women Heels Sandal  (Beige , 2)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/sandal/f/r/2/5-goa-38-shoetopia-cream-original-imagrg4wrhrjxnag.jpeg?q=70"
+    ],
+    discount: "70%",
+    originalPrice: 1999,
+    discountedPrice: 678,
+    rating: 4,
+    gender: "Women",
+    subcategory: ["Heels", "Women Footwear"],
+    color: "Beige"
+  },
+  {
+    id: 45,
+    category: ["groceries"],
+    brand: "Freedom ",
+    name: "Freedom Refined Sunflower Oil Pouch (Surjyamukhi Tela)  (1 L)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/edible-oil/d/9/d/-original-imagqf52zwq6tggk.jpeg?q=70"
+    ],
+    discount: "5%",
+    originalPrice: 173,
+    discountedPrice: 164,
+    rating: 4,
+    subcategory: ["Cooking Ingredients"]
+  },
+  {
+    id: 46,
+    category: ["groceries"],
+    brand: "FORTUNE  ",
+    name: "FORTUNE Soya health refined Soyabean Oil Pouch (Soyabean Tela)  (870 g)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/edible-oil/v/m/l/-original-imahdpfkz9zghthq.jpeg?q=70"
+    ],
+    discount: "5%",
+    originalPrice: 175,
+    discountedPrice: 166,
+    rating: 4,
+    subcategory: ["Cooking Ingredients", "Oil & Ghee"]
+  },
+  {
+    id: 47,
+    category: ["groceries"],
+    brand: "Desi Treat",
+    name: "Desi Treat Soya Paneer (Tofu) 800 g",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/ready-meal/h/d/y/800-soya-paneer-tofu-1-desi-treat-original-imahduhchxwdvzqh.jpeg?q=70"
+    ],
+    discount: "5%",
+    originalPrice: 280,
+    discountedPrice: 1266,
+    rating: 4,
+    subcategory: ["Cooking Ingredients"]
+  },
+  {
+    id: 48,
+    category: ["groceries"],
+    brand: "KURKURE",
+    name: "KURKURE Playz Puffcorn - Yummy Cheese, Namkeen  (3 x 84 g)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/snack-savourie/u/m/j/-original-imah2yswujjhp9fy.jpeg?q=70"
+    ],
+    discount: "5%",
+    originalPrice: 150,
+    discountedPrice: 93,
+    rating: 4,
+    subcategory: ["Snacks & Food Items"]
+  },
+  {
+    id: 49,
+    category: ["beauty"],
+    brand: "NOY",
+    name: "NOY Saloon Secrets Result:4 Shades Of Western Nude Matte Magic Lip Colors Set #WC119  (Nude, Nude Pink, Tan Nude, Mauve Nude, 16 ml)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/lipstick/t/h/v/16-saloon-secrets-result-4-shades-of-western-nude-matte-magic-original-imagtg4zmzgrzusw.jpeg?q=70"
+    ],
+    discount: "79%",
+    originalPrice: 599,
+    discountedPrice: 123,
+    rating: 4,
+    subcategory: ["Lipstick"]
+  },
+  {
+    id: 50,
+    category: ["beauty"],
+    brand: "MARS",
+    name: "MARS SPF50 PA++++ High Coverage Liquid | Blemish Free & Blendable Makeup Foundation  (Shade-08, 40 ml)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/foundation/s/b/a/-original-imahch2xz6baydfy.jpeg?q=70"
+    ],
+    discount: "6%",
+    originalPrice: 379,
+    discountedPrice: 356,
+    rating: 4,
+    subcategory: ["Foundation"]
+  },
+  {
+    id: 51,
+    category: ["beauty"],
+    brand: "MARS",
+    name: "MARS Long Lasting Smudge Proof Eyeliner 1 g  (Black INK)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/eye-liner/c/5/d/1-long-lasting-smudge-proof-eyeliner-mars-original-imagra5humht2daf.jpeg?q=70"
+    ],
+    discount: "10%",
+    originalPrice: 279,
+    discountedPrice: 249,
+    rating: 4,
+    subcategory: ["Eyeliner"]
+  },
+  {
+    id: 52,
+    category: ["beauty"],
+    brand: "Lakmé ",
+    name: "Lakmé Perfect Radiance Brightening Day Cream with Niacinamide & Sunscreen For Women  (50 g)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/moisturizer-cream/a/x/a/50-0-perfect-radiance-brightening-day-cream-with-niacinamide-original-imahcjsqygrfu4wz.jpeg?q=70"
+    ],
+    discount: "10%",
+    originalPrice: 399,
+    discountedPrice: 199,
+    rating: 4,
+    subcategory: ["Moisturizers"]
+  },
+  {
+    id: 53,
+    category: ["beauty"],
+    brand: "Cetaphil ",
+    name: "Cetaphil Gentle Skin Cleanser With Mild, Non Irritating Formula For All Skin Types Face Wash  (125 ml)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/face-wash/9/a/r/125-0-gentle-skin-cleanser-with-mild-non-irritating-formula-for-original-imahckwy6yjymhae.jpeg?q=70"
+    ],
+    discount: "12%",
+    originalPrice: 429,
+    discountedPrice: 377,
+    rating: 4,
+    subcategory: ["Cleansers"]
+  },
+  {
+    id: 54,
+    category: ["beauty"],
+    brand: "Jo",
+    name: "Jo by Wipro Fresh Lime Soap with Glycerine  (8 x 150 g)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/soap/a/m/e/-original-imah7smrwc2nk8yy.jpeg?q=70"
+    ],
+    discount: "12%",
+    originalPrice: 344,
+    discountedPrice: 251,
+    rating: 4,
+    subcategory: ["Personal Care"]
+  },
+  {
+    id: 55,
+    category: ["beauty"],
+    brand: "HIMALAYA",
+    name: "HIMALAYA Ashwagandha tablets India  (60)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/kjabs7k0-0/ayurvedic/k/6/d/ashvagandha-general-wellness-60-tablets-rejuvenates-mind-and-original-imafyw3qkg6fqhxc.jpeg?q=70"
+    ],
+    discount: "16%",
+    originalPrice: 220,
+    discountedPrice: 184,
+    rating: 4,
+    subcategory: ["Medicines"]
+  },
+  {
+    id: 56,
+    category: "furnitures",
+    brand: "iDOLESHOP ",
+    name: "iDOLESHOP Desk Light with 3 Shades Touch Control Light and Mobile Holder Design Table Lamp  (60 cm, White)",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/kgqvlow0/table-lamp/g/q/h/desk-lamp-for-study-with-3-shades-touch-control-light-and-mobile-original-imafwwhxdrszymjv.jpeg?q=70"
+    ],
+    discount: "68%",
+    originalPrice: 1899,
+    discountedPrice: 607,
+    rating: 4,
+    subcategory: ["Living Room"],
+    color: "White"
+  },
+  {
+    id: 57,
+    category: "jewellery",
+    brand: "Devora  ",
+    name: "latest stylish Classic Design link chain for mens and boys 800 Silver Plated Stainless Steel Chain",
+    images: [
+      "https://rukminim2.flixcart.com/image/612/612/xif0q/necklace-chain/1/p/7/1-6tflyrice-chain-6tflys-original-imah3eraqvgdcbse.jpeg?q=70"
+    ],
+    discount: "86%",
+    originalPrice: 999,
+    discountedPrice: 132,
+    rating: 4,
+    subcategory: ["Men Accessories"],
+    color: "Silver"
   },
 ];

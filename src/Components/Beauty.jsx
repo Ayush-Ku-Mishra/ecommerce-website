@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import GridProductCategory from "./GridProductCategory";
+import BeautySidebarFilter from "./BeautySidebarFilter";
 
 const Beauty = () => {
   return (
-    <div>
-      Beauty Page
-    </div>
-  )
-}
+    <GridProductCategory
+      categoryName="beauty"
+      SidebarFilterComponent={BeautySidebarFilter}
+    />
+  );
+};
 
-export default Beauty
+export default Beauty;

@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import GridProductCategory from "./GridProductCategory";
+import GroceriesSidebarFilter from "./GroceriesSidebarFilter";
 
 const Groceries = () => {
   return (
-    <div>
-       Groceries Page
-    </div>
-  )
-}
+    <GridProductCategory
+      categoryName="groceries"
+      SidebarFilterComponent={GroceriesSidebarFilter}
+    />
+  );
+};
 
-export default Groceries
+export default Groceries;
