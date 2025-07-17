@@ -1,6 +1,6 @@
 import React from "react";
 import GridProductCategory from "./GridProductCategory";
-import FootwearSidebarFilter from "../components/FashionSidebarFilter";
+import FootwearSidebarFilter from "./FashionSidebarFilter";
 
 const Footwear = () => {
   return (
