@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import logo from "../assets/pickoraLogo.jpg";
+import logo from "../assets/pickoraLogo2.jpg";
 import { IoSearch } from "react-icons/io5";
 import { Link, NavLink } from "react-router-dom";
 import { FaRegHeart, FaPlus } from "react-icons/fa6";
@@ -11,7 +11,6 @@ import { IoCloseSharp } from "react-icons/io5";
 import { categories } from "../data/categories.js";
 import { useNavigate } from "react-router-dom";
 
-
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -19,15 +18,13 @@ const Navbar = () => {
   const [isSticky, setIsSticky] = useState(false);
   const navigate = useNavigate();
 
-
   useEffect(() => {
-  if (sidebarOpen) {
-    document.body.style.overflow = "hidden";
-  } else {
-    document.body.style.overflow = "";
-  }
-}, [sidebarOpen]);
-
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [sidebarOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,107 +50,120 @@ const Navbar = () => {
       )}
 
       {/* Sidebar */}
-     <div
-  className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-[110] transform transition-transform duration-300 ${
-    sidebarOpen ? "translate-x-0" : "-translate-x-full"
-  }`}
->
-  <div className="p-4 border-b flex justify-between items-center">
-    <img src={logo} alt="Logo" className="h-6 object-contain" />
-    <button
-      className="text-gray-500 hover:text-pink-500 text-xl"
-      onClick={() => setSidebarOpen(false)}
-    >
-      <IoCloseSharp />
-    </button>
-  </div>
-
-  <h2 className="px-4 py-3 font-semibold text-gray-800">
-    Shop By Categories
-  </h2>
-
-  <div className="overflow-y-auto h-[calc(100%-60px)]">
-    {categories.map((cat, index) => (
-      <div key={index} className="px-4 border-b">
-        {/* Main Category */}
-        <div className="flex items-center justify-between py-3">
-          <span
-            onClick={() => {
-              setSidebarOpen(false);
-              navigate(`/${cat.name.toLowerCase()}`)}}
-            className="font-medium text-gray-800 hover:text-pink-600 cursor-pointer"
+      <div
+        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-[110] transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-4 border-b flex justify-between items-center">
+          <img src={logo} alt="Logo" className="h-6 object-contain" />
+          <button
+            className="text-gray-500 hover:text-pink-500 text-xl"
+            onClick={() => setSidebarOpen(false)}
           >
-            {cat.name}
-          </span>
-
-
-          <span
-            className="cursor-pointer"
-            onClick={() =>
-              setExpandedCategory(
-                expandedCategory === cat.name ? null : cat.name
-              )
-            }
-          >
-            {expandedCategory === cat.name ? "−" : <FaPlus className="text-xs" />}
-          </span>
+            <IoCloseSharp />
+          </button>
         </div>
 
-        {/* Subcategories */}
-        {expandedCategory === cat.name &&
-          cat.sub.map((subItem, subIndex) => (
-            <div
-              key={subIndex}
-              className="ml-4 border-l border-gray-200 pl-4"
-            >
-              <div className="flex items-center justify-between py-2">
+        <h2 className="px-4 py-3 font-semibold text-gray-800">
+          Shop By Categories
+        </h2>
+
+        <div className="overflow-y-auto h-[calc(100%-60px)]">
+          {categories.map((cat, index) => (
+            <div key={index} className="px-4 border-b">
+              {/* Main Category */}
+              <div className="flex items-center justify-between py-3">
                 <span
                   onClick={() => {
                     setSidebarOpen(false);
-                    navigate(`/${cat.name.toLowerCase()}?sub=${encodeURIComponent(subItem.name)}`);
+                    navigate(`/${cat.name.toLowerCase()}`);
                   }}
-                  className="text-sm text-gray-700 hover:text-pink-600 cursor-pointer"
+                  className="font-medium text-gray-800 hover:text-pink-600 cursor-pointer"
                 >
-                  {subItem.name}
+                  {cat.name}
                 </span>
-
-
 
                 <span
                   className="cursor-pointer"
                   onClick={() =>
-                    setExpandedSubcategory(
-                      expandedSubcategory === subItem.name
-                        ? null
-                        : subItem.name
+                    setExpandedCategory(
+                      expandedCategory === cat.name ? null : cat.name
                     )
                   }
                 >
-                  {expandedSubcategory === subItem.name ? "−" : <FaPlus className="text-xs" />}
+                  {expandedCategory === cat.name ? (
+                    "−"
+                  ) : (
+                    <FaPlus className="text-xs" />
+                  )}
                 </span>
               </div>
 
-              {/* Sub-subcategories */}
-              {expandedSubcategory === subItem.name &&
-                subItem.sub.map((item, i) => (
-                  <span
-                    key={i}
-                    onClick={() => {
-                      setSidebarOpen(false);
-                      navigate(`/${cat.name.toLowerCase()}?sub=${encodeURIComponent(item)}`)}}
-                    className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block cursor-pointer"
+              {/* Subcategories */}
+              {expandedCategory === cat.name &&
+                cat.sub.map((subItem, subIndex) => (
+                  <div
+                    key={subIndex}
+                    className="ml-4 border-l border-gray-200 pl-4"
                   >
-                    {item}
-                  </span>
+                    <div className="flex items-center justify-between py-2">
+                      <span
+                        onClick={() => {
+                          setSidebarOpen(false);
+                          navigate(
+                            `/${cat.name.toLowerCase()}?sub=${encodeURIComponent(
+                              subItem.name
+                            )}`
+                          );
+                        }}
+                        className="text-sm text-gray-700 hover:text-pink-600 cursor-pointer"
+                      >
+                        {subItem.name}
+                      </span>
 
+                      <span
+                        className="cursor-pointer"
+                        onClick={() =>
+                          setExpandedSubcategory(
+                            expandedSubcategory === subItem.name
+                              ? null
+                              : subItem.name
+                          )
+                        }
+                      >
+                        {expandedSubcategory === subItem.name ? (
+                          "−"
+                        ) : (
+                          <FaPlus className="text-xs" />
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Sub-subcategories */}
+                    {expandedSubcategory === subItem.name &&
+                      subItem.sub.map((item, i) => (
+                        <span
+                          key={i}
+                          onClick={() => {
+                            setSidebarOpen(false);
+                            navigate(
+                              `/${cat.name.toLowerCase()}?sub=${encodeURIComponent(
+                                item
+                              )}`
+                            );
+                          }}
+                          className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block cursor-pointer"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                  </div>
                 ))}
             </div>
           ))}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
-
 
       {/* Sticky Wrapper */}
       <div
@@ -172,7 +182,7 @@ const Navbar = () => {
                 <img
                   src={logo}
                   alt="Pickora Logo"
-                  className="h-8 w-auto object-contain"
+                  className="h-11 w-auto object-contain ml-5"
                 />
               </Link>
             </div>
@@ -206,10 +216,10 @@ const Navbar = () => {
                   className={({ isActive }) =>
                     `transition text-[16px] font-[500] 
                    ${
-                      isActive
-                        ? "text-pink-500"
-                        : "text-gray-600 hover:text-pink-500"
-                    }`
+                     isActive
+                       ? "text-pink-500"
+                       : "text-gray-600 hover:text-pink-500"
+                   }`
                   }
                 >
                   Help

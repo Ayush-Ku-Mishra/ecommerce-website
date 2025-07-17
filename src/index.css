@@ -164,6 +164,11 @@ body {
   background-color: transparent;
 }
 
+.custom-cursor {
+  cursor: url('/SearchIcon.png'), auto;
+}
+
+
 
 
 

@@ -16,7 +16,23 @@ export const products = [
     rating: 2,
     gender: "Men",
     subcategory: ["Shirts", "Men"],
-    color: "Maroon"
+    color: "Maroon",
+    inStock: true,
+    stockQuantity: 50,
+    variants: [
+      { id: 1, name: "Black", price: 99.99, inStock: true },
+      { id: 2, name: "White", price: 99.99, inStock: true },
+      { id: 3, name: "Red", price: 109.99, inStock: false }
+    ],
+    size: "M",
+    reviews: 45,
+    ProductDetails: [
+    { label: "Brand", value: "Campus Sutra" },
+    { label: "Material", value: "Polycotton" },
+    { label: "Color", value: "Maroon" },
+    { label: "Gender", value: "Men" },
+    { label: "Fit", value: "Comfort Fit" }
+  ],
   },
   {
     id: 2,
