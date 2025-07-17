@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import logo from "../assets/pickoraLogo2.jpg";
+import logo from "../assets/PickoraLogo2.jpg";
 import { IoSearch } from "react-icons/io5";
 import { Link, NavLink } from "react-router-dom";
 import { FaRegHeart, FaPlus } from "react-icons/fa6";
