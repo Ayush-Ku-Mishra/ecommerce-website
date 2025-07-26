@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { HiViewGrid } from "react-icons/hi";
 import { TfiViewListAlt } from "react-icons/tfi";
@@ -8,13 +8,23 @@ import ContactUsPart from "./ContactUsPart";
 import { products } from "../data/productItems";
 import { categories } from "../data/categories";
 
-const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
-  const categoryData = categories.find(
-    (cat) => cat.name.toLowerCase() === categoryName.toLowerCase()
-  );
-
+const GridProductCategory = ({ SidebarFilterComponent }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Use category from URL search params
+  const category = searchParams.get("category");
+  console.log("Selected category:", category);
+
+  // Correctly find categoryData based on URL param category
+  const categoryData = Array.isArray(categories)
+    ? categories.find(
+        (cat) =>
+          typeof cat?.name === "string" &&
+          typeof category === "string" &&
+          cat.name.toLowerCase() === category.toLowerCase()
+      )
+    : null;
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubs, setSelectedSubs] = useState([]);
@@ -27,16 +37,38 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
   const [sortOption, setSortOption] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
 
-  const filteredProducts = products.filter((p) =>
-    p.category.includes(categoryName.toLowerCase())
+  const filteredProducts = useMemo(() => {
+    if (!category) return products; // fallback: show all if no category
+
+    return products.filter((product) => {
+      const productCategories = Array.isArray(product.category)
+        ? product.category
+        : [product.category];
+
+      return productCategories.some(
+        (cat) => typeof cat === "string" && cat.toLowerCase() === category.toLowerCase()
+      );
+    });
+  }, [products, category]);
+
+  const brandOptions = useMemo(
+    () => [...new Set(filteredProducts.map((p) => p.brand))].sort(),
+    [filteredProducts]
   );
 
-  const brandOptions = [
-    ...new Set(filteredProducts.map((p) => p.brand)),
-  ].sort();
-  const colorOptions = [
-    ...new Set(filteredProducts.map((p) => p.color)),
-  ].sort();
+  const colorOptions = useMemo(() => {
+    return [
+      ...new Set(
+        filteredProducts.flatMap((p) => {
+          const defaultColor = p?.defaultVariant?.color?.toLowerCase?.();
+          const variantColors = Array.isArray(p?.variants)
+            ? p.variants.map((v) => v?.color?.toLowerCase?.()).filter(Boolean)
+            : [];
+          return [defaultColor, ...variantColors].filter(Boolean);
+        })
+      ),
+    ].sort();
+  }, [filteredProducts]);
 
   useEffect(() => {
     const category = searchParams.get("category") || "";
@@ -50,6 +82,8 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
     const minPrice = parseInt(searchParams.get("minPrice")) || 0;
     const maxPrice = parseInt(searchParams.get("maxPrice")) || Infinity;
 
+    if (!category) return;
+
     setSelectedCategory(category);
     setSelectedSubs(subs);
     setSelectedRating(rating);
@@ -61,7 +95,14 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
     setSortOption(sort);
   }, [searchParams]);
 
+  const didMount = React.useRef(false);
+
   useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return; // skip initial run to avoid loop
+    }
+
     const params = new URLSearchParams();
     if (selectedCategory) params.set("category", selectedCategory);
     selectedSubs.forEach((s) => params.append("sub", s));
@@ -70,8 +111,7 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
     selectedBrands.forEach((b) => params.append("brand", b));
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
-    if (selectedPrice.max !== Infinity)
-      params.set("maxPrice", selectedPrice.max);
+    if (selectedPrice.max !== Infinity) params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
     setSearchParams(params, { replace: true });
@@ -85,14 +125,12 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
     selectedPrice,
     viewType,
     sortOption,
+    setSearchParams,
   ]);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 200
-      ) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
         setVisibleCount((prev) => prev + 10);
       }
     };
@@ -109,67 +147,132 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
     selectedBrands.forEach((b) => params.append("brand", b));
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
-    if (selectedPrice.max !== Infinity)
-      params.set("maxPrice", selectedPrice.max);
+    if (selectedPrice.max !== Infinity) params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
     setSearchParams(params, { replace: true });
   };
 
   const handleResetFilters = () => {
-    setSelectedCategory("");
     setSelectedSubs([]);
     setSelectedRating([]);
     setSelectedDiscount([]);
     setSelectedBrands([]);
     setSelectedColors([]);
     setSelectedPrice({ min: 0, max: Infinity });
-    setSearchParams({});
+
+    const params = new URLSearchParams();
+    if (selectedCategory) params.set("category", selectedCategory);
+    setSearchParams(params, { replace: true });
   };
 
-  const getSortedProducts = () => {
-    let result = filteredProducts.filter(
-      (p) =>
-        (selectedCategory === "" ||
-          p.subcategory?.includes(selectedCategory)) &&
-        (selectedSubs.length === 0 ||
-          selectedSubs.some((s) => p.subcategory?.includes(s))) &&
-        (selectedRating.length === 0 ||
-          selectedRating.some((r) => p.rating >= r)) &&
-        (selectedDiscount.length === 0 ||
-          selectedDiscount.some((d) => parseInt(p.discount) >= d)) &&
-        (selectedBrands.length === 0 || selectedBrands.includes(p.brand)) &&
-        (selectedColors.length === 0 || selectedColors.includes(p.color)) &&
-        p.discountedPrice >= selectedPrice.min &&
-        p.discountedPrice <= selectedPrice.max
-    );
+  const getFilteredVariants = () => {
+    let result = [];
 
-    if (sortOption === "name-asc")
-      result.sort((a, b) => a.name.localeCompare(b.name));
-    if (sortOption === "name-desc")
-      result.sort((a, b) => b.name.localeCompare(a.name));
-    if (sortOption === "price-asc")
-      result.sort((a, b) => a.discountedPrice - b.discountedPrice);
-    if (sortOption === "price-desc")
-      result.sort((a, b) => b.discountedPrice - a.discountedPrice);
+    filteredProducts.forEach((product) => {
+      const subcategories = Array.isArray(product.subcategory) ? product.subcategory : [];
+
+      if (
+        (selectedSubs.length === 0 || selectedSubs.some((s) => subcategories.includes(s))) &&
+        (selectedRating.length === 0 || selectedRating.some((r) => product.rating >= r)) &&
+        (selectedDiscount.length === 0 || selectedDiscount.some((d) => parseInt(product.discount) >= d)) &&
+        (selectedBrands.length === 0 || selectedBrands.includes(product.brand))
+      ) {
+        const matchingVariants = product.variants.filter((variant) => {
+          const colorMatch =
+            selectedColors.length === 0 ||
+            selectedColors.some((selColor) => variant.color?.toLowerCase() === selColor.toLowerCase());
+
+          const price = variant.discountedPrice ?? product.discountedPrice ?? 0;
+          const priceMatch = price >= selectedPrice.min && price <= selectedPrice.max;
+
+          return colorMatch && priceMatch;
+        });
+
+        if (selectedColors.length === 0 && matchingVariants.length === 0 && product.defaultVariant) {
+          matchingVariants.push(product.defaultVariant);
+        }
+
+        matchingVariants.forEach((variant) => {
+          result.push({ product, variant });
+        });
+      }
+    });
+
     return result;
   };
 
-  const sortedProducts = getSortedProducts();
-  const visibleProducts = sortedProducts.slice(0, visibleCount);
+  const filteredVariants = useMemo(() => getFilteredVariants(), [
+    filteredProducts,
+    selectedSubs,
+    selectedRating,
+    selectedDiscount,
+    selectedBrands,
+    selectedColors,
+    selectedPrice.min,
+    selectedPrice.max,
+  ]);
 
-  const handleProductClick = (id) => {
+  const sortedVariants = useMemo(() => {
+    let sorted = [...filteredVariants];
+
+    if (sortOption === "name-asc")
+      sorted.sort((a, b) => a.product.name.localeCompare(b.product.name));
+    if (sortOption === "name-desc")
+      sorted.sort((a, b) => b.product.name.localeCompare(a.product.name));
+    if (sortOption === "price-asc")
+      sorted.sort(
+        (a, b) =>
+          (a.variant.discountedPrice ?? a.product.discountedPrice) -
+          (b.variant.discountedPrice ?? b.product.discountedPrice)
+      );
+    if (sortOption === "price-desc")
+      sorted.sort(
+        (a, b) =>
+          (b.variant.discountedPrice ?? b.product.discountedPrice) -
+          (a.variant.discountedPrice ?? a.product.discountedPrice)
+      );
+
+    return sorted;
+  }, [filteredVariants, sortOption]);
+
+  const visibleVariants = useMemo(() => {
+    return sortedVariants.slice(0, visibleCount);
+  }, [sortedVariants, visibleCount]);
+
+  // Fisher-Yates shuffle function (unchanged)
+  const shuffleArray = (array) => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  // Remove state and useEffect, instead useMemo with conditional shuffle:
+  const shuffledVisibleVariants = React.useMemo(() => {
+    if (!sortOption) {
+      // No sorting applied, shuffle variants for better UX
+      return shuffleArray(visibleVariants);
+    }
+    // Sorting applied, do not shuffle to preserve sort order
+    return visibleVariants;
+  }, [visibleVariants, sortOption]);
+
+  // Updated handleProductClick that now navigates with variant id
+  const handleProductClick = (variantId) => {
     sessionStorage.setItem("scrollPosition", window.scrollY);
-    navigate(`/product/${id}`);
+    navigate(`/product/${variantId}`);
   };
 
   return (
     <div>
       <div className="p-4 mb-4">
-        <div className="flex gap-2">
+        <div className="flex gap-6">
           {/* Sidebar */}
-          <div className="w-[24%] bg-white sticky top-36 h-[calc(100vh-140px)] overflow-y-auto overflow-x-hidden pr-2 custom-scroll z-10">
-            {SidebarFilterComponent && (
+          <aside className="w-[24%] bg-white sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-2 custom-scroll z-10">
+            {SidebarFilterComponent && categoryData && (
               <SidebarFilterComponent
                 categoryData={categoryData}
                 onCategoryChange={setSelectedCategory}
@@ -192,36 +295,31 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
                 onResetFilters={handleResetFilters}
               />
             )}
-          </div>
+          </aside>
+
           {/* Main Product Area */}
-          <div className="w-[76%]">
-            <div className="flex sticky top-32 z-30 items-center justify-between mb-4 px-3 py-2 bg-gray-100 shadow rounded-md">
+          <main className="scrollbar-hide w-[76%] sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-4">
+            <div className="flex sticky top-0 z-30 items-center justify-between mb-4 px-3 py-2 bg-gray-100 shadow rounded-md">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewType("grid")}
-                  className={`p-1 rounded ${
-                    viewType === "grid" ? "text-red-500" : "text-gray-600"
-                  }`}
+                  className={`p-1 rounded ${viewType === "grid" ? "text-red-500" : "text-gray-600"}`}
                 >
                   <HiViewGrid size={20} />
                 </button>
                 <button
                   onClick={() => setViewType("list")}
-                  className={`p-1 rounded ${
-                    viewType === "list" ? "text-red-500" : "text-gray-600"
-                  }`}
+                  className={`p-1 rounded ${viewType === "list" ? "text-red-500" : "text-gray-600"}`}
                 >
                   <TfiViewListAlt size={14} />
                 </button>
                 <span className="text-sm text-gray-700 ml-2">
-                  There are {sortedProducts.length} products.
+                  There are {filteredVariants.length} products.
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Sort by:
-                </label>
+                <label className="text-sm font-medium text-gray-700">Sort by:</label>
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
@@ -239,97 +337,110 @@ const GridProductCategory = ({ categoryName, SidebarFilterComponent }) => {
             {/* Product Cards */}
             {viewType === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {visibleProducts.map((product) => (
-                  <div key={product.id} className="w-full shadow-md bg-white">
-                    <div
-                      onClick={() => handleProductClick(product.id)}
-                      className="w-full h-48 overflow-hidden rounded-md relative group cursor-pointer"
-                    >
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-top object-cover"
-                      />
-                      <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
-                        <FaHeart size={18} />
-                      </button>
-                    </div>
+                {shuffledVisibleVariants.map(({ product, variant }) => {
+                  const productImage = variant.images?.[0] || product.images?.[0];
 
-                    <div className="p-2 shadow-md">
-                      <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700">
-                        {product.brand}
-                      </h6>
-                      <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="line-through text-gray-500 font-[16px]">
-                          ₹{product.originalPrice.toLocaleString()}
-                        </span>
-                        <span className="text-red-500 font-[600]">
-                          ₹{product.discountedPrice.toLocaleString()}
-                        </span>
+                  return (
+                    <div key={variant.id} className="w-full shadow-md bg-white">
+                      <div
+                        onClick={() => handleProductClick(variant.id)}
+                        className="w-full h-48 overflow-hidden rounded-md relative group cursor-pointer"
+                      >
+                        <img
+                          src={productImage}
+                          alt={`${product.name} - ${variant.color}`}
+                          className="w-full h-full object-top object-cover"
+                        />
+                        <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
+                          <FaHeart size={18} />
+                        </button>
                       </div>
-                      <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
-                        <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
-                        <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
-                          ADD TO CART
-                        </span>
-                      </button>
+
+                      <div className="p-2 shadow-md">
+                        <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700">
+                          {product.brand}
+                        </h6>
+                        <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
+                          {product.name} - {variant.color}
+                        </h3>
+                        <div className="flex items-center justify-between">
+                          <span className="line-through text-gray-500 font-[16px]">
+                            ₹
+                            {(variant.originalPrice ?? product.originalPrice).toLocaleString()}
+                          </span>
+                          <span className="text-red-500 font-[600]">
+                            ₹
+                            {(variant.discountedPrice ?? product.discountedPrice).toLocaleString()}
+                          </span>
+                        </div>
+                        <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
+                          <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
+                          <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
+                            ADD TO CART
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {visibleProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="w-full bg-white shadow rounded-lg overflow-hidden flex"
-                  >
-                    <div
-                      className="w-[25%] h-[320px] relative cursor-pointer"
-                      onClick={() => handleProductClick(product.id)}
-                    >
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover p-1 rounded-lg"
-                      />
-                      <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
-                        <FaHeart size={18} />
-                      </button>
-                    </div>
+                {shuffledVisibleVariants.map(({ product, variant }) => {
+                  const productImage = variant.images?.[0] || product.images?.[0];
 
-                    <div className="w-[60%] p-4 flex flex-col justify-between">
-                      <div>
-                        <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
-                          {product.brand}
-                        </h6>
-                        <h3 className="mt-2">{product.name}</h3>
-                        <p className="text-sm text-gray-600 mt-2">
-                          Lorem Ipsum is simply dummy text of the printing and
-                          typesetting industry.
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="line-through text-gray-500 text-md">
-                            ₹{product.originalPrice.toLocaleString()}
-                          </span>
-                          <span className="text-red-500 font-semibold text-md">
-                            ₹{product.discountedPrice.toLocaleString()}
-                          </span>
-                        </div>
+                  return (
+                    <div
+                      key={variant.id}
+                      className="w-full bg-white shadow rounded-lg overflow-hidden flex"
+                    >
+                      <div
+                        className="w-[25%] h-[320px] relative cursor-pointer"
+                        onClick={() => handleProductClick(variant.id)}
+                      >
+                        <img
+                          src={productImage}
+                          alt={`${product.name} - ${variant.color}`}
+                          className="w-full h-full object-cover p-1 rounded-lg"
+                        />
+                        <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
+                          <FaHeart size={18} />
+                        </button>
                       </div>
-                      <button className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2">
-                        <BsCart4 />
-                        ADD TO CART
-                      </button>
+
+                      <div className="w-[60%] p-4 flex flex-col justify-between">
+                        <div>
+                          <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
+                            {product.brand}
+                          </h6>
+                          <h3 className="mt-2">
+                            {product.name} - {variant.color}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-2">
+                            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                          </p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className="line-through text-gray-500 text-md">
+                              ₹
+                              {(variant.originalPrice ?? product.originalPrice).toLocaleString()}
+                            </span>
+                            <span className="text-red-500 font-semibold text-md">
+                              ₹
+                              {(variant.discountedPrice ?? product.discountedPrice).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2">
+                          <BsCart4 />
+                          ADD TO CART
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
       <ContactUsPart />

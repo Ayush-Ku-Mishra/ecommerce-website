@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         custom: ["Verdana", "Geneva", "Tahoma", "sans-serif"],
+        custom2: ["Inter", "-apple-system", "Helvetica", "Arial", "sans-serif"],
       },
       keyframes: {
         slideIn: {

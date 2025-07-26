@@ -4,34 +4,25 @@ import 'swiper/css';
 import 'swiper/css/free-mode';
 
 import { FreeMode } from 'swiper/modules';
-import { products } from '../data/productItems.js';
 import { Link } from 'react-router-dom';
-import Button from '@mui/material/Button';
-import { MdZoomOutMap } from "react-icons/md";
-import { VscGitCompare } from "react-icons/vsc";
-import { FaRegHeart } from "react-icons/fa";
 import { BsCart4 } from "react-icons/bs";
 
-
-const BagSlider = () => {
-  // Filter products by category "bags" (case-insensitive)
-  const bags = products.filter(item =>
-    item.category.some(
-      (cat) => typeof cat === "string" && cat.toLowerCase() === "bags"
-    )
-  );
+const RelatedProductsSlider = ({ relatedProducts }) => {
+  if (!relatedProducts || relatedProducts.length === 0) {
+    return null; // No related products available, don’t render anything
+  }
 
   return (
-    <div>
-      <div>
-        <Swiper
+    <div className="my-6">
+      <h2 className="text-xl font-semibold mb-6 font-custom">Similar Products</h2>
+      <Swiper
           slidesPerView={6}
           spaceBetween={10}
           freeMode={true}
           modules={[FreeMode]}
           className="mySwiper"
         >
-          {bags.map((product) => (
+          {relatedProducts.map((product) => (
             <SwiperSlide key={product.id}>
               <div className="w-full shadow-md">
                 <div className="w-full h-48 overflow-hidden rounded-md relative group">
@@ -45,19 +36,6 @@ const BagSlider = () => {
                     </div>
                   </Link>
 
-                  <div className='popularProducts absolute top-[-200px] right-[5px] z-50 flex flex-col items-center gap-2 w-[50px] group-hover:top-[15px] transition-all duration-500 opacity-0 group-hover:opacity-100'>
-                    <Button className='!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white !text-black hover:!bg-red-500 hover:text-white transition group'>
-                      <MdZoomOutMap className='text-[22px] !text-black group-hover:text-white transition' />
-                    </Button>
-
-                    <Button className='!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white !text-black hover:!bg-red-500 hover:text-white transition group'>
-                      <VscGitCompare className='text-[22px] !text-black group-hover:text-white transition' />
-                    </Button>
-
-                    <Button className='!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white !text-black hover:!bg-red-500 hover:text-white transition group'>
-                      <FaRegHeart className='text-[22px] !text-black group-hover:text-white transition' />
-                    </Button>
-                  </div>
                 </div>
 
                 <div className="p-2 shadow-md">
@@ -95,9 +73,8 @@ const BagSlider = () => {
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
     </div>
   );
 };
 
-export default BagSlider;
+export default RelatedProductsSlider;

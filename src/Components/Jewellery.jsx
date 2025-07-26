@@ -1,12 +1,12 @@
 import React from "react";
 import GridProductCategory from "./GridProductCategory";
-import JewellerySidebarFilter from "./JewellerySidebarFilter";
+import SidebarFilterComponent from "./SidebarFilterComponent";
 
 const Jewellery = () => {
   return (
     <GridProductCategory
       categoryName="jewellery"
-      SidebarFilterComponent={JewellerySidebarFilter}
+      SidebarFilterComponent={SidebarFilterComponent}
     />
   );
 };

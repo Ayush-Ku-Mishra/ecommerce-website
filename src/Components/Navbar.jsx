@@ -56,7 +56,7 @@ const Navbar = () => {
         }`}
       >
         <div className="p-4 border-b flex justify-between items-center">
-          <img src={logo} alt="Logo" className="h-6 object-contain" />
+          <img src={logo} alt="Logo" className="h-11 object-contain" />
           <button
             className="text-gray-500 hover:text-pink-500 text-xl"
             onClick={() => setSidebarOpen(false)}
@@ -77,7 +77,12 @@ const Navbar = () => {
                 <span
                   onClick={() => {
                     setSidebarOpen(false);
-                    navigate(`/${cat.name.toLowerCase()}`);
+                    navigate({
+                      pathname: "/products", // or your main listing route
+                      search: `?category=${encodeURIComponent(
+                        cat.name.toLowerCase()
+                      )}`,
+                    });
                   }}
                   className="font-medium text-gray-800 hover:text-pink-600 cursor-pointer"
                 >
@@ -111,11 +116,12 @@ const Navbar = () => {
                       <span
                         onClick={() => {
                           setSidebarOpen(false);
-                          navigate(
-                            `/${cat.name.toLowerCase()}?sub=${encodeURIComponent(
-                              subItem.name
-                            )}`
-                          );
+                          navigate({
+                            pathname: "/products",
+                            search: `?category=${encodeURIComponent(
+                              cat.name.toLowerCase()
+                            )}&sub=${encodeURIComponent(subItem.name)}`,
+                          });
                         }}
                         className="text-sm text-gray-700 hover:text-pink-600 cursor-pointer"
                       >
@@ -144,14 +150,14 @@ const Navbar = () => {
                     {expandedSubcategory === subItem.name &&
                       subItem.sub.map((item, i) => (
                         <span
-                          key={i}
                           onClick={() => {
                             setSidebarOpen(false);
-                            navigate(
-                              `/${cat.name.toLowerCase()}?sub=${encodeURIComponent(
-                                item
-                              )}`
-                            );
+                            navigate({
+                              pathname: "/products",
+                              search: `?category=${encodeURIComponent(
+                                cat.name.toLowerCase()
+                              )}&sub=${encodeURIComponent(item)}`,
+                            });
                           }}
                           className="ml-4 py-1 text-sm text-gray-600 hover:text-pink-500 block cursor-pointer"
                         >
@@ -271,7 +277,7 @@ const Navbar = () => {
                 Home
               </NavLink>
               <NavLink
-                to="/fashion"
+                to="/fashion?category=fashion"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive
@@ -283,7 +289,7 @@ const Navbar = () => {
                 Fashion
               </NavLink>
               <NavLink
-                to="/electronics"
+                to="/electronics?category=electronics"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive
@@ -295,7 +301,7 @@ const Navbar = () => {
                 Electronics
               </NavLink>
               <NavLink
-                to="/bags"
+                to="/bags?category=bags"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive
@@ -307,7 +313,7 @@ const Navbar = () => {
                 Bags
               </NavLink>
               <NavLink
-                to="/footwear"
+                to="/footwear?category=footwear"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive
@@ -319,7 +325,7 @@ const Navbar = () => {
                 Footwear
               </NavLink>
               <NavLink
-                to="/groceries"
+                to="/groceries?category=groceries"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive
@@ -331,7 +337,7 @@ const Navbar = () => {
                 Groceries
               </NavLink>
               <NavLink
-                to="/beauty"
+                to="/beauty?category=beauty"
                 className={({ isActive }) =>
                   `hover:text-pink-600 pb-2 border-b-2 transition ${
                     isActive

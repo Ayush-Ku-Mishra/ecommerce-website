@@ -21,6 +21,12 @@ import Jewellery from "./Components/Jewellery";
 import ServicePage from "./Components/ServicePage";
 import ContactUsPart from "./Components/ContactUsPart";
 import SingleProductDetails from "./Components/SingleProductDetails";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import GlobalLoadingSkeleton from "./Components/GlobalLoadingSkeleton";
+import GridProductCategory from "./Components/GridProductCategory";
+import SidebarFilterComponent from "./Components/SidebarFilterComponent";
+
 
 const router = createBrowserRouter([
   {
@@ -28,68 +34,72 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       {
-         index: true, 
-         element: <Home /> 
-      },
-      { 
-        path: "login", 
-        element: <Login /> 
-      },
-      { 
-        path: "product/:id", 
-        element: <SingleProductDetails/>
-      },
-      { 
-        path: "wishlist", 
-        element: <Wishlist /> 
-      },
-      { 
-        path: "cart", 
-        element: <Cart /> 
-      },
-      { 
-        path: "fashion", 
-        element: <Fashion /> 
-      },
-      { 
-        path: "electronics", 
-        element: <Electronics /> 
+        index: true,
+        element: <Home />,
       },
       {
-        path: "bags", 
-        element: <Bags /> 
+        path: "login",
+        element: <Login />,
       },
-      { 
-        path: "footwear", 
-        element: <FootWear /> 
+      {
+        path: "product/:id",
+        element: <SingleProductDetails />,
       },
-      { 
-        path: "groceries", 
-        element: <Groceries /> 
+      {
+        path: "wishlist",
+        element: <Wishlist />,
       },
-      { 
-        path: "beauty", 
-        element: <Beauty /> 
+      {
+        path: "cart",
+        element: <Cart />,
       },
-      { 
-        path: "furnitures", 
-        element: <Furnitures /> 
+      {
+        path: "fashion",
+        element: <Fashion />,
       },
-      { 
-        path: "jewellery", 
-        element: <Jewellery /> 
+      {
+        path: "electronics",
+        element: <Electronics />,
       },
-      { 
-        path: "/help", 
-        element: <ContactUsPart/>
+      {
+        path: "bags",
+        element: <Bags />,
       },
-      { 
-        path: "contact", 
-        element: <ContactUsPart /> 
+      {
+        path: "footwear",
+        element: <FootWear />,
       },
-      { 
-        path: "service", 
-        element: <ServicePage /> 
+      {
+        path: "groceries",
+        element: <Groceries />,
+      },
+      {
+        path: "beauty",
+        element: <Beauty />,
+      },
+      {
+        path: "furnitures",
+        element: <Furnitures />,
+      },
+      {
+        path: "jewellery",
+        element: <Jewellery />,
+      },
+      {
+        path: "help",
+        element: <ContactUsPart />,
+      },
+      {
+        path: "contact",
+        element: <ContactUsPart />,
+      },
+      {
+        path: "service",
+        element: <ServicePage />,
+      },
+      {
+        path: "products",
+        element: <GridProductCategory SidebarFilterComponent={SidebarFilterComponent}/>,
       },
     ],
   },
@@ -111,6 +121,8 @@ function App() {
 
   return (
     <div>
+      <ToastContainer position="top-center" autoClose={2000} />
+      <GlobalLoadingSkeleton />
       {showIntro ? (
         <div className="w-screen h-screen flex items-center justify-center bg-white z-[9999] fixed top-0 left-0">
           <img
@@ -120,7 +132,9 @@ function App() {
           />
         </div>
       ) : (
-        <RouterProvider router={router} />
+        <>
+          <RouterProvider router={router} />
+        </>
       )}
     </div>
   );

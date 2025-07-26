@@ -1,12 +1,12 @@
 import React from "react";
 import GridProductCategory from "./GridProductCategory";
-import FurnituresSidebarFilter from "./FurnituresSidebarFilter";
+import SidebarFilterComponent from "./SidebarFilterComponent";
 
 const Furnitures = () => {
   return (
     <GridProductCategory
       categoryName="furnitures"
-      SidebarFilterComponent={FurnituresSidebarFilter}
+      SidebarFilterComponent={SidebarFilterComponent}
     />
   );
 };
