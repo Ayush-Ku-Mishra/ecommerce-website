@@ -3,14 +3,23 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { HiViewGrid } from "react-icons/hi";
 import { TfiViewListAlt } from "react-icons/tfi";
 import { BsCart4 } from "react-icons/bs";
-import { FaHeart } from "react-icons/fa";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import ContactUsPart from "./ContactUsPart";
 import { products } from "../data/productItems";
 import { categories } from "../data/categories";
 
+import { useSelector, useDispatch } from "react-redux";
+import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice"; // adjust path if needed
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+
 const GridProductCategory = ({ SidebarFilterComponent }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Redux wishlist hooks
+  const wishlist = useSelector((state) => state.wishlist.items);
+  const dispatch = useDispatch();
 
   // Use category from URL search params
   const category = searchParams.get("category");
@@ -46,7 +55,9 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
         : [product.category];
 
       return productCategories.some(
-        (cat) => typeof cat === "string" && cat.toLowerCase() === category.toLowerCase()
+        (cat) =>
+          typeof cat === "string" &&
+          cat.toLowerCase() === category.toLowerCase()
       );
     });
   }, [products, category]);
@@ -111,7 +122,8 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     selectedBrands.forEach((b) => params.append("brand", b));
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
-    if (selectedPrice.max !== Infinity) params.set("maxPrice", selectedPrice.max);
+    if (selectedPrice.max !== Infinity)
+      params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
     setSearchParams(params, { replace: true });
@@ -130,7 +142,10 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 200
+      ) {
         setVisibleCount((prev) => prev + 10);
       }
     };
@@ -147,7 +162,8 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     selectedBrands.forEach((b) => params.append("brand", b));
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
-    if (selectedPrice.max !== Infinity) params.set("maxPrice", selectedPrice.max);
+    if (selectedPrice.max !== Infinity)
+      params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
     setSearchParams(params, { replace: true });
@@ -170,26 +186,39 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     let result = [];
 
     filteredProducts.forEach((product) => {
-      const subcategories = Array.isArray(product.subcategory) ? product.subcategory : [];
+      const subcategories = Array.isArray(product.subcategory)
+        ? product.subcategory
+        : [];
 
       if (
-        (selectedSubs.length === 0 || selectedSubs.some((s) => subcategories.includes(s))) &&
-        (selectedRating.length === 0 || selectedRating.some((r) => product.rating >= r)) &&
-        (selectedDiscount.length === 0 || selectedDiscount.some((d) => parseInt(product.discount) >= d)) &&
+        (selectedSubs.length === 0 ||
+          selectedSubs.some((s) => subcategories.includes(s))) &&
+        (selectedRating.length === 0 ||
+          selectedRating.some((r) => product.rating >= r)) &&
+        (selectedDiscount.length === 0 ||
+          selectedDiscount.some((d) => parseInt(product.discount) >= d)) &&
         (selectedBrands.length === 0 || selectedBrands.includes(product.brand))
       ) {
         const matchingVariants = product.variants.filter((variant) => {
           const colorMatch =
             selectedColors.length === 0 ||
-            selectedColors.some((selColor) => variant.color?.toLowerCase() === selColor.toLowerCase());
+            selectedColors.some(
+              (selColor) =>
+                variant.color?.toLowerCase() === selColor.toLowerCase()
+            );
 
           const price = variant.discountedPrice ?? product.discountedPrice ?? 0;
-          const priceMatch = price >= selectedPrice.min && price <= selectedPrice.max;
+          const priceMatch =
+            price >= selectedPrice.min && price <= selectedPrice.max;
 
           return colorMatch && priceMatch;
         });
 
-        if (selectedColors.length === 0 && matchingVariants.length === 0 && product.defaultVariant) {
+        if (
+          selectedColors.length === 0 &&
+          matchingVariants.length === 0 &&
+          product.defaultVariant
+        ) {
           matchingVariants.push(product.defaultVariant);
         }
 
@@ -202,16 +231,19 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     return result;
   };
 
-  const filteredVariants = useMemo(() => getFilteredVariants(), [
-    filteredProducts,
-    selectedSubs,
-    selectedRating,
-    selectedDiscount,
-    selectedBrands,
-    selectedColors,
-    selectedPrice.min,
-    selectedPrice.max,
-  ]);
+  const filteredVariants = useMemo(
+    () => getFilteredVariants(),
+    [
+      filteredProducts,
+      selectedSubs,
+      selectedRating,
+      selectedDiscount,
+      selectedBrands,
+      selectedColors,
+      selectedPrice.min,
+      selectedPrice.max,
+    ]
+  );
 
   const sortedVariants = useMemo(() => {
     let sorted = [...filteredVariants];
@@ -266,6 +298,11 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     navigate(`/product/${variantId}`);
   };
 
+  // Check if variant is in wishlist
+  const isInWishlist = (variantId) => {
+    return wishlist.some((item) => item.id === variantId);
+  };
+
   return (
     <div>
       <div className="p-4 mb-4">
@@ -303,13 +340,17 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewType("grid")}
-                  className={`p-1 rounded ${viewType === "grid" ? "text-red-500" : "text-gray-600"}`}
+                  className={`p-1 rounded ${
+                    viewType === "grid" ? "text-red-500" : "text-gray-600"
+                  }`}
                 >
                   <HiViewGrid size={20} />
                 </button>
                 <button
                   onClick={() => setViewType("list")}
-                  className={`p-1 rounded ${viewType === "list" ? "text-red-500" : "text-gray-600"}`}
+                  className={`p-1 rounded ${
+                    viewType === "list" ? "text-red-500" : "text-gray-600"
+                  }`}
                 >
                   <TfiViewListAlt size={14} />
                 </button>
@@ -319,7 +360,9 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Sort by:
+                </label>
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
@@ -338,7 +381,11 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
             {viewType === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {shuffledVisibleVariants.map(({ product, variant }) => {
-                  const productImage = variant.images?.[0] || product.images?.[0];
+                  const productImage =
+                    variant.images?.[0] || product.images?.[0];
+
+                  // new: isInWishlist for this card
+                  const inWishlist = isInWishlist(variant.id);
 
                   return (
                     <div key={variant.id} className="w-full shadow-md bg-white">
@@ -351,28 +398,83 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                           alt={`${product.name} - ${variant.color}`}
                           className="w-full h-full object-top object-cover"
                         />
-                        <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
-                          <FaHeart size={18} />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (inWishlist) {
+                              dispatch(removeFromWishlist(variant.id));
+                              toast.info("Removed from wishlist");
+                            } else {
+                              dispatch(
+                                addToWishlist({
+                                  id: variant.id,
+                                  title: product.name,
+                                  brand: product.brand,
+                                  image:
+                                    variant.images?.[0] || product.images?.[0],
+                                  price:
+                                    variant.discountedPrice ??
+                                    product.discountedPrice,
+                                  originalPrice:
+                                    variant.originalPrice ??
+                                    product.originalPrice,
+                                  discount: product.discount,
+                                  description: product.description || "",
+                                })
+                              );
+                              toast.success("Added to wishlist");
+                            }
+                          }}
+                          className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
+                            inWishlist
+                              ? "text-red-500 bg-white"
+                              : "text-gray-600 bg-white hover:text-red-500"
+                          }`}
+                          title={
+                            inWishlist
+                              ? "Remove from Wishlist"
+                              : "Add to Wishlist"
+                          }
+                        >
+                          {inWishlist ? (
+                            <FaHeart size={18} />
+                          ) : (
+                            <FaRegHeart size={18} />
+                          )}
                         </button>
                       </div>
 
                       <div className="p-2 shadow-md">
-                        <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700">
+                        <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
                           {product.brand}
                         </h6>
-                        <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
-                          {product.name} - {variant.color}
+                        <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2 hover:text-red-500">
+                          <Link
+                            to={`/product/${variant.id}`}
+                            className="block w-full"
+                          >
+                            {product.name} - {variant.color}
+                          </Link>
                         </h3>
                         <div className="flex items-center justify-between">
                           <span className="line-through text-gray-500 font-[16px]">
                             ₹
-                            {(variant.originalPrice ?? product.originalPrice).toLocaleString()}
+                            {(
+                              variant.originalPrice ?? product.originalPrice
+                            ).toLocaleString()}
                           </span>
                           <span className="text-red-500 font-[600]">
                             ₹
-                            {(variant.discountedPrice ?? product.discountedPrice).toLocaleString()}
+                            {(
+                              variant.discountedPrice ?? product.discountedPrice
+                            ).toLocaleString()}
                           </span>
                         </div>
+                        {product.discount && (
+                          <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
+                            {product.discount} off
+                          </div>
+                        )}
                         <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
                           <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
                           <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
@@ -387,7 +489,10 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
             ) : (
               <div className="flex flex-col gap-4">
                 {shuffledVisibleVariants.map(({ product, variant }) => {
-                  const productImage = variant.images?.[0] || product.images?.[0];
+                  const productImage =
+                    variant.images?.[0] || product.images?.[0];
+
+                  const inWishlist = isInWishlist(variant.id);
 
                   return (
                     <div
@@ -403,32 +508,89 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                           alt={`${product.name} - ${variant.color}`}
                           className="w-full h-full object-cover p-1 rounded-lg"
                         />
-                        <button className="absolute top-3 right-3 bg-white p-1 rounded-full shadow-md text-gray-600 hover:text-red-500">
-                          <FaHeart size={18} />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (inWishlist) {
+                              dispatch(removeFromWishlist(variant.id));
+                              toast.info("Removed from wishlist");
+                            } else {
+                              dispatch(
+                                addToWishlist({
+                                  id: variant.id,
+                                  title: product.name,
+                                  brand: product.brand,
+                                  image:
+                                    variant.images?.[0] || product.images?.[0],
+                                  price:
+                                    variant.discountedPrice ??
+                                    product.discountedPrice,
+                                  originalPrice:
+                                    variant.originalPrice ??
+                                    product.originalPrice,
+                                  discount: product.discount,
+                                  description: product.description || "",
+                                })
+                              );
+                              toast.success("Added to wishlist");
+                            }
+                          }}
+                          className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
+                            inWishlist
+                              ? "text-red-500 bg-white"
+                              : "text-gray-600 bg-white hover:text-red-500"
+                          }`}
+                          title={
+                            inWishlist
+                              ? "Remove from Wishlist"
+                              : "Add to Wishlist"
+                          }
+                        >
+                          {inWishlist ? (
+                            <FaHeart size={18} />
+                          ) : (
+                            <FaRegHeart size={18} />
+                          )}
                         </button>
                       </div>
 
                       <div className="w-[60%] p-4 flex flex-col justify-between">
                         <div>
-                          <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
+                          <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis hover:text-red-500">
                             {product.brand}
                           </h6>
-                          <h3 className="mt-2">
-                            {product.name} - {variant.color}
+                          <h3 className="mt-2 hover:text-red-500">
+                            <Link
+                              to={`/product/${variant.id}`}
+                              className="block w-full"
+                            >
+                              {product.name} - {variant.color}
+                            </Link>
                           </h3>
                           <p className="text-sm text-gray-600 mt-2">
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                            Lorem Ipsum is simply dummy text of the printing and
+                            typesetting industry.
                           </p>
-                          <div className="flex items-center gap-3 mt-2">
+                          <div className="flex items-center gap-3 mt-2 mb-2">
                             <span className="line-through text-gray-500 text-md">
                               ₹
-                              {(variant.originalPrice ?? product.originalPrice).toLocaleString()}
+                              {(
+                                variant.originalPrice ?? product.originalPrice
+                              ).toLocaleString()}
                             </span>
                             <span className="text-red-500 font-semibold text-md">
                               ₹
-                              {(variant.discountedPrice ?? product.discountedPrice).toLocaleString()}
+                              {(
+                                variant.discountedPrice ??
+                                product.discountedPrice
+                              ).toLocaleString()}
                             </span>
                           </div>
+                          {product.discount && (
+                            <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
+                              {product.discount} off
+                            </div>
+                          )}
                         </div>
                         <button className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2">
                           <BsCart4 />

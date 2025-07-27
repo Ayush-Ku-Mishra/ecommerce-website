@@ -231,13 +231,19 @@ const Navbar = () => {
                   Help
                 </NavLink>
               </div>
-              <Link
+              <NavLink
                 to="/wishlist"
                 title="Wishlist"
-                className="text-lg transition p-2 rounded-full hover:bg-gray-200 duration-200"
+                className={({ isActive }) =>
+                  `text-lg transition p-2 rounded-full duration-200 ${
+                    isActive
+                      ? "text-red-500"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`
+                }
               >
-                <FaRegHeart className="text-lg text-gray-700" />
-              </Link>
+                <FaRegHeart />
+              </NavLink>
               <Link
                 to="/cart"
                 title="Cart"

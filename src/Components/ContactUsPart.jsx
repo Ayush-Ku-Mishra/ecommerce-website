@@ -12,7 +12,7 @@ const ContactUsPart = () => {
   return (
     <>
       {/* Section 1: Features and Contact */}
-      <section className='bg-[#f9f9f9] w-full py-10' id='contactus'>
+      <section className='bg-[#f9f9f9] w-full py-10 border-t-2' id='contactus'>
         {/* Top Features Row */}
         <div className='w-full flex justify-center'>
           <div className='flex items-start justify-center gap-10 flex-wrap max-w-6xl'>

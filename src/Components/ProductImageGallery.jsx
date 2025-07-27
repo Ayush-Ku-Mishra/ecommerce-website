@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BsFillCartFill } from "react-icons/bs";
 import { FaBolt, FaHeart } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
+
 
 const ProductImageGallery = ({
   product,
@@ -13,6 +16,9 @@ const ProductImageGallery = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+  const wishlist = useSelector((state) => state.wishlist.items);
+
   const colorParam = new URLSearchParams(location.search).get("color");
 
   const initialVariant =
@@ -71,10 +77,7 @@ const ProductImageGallery = ({
       return;
     }
 
-    if (
-      hasSizes &&
-      (!selectedSize.inStock || selectedSize.stockQuantity === 0)
-    ) {
+    if (hasSizes && (!selectedSize.inStock || selectedSize.stockQuantity === 0)) {
       toast.error("Selected size is out of stock.");
       return;
     }
@@ -98,7 +101,6 @@ const ProductImageGallery = ({
     console.log("Added to cart:", cartItem);
     toast.success("Item added to cart!");
   };
-  
 
   const handleBuyNow = () => {
     const hasSizes =
@@ -109,10 +111,7 @@ const ProductImageGallery = ({
       return;
     }
 
-    if (
-      hasSizes &&
-      (!selectedSize.inStock || selectedSize.stockQuantity === 0)
-    ) {
+    if (hasSizes && (!selectedSize.inStock || selectedSize.stockQuantity === 0)) {
       toast.error("Selected size is out of stock.");
       return;
     }
@@ -132,8 +131,32 @@ const ProductImageGallery = ({
 
   if (!selectedVariant) return null;
 
+  // Wishlist status and toggle handler
+  const isInWishlist = wishlist.some((item) => item.id === selectedVariant.id);
+  const toggleWishlist = () => {
+    if (!selectedVariant || !product) return;
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(selectedVariant.id));
+      toast.info("Removed from wishlist");
+    } else {
+      dispatch(
+        addToWishlist({
+          id: selectedVariant.id,
+          title: product.name,
+          brand: product.brand,
+          image: selectedVariant.images?.[0] || product.images?.[0],
+          price: selectedVariant.discountedPrice ?? product.discountedPrice,
+          originalPrice: selectedVariant.originalPrice ?? product.originalPrice,
+          discount: selectedVariant.discount ?? product.discount ?? "",
+          description: product.description || "",
+        })
+      );
+      toast.success("Added to wishlist");
+    }
+  };
+
   return (
-    <div className="flex items-start gap-2 ml-5 mt-0">
+    <div className="flex items-start gap-4 ml-5 mt-0">
       {/* Thumbnails */}
       <div className="flex flex-col justify-start gap-2">
         {selectedVariant.images.map((img, index) => (
@@ -141,10 +164,8 @@ const ProductImageGallery = ({
             key={index}
             src={img}
             alt={`Thumb-${index}`}
-            className={`w-16 h-16 rounded-lg cursor-pointer object-cover border-2 ${
-              selectedImage === img
-                ? "border-black"
-                : "border-transparent opacity-50"
+            className={`w-16 h-16 rounded-lg cursor-pointer object-cover ${
+              selectedImage === img ? "border-2 border-black" : "border-2 border-transparent opacity-50"
             }`}
             onClick={() => handleImageClick(img)}
           />
@@ -170,27 +191,29 @@ const ProductImageGallery = ({
             style={isHovering ? zoomStyle : {}}
           />
 
-          <Link
-            to="/wishlist"
-            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-red-500"
+          {/* Wishlist heart button */}
+          <button
+            onClick={toggleWishlist}
+            className={`absolute top-3 right-3 p-2 rounded-full bg-white shadow-md text-gray-600 transition ${
+              isInWishlist ? "text-red-500" : "hover:text-red-500"
+            }`}
+            title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+            aria-label="Toggle wishlist"
           >
             <FaHeart size={22} />
-          </Link>
+          </button>
         </div>
 
-        {/* Cart & Buy buttons */}
+        {/* Cart and Buy buttons */}
         <div className="flex gap-3 mt-4">
           {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
-            disabled={
-              selectedSize &&
-              (!selectedSize.inStock || selectedSize.stockQuantity === 0)
-            }
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px] rounded-md font-semibold text-sm md:text-base active:scale-95 transition shadow-sm ${
+            disabled={selectedSize && !selectedSize.inStock}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px] rounded-md font-semibold text-white transition shadow-sm ${
               selectedSize && selectedSize.stockQuantity === 0
-                ? "bg-gray-400 text-white cursor-not-allowed"
-                : "bg-[#ff9f00] hover:bg-[#e68a00] text-white"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#ff9f00] hover:bg-[#e68a00]"
             }`}
           >
             <BsFillCartFill className="text-lg" />
@@ -200,17 +223,12 @@ const ProductImageGallery = ({
           {/* Buy Now */}
           <button
             onClick={handleBuyNow}
-            disabled={
-              selectedSize &&
-              (!selectedSize.inStock || selectedSize.stockQuantity === 0)
-            }
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px] rounded-md font-semibold text-sm md:text-base active:scale-95 transition shadow-sm 
-    ${
-      selectedSize &&
-      (!selectedSize.inStock || selectedSize.stockQuantity === 0)
-        ? "bg-gray-400 text-white cursor-not-allowed"
-        : "bg-[#fb641b] hover:bg-orange-600 text-white"
-    }`}
+            disabled={selectedSize && !selectedSize.inStock}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px] rounded-md font-semibold text-white transition shadow-sm ${
+              selectedSize && selectedSize.stockQuantity === 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#fb641b] hover:bg-orange-600"
+            }`}
           >
             <FaBolt className="text-base" />
             <span>BUY NOW</span>
