@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice"; // adjust path if needed
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import { addToCart } from "../redux/cartSlice";
 
 const GridProductCategory = ({ SidebarFilterComponent }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -139,6 +140,25 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     sortOption,
     setSearchParams,
   ]);
+
+  const handleAddToCart = (product, variant, e) => {
+    e.stopPropagation(); // Prevent navigation on card click
+    dispatch(
+      addToCart({
+        id: variant.id,
+        title: product.name,
+        brand: product.brand,
+        color: variant.color || product.defaultVariant?.color,
+        size: variant.sizes?.[0]?.size || "default", // you can prompt user to pick size
+        price: variant.discountedPrice ?? product.discountedPrice,
+        originalPrice: variant.originalPrice ?? product.originalPrice,
+        quantity: 1,
+        image: variant.images?.[0] || product.images?.[0],
+        discount: product.discount,
+      })
+    );
+    toast.success("Added to cart!");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -475,7 +495,10 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                             {product.discount} off
                           </div>
                         )}
-                        <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
+                        <button
+                          onClick={(e) => handleAddToCart(product, variant, e)}
+                          className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                        >
                           <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
                           <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
                             ADD TO CART
@@ -592,7 +615,10 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                             </div>
                           )}
                         </div>
-                        <button className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2">
+                        <button
+                          onClick={(e) => handleAddToCart(product, variant, e)}
+                          className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2"
+                        >
                           <BsCart4 />
                           ADD TO CART
                         </button>

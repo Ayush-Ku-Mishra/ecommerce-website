@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BsFillCartFill } from "react-icons/bs";
-import { FaBolt, FaHeart } from "react-icons/fa";
+import { FaBolt, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
-
+// ADD THIS import for addToCart action
+import { addToCart } from "../redux/cartSlice"; // Adjust path if needed
 
 const ProductImageGallery = ({
   product,
@@ -68,6 +69,7 @@ const ProductImageGallery = ({
     });
   };
 
+  // UPDATED: Add to Cart button logic dispatches action to Redux store
   const handleAddToCart = () => {
     const hasSizes =
       Array.isArray(selectedVariant?.sizes) && selectedVariant.sizes.length > 0;
@@ -93,12 +95,21 @@ const ProductImageGallery = ({
     }
 
     const cartItem = {
-      ...selectedVariant,
+      id: selectedVariant.id,
+      title: product.name,
+      brand: product.brand,
+      image: selectedVariant.images?.[0] || product.images?.[0],
+      price: selectedVariant.discountedPrice ?? product.discountedPrice,
+      originalPrice: selectedVariant.originalPrice ?? product.originalPrice,
+      discount: selectedVariant.discount ?? product.discount ?? "",
+      description: product.description || "",
       selectedSize: hasSizes ? selectedSize?.size : null,
       quantity: 1,
     };
 
-    console.log("Added to cart:", cartItem);
+    // Dispatch addToCart action here!
+    dispatch(addToCart(cartItem));
+
     toast.success("Item added to cart!");
   };
 
@@ -165,7 +176,9 @@ const ProductImageGallery = ({
             src={img}
             alt={`Thumb-${index}`}
             className={`w-16 h-16 rounded-lg cursor-pointer object-cover ${
-              selectedImage === img ? "border-2 border-black" : "border-2 border-transparent opacity-50"
+              selectedImage === img
+                ? "border-2 border-black"
+                : "border-2 border-transparent opacity-50"
             }`}
             onClick={() => handleImageClick(img)}
           />
@@ -191,16 +204,20 @@ const ProductImageGallery = ({
             style={isHovering ? zoomStyle : {}}
           />
 
-          {/* Wishlist heart button */}
+          {/* Wishlist heart button (red filled when in wishlist, outline when not) */}
           <button
             onClick={toggleWishlist}
-            className={`absolute top-3 right-3 p-2 rounded-full bg-white shadow-md text-gray-600 transition ${
-              isInWishlist ? "text-red-500" : "hover:text-red-500"
+            className={`absolute top-3 right-3 p-2 rounded-full bg-white shadow-md transition ${
+              isInWishlist ? "text-red-500" : "text-gray-600 hover:text-red-500"
             }`}
             title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             aria-label="Toggle wishlist"
           >
-            <FaHeart size={22} />
+            {isInWishlist ? (
+              <FaHeart size={22} className="text-red-500" />
+            ) : (
+              <FaRegHeart size={22} className="text-gray-400" />
+            )}
           </button>
         </div>
 

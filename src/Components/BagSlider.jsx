@@ -13,6 +13,7 @@ import { BsCart4 } from "react-icons/bs";
 
 import { useSelector, useDispatch } from "react-redux";
 import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
+import { addToCart } from "../redux/cartSlice"; // Import addToCart here
 import { toast } from "react-toastify";
 
 const BagSlider = () => {
@@ -58,6 +59,26 @@ const BagSlider = () => {
       );
       toast.success("Added to wishlist");
     }
+  };
+
+  // Add to cart handler with random size selection
+  const handleAddToCart = (product, variant, e) => {
+    e.stopPropagation(); // Prevent navigation on card click
+    dispatch(
+      addToCart({
+        id: variant.id,
+        title: product.name,
+        brand: product.brand,
+        color: variant.color || product.defaultVariant?.color,
+        size: variant.sizes?.[0]?.size || "default", // you can prompt user to pick size
+        price: variant.discountedPrice ?? product.discountedPrice,
+        originalPrice: variant.originalPrice ?? product.originalPrice,
+        quantity: 1,
+        image: variant.images?.[0] || product.images?.[0],
+        discount: product.discount,
+      })
+    );
+    toast.success("Added to cart!");
   };
 
   return (
@@ -146,7 +167,10 @@ const BagSlider = () => {
                         {product.discount} off
                       </div>
                     )}
-                    <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
+                    <button
+                      onClick={(e) => handleAddToCart(product, variant, e)}
+                      className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                    >
                       <div className="text-[15px] text-red-500 ml-5 group-hover:text-white transition">
                         <BsCart4 />
                       </div>

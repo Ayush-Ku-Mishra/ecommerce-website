@@ -1,6 +1,16 @@
 export const products = [
   {
     id: 1, // unique product group id
+    orderId: "6887b583228db479bba3d66a",
+    paymentId: "PAY987654",
+    userName: "John Doe",
+    phone: "9876543210",
+    address:
+      "APJ Abdul Kalam Hall Of Residency, CET college, Ghatikia, Bhubaneswar, Odisha - 751029 Bhubaneswar hi Odisha India",
+    pincode: "110001",
+    email: "amishra59137@gmail.com",
+    status: "Delivered",
+    userId: "USR001",
     category: ["popular", "fashion", "Men"],
     brand: "KAJARU",
     name: "Men Striped Round Neck Polycotton Brown T-Shirt",

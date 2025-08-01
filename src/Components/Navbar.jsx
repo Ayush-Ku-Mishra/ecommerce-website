@@ -10,6 +10,17 @@ import { IoRocketOutline } from "react-icons/io5";
 import { IoCloseSharp } from "react-icons/io5";
 import { categories } from "../data/categories.js";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import Box from "@mui/material/Box";
+import Avatar from "@mui/material/Avatar";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import ButtonBase from "@mui/material/ButtonBase";
+import { FaRegUser } from "react-icons/fa";
+import { IoPowerSharp } from "react-icons/io5";
+import { SlLocationPin } from "react-icons/sl";
+import { HiOutlineShoppingBag } from "react-icons/hi";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +28,37 @@ const Navbar = () => {
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
   const navigate = useNavigate();
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Extract initials for avatar
+  const getInitials = (fullName) => {
+    const names = fullName.split(" ");
+    if (names.length === 0) return "";
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+  };
+
+  const user = {
+    name: "Ayush Kumar Mishra",
+    email: "amishra59137@gmail.com",
+  };
+
+  const wishlist = useSelector((state) => state.wishlist.items);
+  const count = wishlist.length;
+
+  const cartItems = useSelector((state) => state.cart.items);
+  const totalQuantity = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 0),
+    0
+  );
 
   useEffect(() => {
     if (sidebarOpen) {
@@ -194,7 +236,7 @@ const Navbar = () => {
             </div>
 
             {/* Search */}
-            <div className="w-[45%] flex justify-center items-center bg-[#e5e5e5] rounded-[8px] p-1">
+            <div className="w-[45%] flex justify-center items-center bg-[#e5e5e5] rounded-[8px] p-1 mr-10">
               <div className="relative w-full">
                 <input
                   type="text"
@@ -208,49 +250,212 @@ const Navbar = () => {
             </div>
 
             {/* Actions */}
-            <div className="w-[30%] flex items-center justify-end gap-5 text-gray-700 text-sm font-medium pr-1">
+            <div className="w-[30%] flex items-center justify-end gap-5 text-gray-700 font-medium pr-1">
               <div className="flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="hover:text-pink-500 transition text-[16px] font-[500] text-gray-600"
+                {/* User logged in */}
+                {user ? (
+                  <>
+                    <Tooltip title="Account settings">
+                      <ButtonBase
+                        onClick={handleClick}
+                        aria-controls={open ? "account-menu" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? "true" : undefined}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          p: 1,
+                          borderRadius: 1,
+                          cursor: "pointer",
+                          "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+                        }}
+                      >
+                        <Avatar
+                          sx={{ width: 36, height: 36, fontSize: "1rem" }}
+                        >
+                          {getInitials(user.name)}
+                        </Avatar>
+                        <Box
+                          sx={{
+                            minWidth: 140,
+                            width: 167,
+                            overflow: "hidden",
+                            whiteSpace: "nowrap",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span
+                              className="block font-semibold text-gray-700 truncate text-[13px]"
+                              title={user.name}
+                            >
+                              {user.name}
+                            </span>
+                            <span
+                              className="block text-gray-500 truncate text-[13px]"
+                              title={user.email}
+                            >
+                              {user.email}
+                            </span>
+                          </div>
+                        </Box>
+                      </ButtonBase>
+                    </Tooltip>
+                    <span>|</span>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="hover:text-pink-500 transition text-[16px] font-[500] text-gray-600"
+                    >
+                      Login
+                    </Link>
+                    <span>|</span>
+                  </>
+                )}
+
+                {/* Account dropdown menu */}
+                <Menu
+                  anchorEl={anchorEl}
+                  id="account-menu"
+                  open={open}
+                  onClose={handleClose}
+                  onClick={handleClose}
+                  PaperProps={{
+                    elevation: 0,
+                    sx: {
+                      overflow: "visible",
+                      filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                      mt: 1.5,
+                      minWidth: 180,
+                      "& .MuiAvatar-root": {
+                        width: 32,
+                        height: 32,
+                        ml: -0.5,
+                        mr: 1,
+                      },
+                      "&:before": {
+                        content: '""',
+                        display: "block",
+                        position: "absolute",
+                        top: 0,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        bgcolor: "background.paper",
+                        transform: "translateY(-50%) rotate(45deg)",
+                        zIndex: 0,
+                      },
+                    },
+                  }}
+                  transformOrigin={{ horizontal: "right", vertical: "top" }}
+                  anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                 >
-                  Login
-                </Link>
-                <span>|</span>
+                  <MenuItem
+                    onClick={handleClose}
+                    className="flex items-center gap-2 text-[15px]"
+                  >
+                    <Link to="/account/profile" className="flex items-center gap-2">
+                      <FaRegUser /> My Account
+                    </Link>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleClose}
+                    className="flex items-center gap-2 text-[15px]"
+                  >
+                    <Link
+                      to="/account/address"
+                      className="flex items-center gap-2"
+                    >
+                      <SlLocationPin /> Saved Address
+                    </Link>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleClose}
+                    className="flex items-center gap-2 text-[15px]"
+                  >
+                    <Link to="/wishlist" className="flex items-center gap-2">
+                      <FaRegHeart /> My Wishlist
+                    </Link>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleClose}
+                    className="flex items-center gap-2 text-[15px]"
+                  >
+                    <Link to="/account/orders" className="flex items-center gap-2">
+                      <HiOutlineShoppingBag /> My Orders
+                    </Link>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      // Add your logout logic here, e.g., clearing auth tokens
+                    }}
+                    className="flex items-center gap-2 text-[15px]"
+                  >
+                    <IoPowerSharp /> Logout
+                  </MenuItem>
+                </Menu>
+
+                {/* Help always */}
                 <NavLink
                   to="/help"
                   className={({ isActive }) =>
-                    `transition text-[16px] font-[500] 
-                   ${
-                     isActive
-                       ? "text-pink-500"
-                       : "text-gray-600 hover:text-pink-500"
-                   }`
+                    `transition text-[16px] font-[500] ${
+                      isActive
+                        ? "text-pink-500"
+                        : "text-gray-600 hover:text-pink-500"
+                    }`
                   }
                 >
                   Help
                 </NavLink>
               </div>
+
+              {/* Wishlist Icon */}
               <NavLink
                 to="/wishlist"
                 title="Wishlist"
                 className={({ isActive }) =>
-                  `text-lg transition p-2 rounded-full duration-200 ${
+                  `relative text-lg transition p-2 rounded-full duration-200 ${
                     isActive
                       ? "text-red-500"
                       : "text-gray-700 hover:bg-gray-200"
                   }`
                 }
               >
-                <FaRegHeart />
+                <FaRegHeart size={22} />
+                {count > 0 && (
+                  <span
+                    className="absolute -top-[0.5px] -right-[0.5px] bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex justify-center items-center font-semibold"
+                    aria-label={`${count} items in wishlist`}
+                  >
+                    {count}
+                  </span>
+                )}
               </NavLink>
-              <Link
+
+              {/* Cart Icon */}
+              <NavLink
                 to="/cart"
                 title="Cart"
-                className="text-lg transition p-2 rounded-full hover:bg-gray-200 duration-200"
+                className={({ isActive }) =>
+                  `relative text-lg transition p-2 rounded-full duration-200 ${
+                    isActive
+                      ? "text-red-500"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`
+                }
               >
-                <FiShoppingCart className="text-lg text-gray-700" />
-              </Link>
+                <FiShoppingCart className="text-lg" size={22} />
+                {totalQuantity > 0 && (
+                  <span className="absolute -top-[0.5px] -right-[0.5px] bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center font-bold select-none pointer-events-none">
+                    {totalQuantity}
+                  </span>
+                )}
+              </NavLink>
             </div>
           </div>
         </header>

@@ -12,6 +12,7 @@ import { products } from "../data/productItems.js";
 
 import { useSelector, useDispatch } from "react-redux";
 import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
+import { addToCart } from "../redux/cartSlice";  // <-- Import addToCart here
 import { toast } from "react-toastify";
 
 const ProductSlider = () => {
@@ -58,6 +59,26 @@ const ProductSlider = () => {
       toast.success("Added to wishlist");
     }
   };
+
+  // Add to cart handler for first variant of product
+  const handleAddToCart = (product, variant, e) => {
+      e.stopPropagation(); // Prevent navigation on card click
+      dispatch(
+        addToCart({
+          id: variant.id,
+          title: product.name,
+          brand: product.brand,
+          color: variant.color || product.defaultVariant?.color,
+          size: variant.sizes?.[0]?.size || "default", // you can prompt user to pick size
+          price: variant.discountedPrice ?? product.discountedPrice,
+          originalPrice: variant.originalPrice ?? product.originalPrice,
+          quantity: 1,
+          image: variant.images?.[0] || product.images?.[0],
+          discount: product.discount,
+        })
+      );
+      toast.success("Added to cart!");
+    };
 
   if (!popularProducts || popularProducts.length === 0) {
     return null;
@@ -110,10 +131,18 @@ const ProductSlider = () => {
                               ? "text-red-500 bg-white"
                               : "text-gray-600 bg-white hover:text-red-500"
                           }`}
-                          title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                          title={
+                            inWishlist
+                              ? "Remove from Wishlist"
+                              : "Add to Wishlist"
+                          }
                           aria-label="Toggle wishlist"
                         >
-                          {inWishlist ? <FaHeart size={18} /> : <FaRegHeart size={18} />}
+                          {inWishlist ? (
+                            <FaHeart size={18} />
+                          ) : (
+                            <FaRegHeart size={18} />
+                          )}
                         </button>
                       </div>
                     </Link>
@@ -121,13 +150,19 @@ const ProductSlider = () => {
 
                   <div className="p-2 shadow-md">
                     <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
-                      <Link to={`/product/${product.id}`} className="hover:text-pink-600 transition">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="hover:text-pink-600 transition"
+                      >
                         {product.brand}
                       </Link>
                     </h6>
 
                     <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[20px] line-clamp-1">
-                      <Link to={`/product/${product.id}`} className="hover:text-pink-600 transition">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="hover:text-pink-600 transition"
+                      >
                         {product.name}
                       </Link>
                     </h3>
@@ -154,7 +189,11 @@ const ProductSlider = () => {
                       </div>
                     )}
 
-                    <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
+                    {/* Add To Cart Button with handler */}
+                    <button
+                      onClick={(e) => handleAddToCart(product, variant, e)}
+                      className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                    >
                       <div className="text-[15px] text-red-500 ml-5 group-hover:text-white transition">
                         <BsCart4 />
                       </div>

@@ -1,5 +1,5 @@
 // src/redux/wishlistSlice.js
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 // Helper to load wishlist items from localStorage
 const loadWishlistFromStorage = () => {
@@ -18,17 +18,21 @@ const initialState = {
 };
 
 const wishlistSlice = createSlice({
-  name: 'wishlist',
+  name: "wishlist",
   initialState,
   reducers: {
     addToWishlist: (state, action) => {
-      const isAlreadyPresent = state.items.find(item => item.id === action.payload.id);
+      const isAlreadyPresent = state.items.find(
+        (item) => item.id === action.payload.id
+      );
       if (!isAlreadyPresent) {
-        state.items.push(action.payload);
+        // Add new item at the beginning of the wishlist array
+        state.items.unshift(action.payload);
       }
     },
+    
     removeFromWishlist: (state, action) => {
-      state.items = state.items.filter(item => item.id !== action.payload);
+      state.items = state.items.filter((item) => item.id !== action.payload);
     },
   },
 });

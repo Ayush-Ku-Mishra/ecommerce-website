@@ -26,6 +26,11 @@ import "react-toastify/dist/ReactToastify.css";
 import GlobalLoadingSkeleton from "./Components/GlobalLoadingSkeleton";
 import GridProductCategory from "./Components/GridProductCategory";
 import SidebarFilterComponent from "./Components/SidebarFilterComponent";
+import MyOrders from "./Components/MyOrders";
+import OrderDetailsPage from "./Components/OrderDetailsPage";
+import SavedAddress from "./Components/SavedAddress";
+import CheckoutPage from "./Components/CheckoutPage";
+import MyProfile from "./Components/MyProfile";
 
 
 const router = createBrowserRouter([
@@ -100,6 +105,26 @@ const router = createBrowserRouter([
       {
         path: "products",
         element: <GridProductCategory SidebarFilterComponent={SidebarFilterComponent}/>,
+      },
+      {
+        path: "account/orders",
+        element: <MyOrders/>,
+      },
+      {
+        path: "account/orders/:orderId",
+        element: <OrderDetailsPage/>
+      },
+      {
+        path: "account/address",
+        element: <SavedAddress/>
+      },
+      {
+        path: "checkout",
+        element: <CheckoutPage/>
+      },
+      {
+        path: "account/profile",
+        element: <MyProfile/>
       },
     ],
   },

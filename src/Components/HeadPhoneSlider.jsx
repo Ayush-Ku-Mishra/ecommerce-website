@@ -13,6 +13,7 @@ import { BsCart4 } from "react-icons/bs";
 
 import { useDispatch, useSelector } from "react-redux";
 import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
+import { addToCart } from "../redux/cartSlice"; // Import addToCart here
 import { toast } from "react-toastify";
 
 const HeadPhoneSlider = () => {
@@ -62,6 +63,26 @@ const HeadPhoneSlider = () => {
     }
   };
 
+  // Add to cart handler with random size selection
+  const handleAddToCart = (product, variant, e) => {
+    e.stopPropagation(); // Prevent navigation on card click
+    dispatch(
+      addToCart({
+        id: variant.id,
+        title: product.name,
+        brand: product.brand,
+        color: variant.color || product.defaultVariant?.color,
+        size: variant.sizes?.[0]?.size || "default", // you can prompt user to pick size
+        price: variant.discountedPrice ?? product.discountedPrice,
+        originalPrice: variant.originalPrice ?? product.originalPrice,
+        quantity: 1,
+        image: variant.images?.[0] || product.images?.[0],
+        discount: product.discount,
+      })
+    );
+    toast.success("Added to cart!");
+  };
+
   return (
     <div>
       <div>
@@ -101,13 +122,11 @@ const HeadPhoneSlider = () => {
                         <VscGitCompare className="text-[22px] !text-black group-hover:text-white transition" />
                       </Button>
 
-                      {/* Wishlist Button (only thing changed) */}
+                      {/* Wishlist Button (unchanged) */}
                       <Button
                         onClick={(e) => toggleWishlist(product, e)}
                         className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white hover:!bg-red-500 hover:text-white transition group ${
-                          inWishlist
-                            ? "text-red-500"
-                            : "text-gray-600"
+                          inWishlist ? "text-red-500" : "text-gray-600"
                         }`}
                         title={
                           inWishlist
@@ -159,7 +178,10 @@ const HeadPhoneSlider = () => {
                       </div>
                     )}
 
-                    <button className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition">
+                    <button
+                      onClick={(e) => handleAddToCart(product, variant, e)}
+                      className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                    >
                       <div className="text-[15px] text-red-500 ml-5 group-hover:text-white transition">
                         <BsCart4 />
                       </div>

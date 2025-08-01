@@ -1,38 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { FaRegUser, FaRegHeart, FaCloudUploadAlt } from "react-icons/fa";
-import { IoLocationOutline, IoPowerSharp } from "react-icons/io5";
+import { IoPowerSharp } from "react-icons/io5";
+import { SlLocationPin } from "react-icons/sl";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 
 const menuItems = [
   {
     text: "My Profile",
-    icon: <FaRegUser className="text-[17px]" />,
+    icon: <FaRegUser />,
     to: "/account/profile",
   },
   {
     text: "Saved Address",
-    icon: <IoLocationOutline className="text-[20px]" />,
+    icon: <SlLocationPin />,
     to: "/account/address",
   },
   {
-    text: "My List",
-    icon: <FaRegHeart className="text-[17px]" />,
+    text: "My Wishlist",
+    icon: <FaRegHeart />,
     to: "/wishlist",
   },
   {
     text: "My Orders",
-    icon: <HiOutlineShoppingBag className="text-[19px]" />,
+    icon: <HiOutlineShoppingBag />,
     to: "/account/orders",
   },
   {
     text: "Logout",
-    icon: <IoPowerSharp className="text-[20px]" />,
+    icon: <IoPowerSharp />,
     to: "/logout",
   },
 ];
 
 const AccountDetailsSection = () => {
+  const user = {
+    name: "Ayush Kumar Mishra",
+    email: "amishra59137@gmail.com",
+  };
+
   const defaultAvatar =
     "https://cdn-icons-png.flaticon.com/128/3135/3135715.png";
 
@@ -63,10 +69,12 @@ const AccountDetailsSection = () => {
     }
   };
 
+  const location = useLocation(); // Get current location
+
   return (
-    <div className="flex flex-col items-center mt-5 w-[260px] mx-auto rounded-xl border-2">
+    <div className="flex flex-col items-center mt-5 w-[240px] mx-auto rounded-xl border-2">
       {/* Avatar */}
-      <div className="bg-white w-full shadow p-5 flex items-center justify-center relative cursor-pointer overflow-hidden">
+      <div className="bg-white w-full shadow p-5 flex flex-col items-center justify-center relative cursor-pointer overflow-hidden">
         <label
           htmlFor="avatar-upload"
           className="relative w-28 h-28 block rounded-full overflow-hidden"
@@ -88,24 +96,50 @@ const AccountDetailsSection = () => {
           className="hidden"
           onChange={handleImageChange}
         />
+
+        <div className="flex flex-col items-start mt-3 px-5 w-full">
+          <span
+            className="block font-semibold text-gray-700 truncate text-[17px] leading-tight"
+            style={{ maxWidth: "100%", fontSize: "clamp(12px, 5vw, 17px)" }}
+            title={user.name}
+          >
+            {user.name}
+          </span>
+          <span
+            className="block text-gray-500 truncate text-[13px]"
+            style={{ maxWidth: "100%", fontSize: "clamp(10px, 3vw, 13px)" }}
+            title={user.email}
+          >
+            {user.email}
+          </span>
+        </div>
       </div>
 
       {/* Menu */}
       <div className="w-full bg-gray-100 shadow px-4 py-5 flex flex-col gap-1">
-        {menuItems.map((item, idx) => (
-          <Link
-            to={item.to}
-            key={item.text}
-            className={`
-              flex items-center gap-3 p-2 rounded-lg hover:bg-white
-              transition text-gray-800
-              ${idx === 2 ? "bg-white !text-pink-600" : ""}
-            `}
-          >
-            {item.icon}
-            <span className="font-medium text-[15px]">{item.text}</span>
-          </Link>
-        ))}
+        {menuItems.map((item) => {
+          // Dynamically check if current path matches or starts with this menu item's 'to'
+          const isActive = location.pathname.startsWith(item.to);
+
+          return (
+            <Link
+              to={item.to}
+              key={item.text}
+              className={`
+                flex items-center gap-2 p-2 rounded-lg hover:bg-white
+                transition
+                ${
+                  isActive
+                    ? "bg-white !text-pink-600 font-semibold"
+                    : "text-gray-800"
+                }
+              `}
+            >
+              {item.icon}
+              <span className="font-medium text-[15px]">{item.text}</span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
