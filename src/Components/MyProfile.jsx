@@ -36,7 +36,7 @@ const MyProfile = () => {
 
   return (
     <div className="flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
-      <div className="w-[20%]">
+      <div className="flex-shrink-0 min-w-[20%] w-auto">
         <AccountDetailsSection />
       </div>
       <div className="w-[80%] p-6 bg-white rounded-xl shadow border border-gray-200">

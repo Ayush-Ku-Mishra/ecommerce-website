@@ -12,6 +12,7 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from "../redux/addressSlice"; // update import as per your structure
+import ContactUsPart from "./ContactUsPart";
 
 const emptyAddress = {
   name: "",
@@ -139,12 +140,13 @@ const SavedAddress = () => {
   const handleDefault = (id) => dispatch(setDefaultAddress(id));
 
   return (
-    <div className="flex gap-10 ml-10 mt-2 mb-8 max-w-[1000px]">
-      <div className="w-[20%]">
+    <div>
+      <div className="flex gap-10 ml-10 mt-2 mb-8 max-w-[1190px]">
+      <div className="flex-shrink-0 min-w-[20%] w-auto sticky top-28 self-start">
         <AccountDetailsSection />
       </div>
 
-      <div className="w-[80%] border-2 ml-10 shadow mt-5 rounded-xl bg-white p-5">
+      <div className="w-[80%] border-2 shadow mt-5 rounded-xl bg-white p-5">
         <p className="text-[20px] font-semibold">Address</p>
         {/* Add Address Button */}
         <div
@@ -520,6 +522,8 @@ const SavedAddress = () => {
           </div>
         )}
       </div>
+    </div>
+    <ContactUsPart/>
     </div>
   );
 };

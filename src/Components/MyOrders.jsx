@@ -151,7 +151,7 @@ const MyOrders = () => {
     <div>
         <section className="page-layout flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
       {/* Sidebar with Account Details */}
-      <div className="sidebar w-[20%] sticky top-[10px] self-start">
+      <div className="sidebar flex-shrink-0 min-w-[20%] w-auto sticky top-28 self-start">
         <AccountDetailsSection />
       </div>
 

@@ -72,9 +72,9 @@ const AccountDetailsSection = () => {
   const location = useLocation(); // Get current location
 
   return (
-    <div className="flex flex-col items-center mt-5 w-[240px] mx-auto rounded-xl border-2">
+    <div className="flex flex-col items-center mt-5 mx-auto rounded-xl border-2">
       {/* Avatar */}
-      <div className="bg-white w-full shadow p-5 flex flex-col items-center justify-center relative cursor-pointer overflow-hidden">
+      <div className="bg-white w-full shadow py-5 flex flex-col items-center justify-center relative cursor-pointer overflow-hidden">
         <label
           htmlFor="avatar-upload"
           className="relative w-28 h-28 block rounded-full overflow-hidden"
@@ -97,17 +97,17 @@ const AccountDetailsSection = () => {
           onChange={handleImageChange}
         />
 
-        <div className="flex flex-col items-start mt-3 px-5 w-full">
+        <div className="flex flex-col items-start mt-3 px-5 w-auto min-w-0">
           <span
-            className="block font-semibold text-gray-700 truncate text-[17px] leading-tight"
-            style={{ maxWidth: "100%", fontSize: "clamp(12px, 5vw, 17px)" }}
+            className="block font-semibold text-gray-700 leading-tight whitespace-nowrap"
+            style={{ fontSize: "clamp(12px, 5vw, 17px)" }}
             title={user.name}
           >
             {user.name}
           </span>
           <span
-            className="block text-gray-500 truncate text-[13px]"
-            style={{ maxWidth: "100%", fontSize: "clamp(10px, 3vw, 13px)" }}
+            className="block text-gray-500 whitespace-nowrap"
+            style={{ fontSize: "clamp(10px, 3vw, 13px)" }}
             title={user.email}
           >
             {user.email}

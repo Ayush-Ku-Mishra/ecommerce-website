@@ -25,12 +25,12 @@ const Wishlist = () => {
     <div>
       <div className="flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
         {/* Sidebar with Account Details */}
-        <div className="w-[20%]">
+        <div className="min-w-[20%] w-auto sticky top-28 self-start">
           <AccountDetailsSection />
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex w-[80%] flex-col border-2 shadow mt-5 rounded-xl bg-white p-8">
+        <div className="flex-1 flex w-[80%] flex-col border-2 shadow mt-5 rounded-xl bg-white p-6">
           <div className="mb-6">
             <p className="text-2xl font-semibold mb-1">My Wishlist</p>
             <p className="text-gray-700">

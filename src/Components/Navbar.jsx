@@ -215,15 +215,15 @@ const Navbar = () => {
 
       {/* Sticky Wrapper */}
       <div
-        className={`w-full z-[50] ${
+        className={`w-full z-[60] ${
           isSticky
             ? "fixed top-0 left-0 shadow-md bg-white"
             : "relative bg-white"
         } transition-all duration-300 ease-in-out`}
       >
         {/* Top Navbar */}
-        <header className="w-full border-b">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-6 justify-between">
+        <header className="w-full border-b ">
+          <div className="max-w-7xl mx-auto px-2 py-2 flex items-center gap-6 justify-between">
             {/* Logo */}
             <div className="w-[25%] flex items-center gap-2 pl-5">
               <Link to="/">
@@ -272,7 +272,12 @@ const Navbar = () => {
                         }}
                       >
                         <Avatar
-                          sx={{ width: 36, height: 36, fontSize: "1rem" }}
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            fontSize: "1rem",
+                            bgcolor: "#455a64",
+                          }}
                         >
                           {getInitials(user.name)}
                         </Avatar>
@@ -357,7 +362,10 @@ const Navbar = () => {
                     onClick={handleClose}
                     className="flex items-center gap-2 text-[15px]"
                   >
-                    <Link to="/account/profile" className="flex items-center gap-2">
+                    <Link
+                      to="/account/profile"
+                      className="flex items-center gap-2"
+                    >
                       <FaRegUser /> My Account
                     </Link>
                   </MenuItem>
@@ -384,7 +392,10 @@ const Navbar = () => {
                     onClick={handleClose}
                     className="flex items-center gap-2 text-[15px]"
                   >
-                    <Link to="/account/orders" className="flex items-center gap-2">
+                    <Link
+                      to="/account/orders"
+                      className="flex items-center gap-2"
+                    >
                       <HiOutlineShoppingBag /> My Orders
                     </Link>
                   </MenuItem>

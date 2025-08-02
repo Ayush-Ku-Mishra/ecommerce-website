@@ -9,6 +9,7 @@ import {
   increaseQuantity,
   decreaseQuantity,
 } from "../redux/cartSlice"; // Adjust path accordingly
+import ContactUsPart from "./ContactUsPart";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart.items);
@@ -46,7 +47,8 @@ const Cart = () => {
   const total = subtotal - totalDiscount;
 
   return (
-    <div className="flex gap-6 ml-16 mt-4 max-w-[1230px] mx-auto mb-8">
+    <div>
+      <div className="flex gap-6 ml-16 mt-4 max-w-[1230px] mx-auto mb-8">
       <div className="flex flex-col md:flex-row gap-8 w-full">
         {/* Left: Cart items or empty state */}
         <div
@@ -211,14 +213,7 @@ const Cart = () => {
 
         {/* Right: Cart Totals Card */}
         {cart.length > 0 && (
-          <div
-            className="max-w-[260px] ml-16 fixed bg-white rounded-lg shadow-md p-6 border border-gray-200 md:w-1/4"
-            style={{
-              maxWidth: 350,
-              left: "calc((100vw - 1150px)/2 + 767px + 0px)",
-              zIndex: 10,
-            }}
-          >
+          <div className="max-w-[350px] h-[390px] sticky top-32 self-start bg-white rounded-lg shadow-md p-6 border border-gray-200 md:w-1/4">
             <h2 className="text-lg font-semibold mb-4">Cart Totals</h2>
             <hr className="mb-4" />
             <div className="flex justify-between items-center mb-4">
@@ -276,6 +271,8 @@ const Cart = () => {
           </div>
         )}
       </div>
+    </div>
+    <ContactUsPart/>
     </div>
   );
 };

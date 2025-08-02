@@ -8,7 +8,7 @@ const steps = ['Address', 'Order Summary', 'Payment'];
 
 export default function HorizontalLinearAlternativeLabelStepper({ activeStep }) {
   return (
-    <Box sx={{ width: '100%', mb: 2 }}>
+    <Box sx={{ width: '100%', mb: 2, pt: 1 }}>
       <Stepper
         activeStep={activeStep}
         alternativeLabel
