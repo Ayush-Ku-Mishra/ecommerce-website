@@ -60,13 +60,14 @@ const Login = () => {
         : `+91${data.phone}`;
       try {
         const response = await axios.post(
-          "http://localhost:8000/api/v1/user/register",
+          `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/register`,
           data,
           {
             withCredentials: true,
             headers: { "Content-Type": "application/json" },
           }
         );
+
         toast.success(response.data.message);
         setRegisterData({
           email: data.email,
@@ -83,7 +84,7 @@ const Login = () => {
     if (currentView === "login") {
       try {
         const response = await axios.post(
-          "http://localhost:8000/api/v1/user/login",
+          `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/login`,
           { email: data.email, password: data.password },
           {
             withCredentials: true,
@@ -92,6 +93,7 @@ const Login = () => {
             },
           }
         );
+
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
@@ -103,7 +105,7 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = "http://localhost:8000/auth/google/callback";
+    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/google/callback`;
   };
 
   const toggleLoginRegister = () => {

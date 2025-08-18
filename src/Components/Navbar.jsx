@@ -47,9 +47,12 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:8000/api/v1/user/logout", {
-        withCredentials: true,
-      });
+      await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/logout`,
+        {
+          withCredentials: true,
+        }
+      );
       setIsAuthenticated(false);
       setUser(null);
       localStorage.removeItem("user-info"); // Clear local storage on logout
