@@ -24,7 +24,7 @@ const AppWrapper = () => {
     const checkAuth = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/me`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
           { withCredentials: true }
         );
         setUser(res.data.user);
