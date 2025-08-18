@@ -31,7 +31,8 @@ import OrderDetailsPage from "./Components/OrderDetailsPage";
 import SavedAddress from "./Components/SavedAddress";
 import CheckoutPage from "./Components/CheckoutPage";
 import MyProfile from "./Components/MyProfile";
-
+import ResetPassword from "./pages/ResetPassword";
+import NotFoundPage from "./Components/NotFoundPage";
 
 const router = createBrowserRouter([
   {
@@ -42,10 +43,7 @@ const router = createBrowserRouter([
         index: true,
         element: <Home />,
       },
-      {
-        path: "login",
-        element: <Login />,
-      },
+
       {
         path: "product/:id",
         element: <SingleProductDetails />,
@@ -104,29 +102,45 @@ const router = createBrowserRouter([
       },
       {
         path: "products",
-        element: <GridProductCategory SidebarFilterComponent={SidebarFilterComponent}/>,
+        element: (
+          <GridProductCategory
+            SidebarFilterComponent={SidebarFilterComponent}
+          />
+        ),
       },
       {
         path: "account/orders",
-        element: <MyOrders/>,
+        element: <MyOrders />,
       },
       {
         path: "account/orders/:orderId",
-        element: <OrderDetailsPage/>
+        element: <OrderDetailsPage />,
       },
       {
         path: "account/address",
-        element: <SavedAddress/>
+        element: <SavedAddress />,
       },
       {
         path: "checkout",
-        element: <CheckoutPage/>
+        element: <CheckoutPage />,
       },
       {
         path: "account/profile",
-        element: <MyProfile/>
+        element: <MyProfile />,
       },
     ],
+  },
+  {
+    path: "login",
+    element: <Login />,
+  },
+  {
+    path: "password/reset/:token",
+    element: <ResetPassword/>,
+  },
+  {
+    path: "*",
+    element: <NotFoundPage/>,
   },
 ]);
 

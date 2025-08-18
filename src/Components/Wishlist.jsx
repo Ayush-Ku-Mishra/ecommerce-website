@@ -1,49 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
+import { Context } from "../main"; // Adjust path
 import AccountDetailsSection from "./AccountDetailsSection";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { removeFromWishlist } from "../redux/wishlistSlice"; // path as per your structure
-import { MdDeleteOutline } from "react-icons/md"; // for trash icon
+import { removeFromWishlist } from "../redux/wishlistSlice";
+import { MdDeleteOutline } from "react-icons/md";
 import ContactUsPart from "./ContactUsPart";
 import { toast } from "react-toastify";
 
 const Wishlist = () => {
+  const { isAuthenticated } = useContext(Context);
   const wishlist = useSelector((state) => state.wishlist.items);
   const dispatch = useDispatch();
-
-  // Local state to manage number of items displayed
   const [visibleCount, setVisibleCount] = useState(10);
-
-  const loadMore = () => {
-    setVisibleCount((prev) => prev + 10);
-  };
-
-  // Slice the wishlist according to visibleCount
+  const loadMore = () => setVisibleCount((prev) => prev + 10);
   const visibleItems = wishlist.slice(0, visibleCount);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // Replace Wishlist with login in history stack for correct back behavior
+      navigate("/login", { state: { from: location }, replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  if (!isAuthenticated) return null;
 
   return (
     <div>
       <div className="flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
-        {/* Sidebar with Account Details */}
         <div className="min-w-[20%] w-auto sticky top-28 self-start">
           <AccountDetailsSection />
         </div>
-
-        {/* Main Content */}
         <div className="flex-1 flex w-[80%] flex-col border-2 shadow mt-5 rounded-xl bg-white p-6">
           <div className="mb-6">
             <p className="text-2xl font-semibold mb-1">My Wishlist</p>
             <p className="text-gray-700">
               There are{" "}
-              <span className="text-red-500 font-semibold">
-                {wishlist.length}
-              </span>{" "}
+              <span className="text-red-500 font-semibold">{wishlist.length}</span>{" "}
               products in your list
             </p>
           </div>
-
           {wishlist.length === 0 ? (
-            // Empty State
             <div className="flex flex-col items-center justify-center flex-grow border-2 border-dashed border-gray-300 rounded-xl p-10 bg-gray-50">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
@@ -62,7 +62,6 @@ const Wishlist = () => {
             </div>
           ) : (
             <>
-              {/* Wishlist items */}
               <ul className="divide-y border rounded-xl overflow-hidden">
                 {visibleItems.map((product) => (
                   <li
@@ -81,12 +80,10 @@ const Wishlist = () => {
                           loading="lazy"
                         />
                       </div>
-
                       <div className="flex-1 px-2 min-w-0">
                         <h3 className="text-[14px] leading-[22px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] group-hover:text-blue-500 truncate whitespace-nowrap overflow-hidden w-[550px] min-h-[40px]">
                           {product.title}
                         </h3>
-
                         <div className="flex gap-2 items-center text-gray-600 mt-1">
                           {product.description && (
                             <span className="text-xs text-gray-500">
@@ -94,7 +91,6 @@ const Wishlist = () => {
                             </span>
                           )}
                         </div>
-
                         <div>
                           <span className="text-red-500 font-semibold text-xl">
                             ₹{(product.price || 0).toLocaleString()}
@@ -112,7 +108,6 @@ const Wishlist = () => {
                         </div>
                       </div>
                     </Link>
-
                     <button
                       title="Remove"
                       onClick={() => {
@@ -126,8 +121,6 @@ const Wishlist = () => {
                   </li>
                 ))}
               </ul>
-
-              {/* Load More button */}
               {visibleCount < wishlist.length && (
                 <div className="flex justify-center mt-6">
                   <button
@@ -142,7 +135,6 @@ const Wishlist = () => {
           )}
         </div>
       </div>
-
       <ContactUsPart />
     </div>
   );

@@ -52,16 +52,29 @@ const SidebarFilterComponent = ({
   };
 
   const handleInputChange = (e, index) => {
-    const value = Number(e.target.value);
-    if (!isNaN(value)) {
+    const inputValue = e.target.value;
+    
+    // Allow empty string for better UX
+    if (inputValue === '') {
+      const newRange = [...priceRange];
+      newRange[index] = '';
+      setPriceRange(newRange);
+      return;
+    }
+    
+    const value = Number(inputValue);
+    if (!isNaN(value) && value >= 0) {
       const newRange = [...priceRange];
       newRange[index] = value;
       setPriceRange(newRange);
-      onPriceChange &&
-        onPriceChange({
-          min: index === 0 ? value : newRange[0],
-          max: index === 1 ? value : newRange[1],
+      
+      // Only call parent onChange if both values are valid numbers
+      if (typeof newRange[0] === 'number' && typeof newRange[1] === 'number') {
+        onPriceChange && onPriceChange({ 
+          min: newRange[0], 
+          max: newRange[1] 
         });
+      }
     }
   };
 

@@ -162,16 +162,31 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
 
   useEffect(() => {
     const handleScroll = () => {
+      // Assume products is your array of product data
+      const maxProducts = products.length;
       if (
         window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 200
+          document.body.offsetHeight - 200 &&
+        visibleCount < maxProducts // Only load more if not all shown
       ) {
-        setVisibleCount((prev) => prev + 10);
+        setVisibleCount((prev) => {
+          // Calculate new count, capped at maxProducts
+          const newCount = Math.min(prev + 10, maxProducts);
+          return newCount;
+        });
       }
     };
+
     window.addEventListener("scroll", handleScroll);
+
+    // Clean up: remove listener if all products are shown
+    if (visibleCount >= products.length) {
+      window.removeEventListener("scroll", handleScroll);
+    }
+
+    // Cleanup on unmount
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [visibleCount, products.length]); // Add dependencies here!
 
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
@@ -210,6 +225,10 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
         ? product.subcategory
         : [];
 
+      // ✅ Get default variant price for product-level price check
+      const defaultPrice =
+        product.defaultVariant?.discountedPrice ?? product.discountedPrice ?? 0;
+
       if (
         (selectedSubs.length === 0 ||
           selectedSubs.some((s) => subcategories.includes(s))) &&
@@ -217,7 +236,11 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
           selectedRating.some((r) => product.rating >= r)) &&
         (selectedDiscount.length === 0 ||
           selectedDiscount.some((d) => parseInt(product.discount) >= d)) &&
-        (selectedBrands.length === 0 || selectedBrands.includes(product.brand))
+        (selectedBrands.length === 0 ||
+          selectedBrands.includes(product.brand)) &&
+        // ✅ Add product-level price check
+        defaultPrice >= selectedPrice.min &&
+        defaultPrice <= selectedPrice.max
       ) {
         const matchingVariants = product.variants.filter((variant) => {
           const colorMatch =
@@ -234,12 +257,19 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
           return colorMatch && priceMatch;
         });
 
+        // ✅ Add price check for defaultVariant push
         if (
           selectedColors.length === 0 &&
           matchingVariants.length === 0 &&
           product.defaultVariant
         ) {
-          matchingVariants.push(product.defaultVariant);
+          const defPrice =
+            product.defaultVariant.discountedPrice ??
+            product.discountedPrice ??
+            0;
+          if (defPrice >= selectedPrice.min && defPrice <= selectedPrice.max) {
+            matchingVariants.push(product.defaultVariant);
+          }
         }
 
         matchingVariants.forEach((variant) => {

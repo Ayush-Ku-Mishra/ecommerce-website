@@ -1,9 +1,14 @@
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom"; // Import useLocation
+import React, { useState, useContext } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaRegUser, FaRegHeart, FaCloudUploadAlt } from "react-icons/fa";
 import { IoPowerSharp } from "react-icons/io5";
 import { SlLocationPin } from "react-icons/sl";
 import { HiOutlineShoppingBag } from "react-icons/hi";
+import axios from "axios";
+import { Context } from "../main";
+import ReactDOM from "react-dom";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 const menuItems = [
   {
@@ -26,28 +31,26 @@ const menuItems = [
     icon: <HiOutlineShoppingBag />,
     to: "/account/orders",
   },
-  {
-    text: "Logout",
-    icon: <IoPowerSharp />,
-    to: "/logout",
-  },
+  // REMOVE Logout from menuItems!
 ];
 
+const defaultAvatar = "https://cdn-icons-png.flaticon.com/128/3135/3135715.png";
+
 const AccountDetailsSection = () => {
-  const user = {
-    name: "Ayush Kumar Mishra",
-    email: "amishra59137@gmail.com",
-  };
+  const location = useLocation();
+  const { user, setIsAuthenticated, setUser } = useContext(Context);
+  const navigate = useNavigate();
 
-  const defaultAvatar =
-    "https://cdn-icons-png.flaticon.com/128/3135/3135715.png";
+  // Use user email (or id) for storage key
+  const localStorageKey = user ? `avatarUrl_${user.email}` : "avatarUrl_guest";
 
-  // Initialize avatar from localStorage or fallback to default
-  const [avatar, setAvatar] = useState(() => {
-    return localStorage.getItem("avatarUrl") || defaultAvatar;
-  });
+  const [avatar, setAvatar] = useState(defaultAvatar);
 
-  // Convert file to base64 string
+  useEffect(() => {
+    const storedAvatar = localStorage.getItem(localStorageKey);
+    setAvatar(storedAvatar || defaultAvatar);
+  }, [localStorageKey]);
+
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -62,14 +65,29 @@ const AccountDetailsSection = () => {
       try {
         const base64String = await toBase64(file);
         setAvatar(base64String);
-        localStorage.setItem("avatarUrl", base64String);
+        localStorage.setItem(localStorageKey, base64String);
       } catch (error) {
         console.error("Failed to read file as base64:", error);
       }
     }
   };
 
-  const location = useLocation(); // Get current location
+  // Logout logic and modal
+  const [showConfirm, setShowConfirm] = useState(false);
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:8000/api/v1/user/logout", {
+        withCredentials: true,
+      });
+      setIsAuthenticated(false);
+      setUser(null);
+      toast.success("Logged out successfully.");
+      navigate("/");
+    } catch {
+      toast.error("Logout failed. Please try again.");
+    }
+    setShowConfirm(false);
+  };
 
   return (
     <div className="flex flex-col items-center mt-5 mx-auto rounded-xl border-2">
@@ -101,16 +119,16 @@ const AccountDetailsSection = () => {
           <span
             className="block font-semibold text-gray-700 leading-tight whitespace-nowrap"
             style={{ fontSize: "clamp(12px, 5vw, 17px)" }}
-            title={user.name}
+            title={user?.name}
           >
-            {user.name}
+            {user?.name || "Guest"}
           </span>
           <span
             className="block text-gray-500 whitespace-nowrap"
             style={{ fontSize: "clamp(10px, 3vw, 13px)" }}
-            title={user.email}
+            title={user?.email}
           >
-            {user.email}
+            {user?.email || ""}
           </span>
         </div>
       </div>
@@ -140,7 +158,44 @@ const AccountDetailsSection = () => {
             </Link>
           );
         })}
+
+        {/* Logout button */}
+        <button
+          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition text-gray-800 font-medium text-[15px]"
+          onClick={() => setShowConfirm(true)}
+          type="button"
+        >
+          <IoPowerSharp />
+          <span>Logout</span>
+        </button>
       </div>
+
+      {/* Logout confirmation modal */}
+      {showConfirm &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-72 text-center">
+              <p className="mb-4 text-gray-800">
+                Are you sure you want to logout?
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

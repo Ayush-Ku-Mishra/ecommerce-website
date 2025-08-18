@@ -21,13 +21,45 @@ import { FaRegUser } from "react-icons/fa";
 import { IoPowerSharp } from "react-icons/io5";
 import { SlLocationPin } from "react-icons/sl";
 import { HiOutlineShoppingBag } from "react-icons/hi";
+import { useContext } from "react";
+import { Context } from "../main";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
+  const [showConfirm, setShowConfirm] = React.useState(false);
+
   const navigate = useNavigate();
+
+  const { setIsAuthenticated, setUser } = useContext(Context);
+  const [localUser, setLocalUser] = useState(null);
+
+  useEffect(() => {
+    const data = localStorage.getItem("user-info");
+    if (data) {
+      setLocalUser(JSON.parse(data));
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:8000/api/v1/user/logout", {
+        withCredentials: true,
+      });
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("user-info"); // Clear local storage on logout
+      toast.success("Logged out successfully.");
+      navigate("/");
+    } catch {
+      toast.error("Logout failed. Please try again.");
+    }
+    setShowConfirm(false);
+  };
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -46,10 +78,7 @@ const Navbar = () => {
     return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
   };
 
-  const user = {
-    name: "Ayush Kumar Mishra",
-    email: "amishra59137@gmail.com",
-  };
+  const { user } = useContext(Context);
 
   const wishlist = useSelector((state) => state.wishlist.items);
   const count = wishlist.length;
@@ -249,6 +278,31 @@ const Navbar = () => {
               </div>
             </div>
 
+            {/* Your logout modal */}
+            {showConfirm && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-72 text-center">
+                  <p className="mb-4 text-gray-800">
+                    Are you sure you want to logout?
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      onClick={() => setShowConfirm(false)}
+                      className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="w-[30%] flex items-center justify-end gap-5 text-gray-700 font-medium pr-1">
               <div className="flex items-center gap-2">
@@ -401,10 +455,10 @@ const Navbar = () => {
                   </MenuItem>
                   <MenuItem
                     onClick={() => {
-                      handleClose();
-                      // Add your logout logic here, e.g., clearing auth tokens
+                      handleClose(); // closes the menu
+                      setShowConfirm(true); // opens the confirmation modal
                     }}
-                    className="flex items-center gap-2 text-[15px]"
+                    className="flex items-center gap-2 text-[15px] cursor-pointer"
                   >
                     <IoPowerSharp /> Logout
                   </MenuItem>
