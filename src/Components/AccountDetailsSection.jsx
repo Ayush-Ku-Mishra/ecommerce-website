@@ -77,7 +77,7 @@ const AccountDetailsSection = () => {
   const handleLogout = async () => {
     try {
       await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/logout`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
         {
           withCredentials: true,
         }

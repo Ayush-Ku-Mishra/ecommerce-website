@@ -60,7 +60,7 @@ const Login = () => {
         : `+91${data.phone}`;
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/register`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
           data,
           {
             withCredentials: true,
@@ -83,8 +83,10 @@ const Login = () => {
 
     if (currentView === "login") {
       try {
+        console.log("API URL:", import.meta.env.VITE_BACKEND_URL);
+
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL}/api/v1/user/login`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
           { email: data.email, password: data.password },
           {
             withCredentials: true,
@@ -105,7 +107,7 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/google/callback`;
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google/callback`;
   };
 
   const toggleLoginRegister = () => {
