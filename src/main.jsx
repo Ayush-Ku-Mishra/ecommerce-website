@@ -8,6 +8,7 @@ import { createContext } from "react";
 import { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const Context = createContext({
   isAuthenticated: false,
@@ -17,8 +18,9 @@ export const Context = createContext({
 });
 
 const AppWrapper = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState();
-  const [user, setUser] = useState();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,6 +34,11 @@ const AppWrapper = () => {
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
+        if (error.response?.status === 401) {
+          toast.info("Your session has expired. Please login again.");
+        }
+      } finally {
+        setAuthLoading(false);
       }
     };
     checkAuth();
@@ -39,7 +46,13 @@ const AppWrapper = () => {
 
   return (
     <Context.Provider
-      value={{ isAuthenticated, setIsAuthenticated, user, setUser }}
+      value={{
+        isAuthenticated,
+        setIsAuthenticated,
+        user,
+        setUser,
+        authLoading,
+      }}
     >
       <App />
     </Context.Provider>

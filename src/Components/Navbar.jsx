@@ -25,6 +25,8 @@ import { useContext } from "react";
 import { Context } from "../main";
 import axios from "axios";
 import { toast } from "react-toastify";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Navbar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,6 +34,9 @@ const Navbar = () => {
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const [loading, setLoading] = useState(false);
+  const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
+  const [logoLoading, setLogoLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -46,6 +51,7 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
+    setLoading(true);
     try {
       await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
@@ -60,8 +66,10 @@ const Navbar = () => {
       navigate("/");
     } catch {
       toast.error("Logout failed. Please try again.");
+    } finally {
+      setLoading(false);
+      setShowConfirm(false);
     }
-    setShowConfirm(false);
   };
 
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -92,6 +100,54 @@ const Navbar = () => {
     0
   );
 
+  const fetchCurrentLogo = async () => {
+    setLogoLoading(true);
+    try {
+      const response = await fetch("/api/v1/logo/all", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const logos = data.logos || [];
+
+        // Set the latest logo (first one due to sort order) as current logo
+        if (logos.length > 0) {
+          setCurrentLogo(logos[0].url);
+        } else {
+          setCurrentLogo("/api/placeholder/100/50");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching current logo:", error);
+      setCurrentLogo("/api/placeholder/100/50");
+    } finally {
+      setLogoLoading(false);
+    }
+  };
+
+  // Listen for logo updates from ManageLogo component
+  useEffect(() => {
+    const handleLogoUpdate = () => {
+      console.log("Logo update event received, fetching new logo...");
+      fetchCurrentLogo();
+    };
+
+    // Listen for custom logoUpdated event
+    window.addEventListener("logoUpdated", handleLogoUpdate);
+
+    // Initial fetch
+    fetchCurrentLogo();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("logoUpdated", handleLogoUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     if (sidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -113,8 +169,19 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogoError = () => {
+    // If the dynamic logo fails to load, fall back to a placeholder
+    setCurrentLogo("/api/placeholder/100/50");
+  };
+
   return (
     <div className="relative">
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
       {/* Overlay */}
       {sidebarOpen && (
         <div
@@ -259,11 +326,18 @@ const Navbar = () => {
             {/* Logo */}
             <div className="w-[25%] flex items-center gap-2 pl-5">
               <Link to="/">
-                <img
-                  src={logo}
-                  alt="Pickora Logo"
-                  className="h-11 w-auto object-contain ml-5"
-                />
+                {logoLoading ? (
+                  <div className="h-11 w-20 bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                    <span className="text-xs text-gray-500">Loading...</span>
+                  </div>
+                ) : (
+                  <img
+                    src={currentLogo}
+                    alt="Pickora Logo"
+                    className="h-11 w-auto object-contain ml-5"
+                    onError={handleLogoError}
+                  />
+                )}
               </Link>
             </div>
 
@@ -495,14 +569,15 @@ const Navbar = () => {
                 }
               >
                 <FaRegHeart size={22} />
-                {count > 0 && (
-                  <span
-                    className="absolute -top-[0.5px] -right-[0.5px] bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex justify-center items-center font-semibold"
-                    aria-label={`${count} items in wishlist`}
-                  >
-                    {count}
-                  </span>
-                )}
+                {user &&
+                  count > 0 && ( // only show badge if user is logged in and count > 0
+                    <span
+                      className="absolute -top-[0.5px] -right-[0.5px] bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex justify-center items-center font-semibold"
+                      aria-label={`${count} items in wishlist`}
+                    >
+                      {count}
+                    </span>
+                  )}
               </NavLink>
 
               {/* Cart Icon */}

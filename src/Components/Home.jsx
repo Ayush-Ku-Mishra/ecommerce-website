@@ -47,25 +47,14 @@ const Home = () => {
           <HeadPhoneSlider />
         </div>
 
-        <div className='mt-10'>
-          <BrandLoop />
-        </div>
+        
 
         <div className='ml-16 mt-10'>
           <h3 className='text-[22px] font-[600] mb-4 font-custom'>Bags</h3>
           <BagSlider />
         </div>
 
-        <div className='mt-10 w-full h-[420px] relative overflow-hidden'>
-          <video
-            src="https://assets.mixkit.co/videos/33029/33029-720.mp4"
-            className='w-full h-full object-cover'
-            autoPlay
-            muted
-            loop
-            playsInline
-          ></video>
-        </div>
+        
 
         <div className='mt-10 border-t mx-16'>
           <ClientsPart />

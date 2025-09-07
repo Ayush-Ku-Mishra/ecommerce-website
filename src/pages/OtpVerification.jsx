@@ -1,6 +1,6 @@
 // src/pages/OtpVerification.jsx
 import React, { useState, useRef, useEffect, useContext } from "react";
-import { MdArrowBack, MdSms } from "react-icons/md";
+import { MdArrowBack, MdSms, MdEmail } from "react-icons/md";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Context } from "../main";
@@ -14,7 +14,7 @@ const OtpVerification = ({
   clearAllStates,
 }) => {
   const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(15);
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef()];
 
   const { setIsAuthenticated, setUser } = useContext(Context);
@@ -127,15 +127,21 @@ const OtpVerification = ({
       {/* Heading */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-          <MdSms className="w-8 h-8 text-blue-600" />
+          {verificationMethod === "phone" ? (
+            <MdSms className="w-8 h-8 text-blue-600" />
+          ) : (
+            <MdEmail className="w-8 h-8 text-blue-600" />
+          )}
         </div>
         <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          Verify Your Phone
+          Verify Your {verificationMethod === "phone" ? "Phone" : "Email"}
         </h3>
         <p className="text-sm text-gray-600 mb-1">
-          We've sent a 5-digit code to
+          We've sent a {otp.length}-digit code to
         </p>
-        <p className="text-sm font-semibold text-gray-800"> {phone}</p>
+        <p className="text-sm font-semibold text-gray-800">
+          {verificationMethod === "phone" ? phone : email}
+        </p>
       </div>
 
       {/* OTP Input */}
@@ -148,6 +154,9 @@ const OtpVerification = ({
             type="text"
             maxLength="1"
             value={digit}
+            autoComplete="one-time-code"
+            inputMode="numeric"
+            pattern="\d{5}"
             onChange={(e) => handleOTPChange(index, e.target.value)}
             onKeyDown={(e) => handleOTPKeyDown(index, e)}
             className="w-14 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors bg-gray-50"

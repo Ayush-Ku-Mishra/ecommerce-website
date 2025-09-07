@@ -75,6 +75,7 @@ const RegisterComponent = ({
           <input
             type="tel"
             placeholder="Enter your phone number"
+            autoComplete="new-number"
             {...register("phone", {
               required: "Phone number is required",
               pattern: {
@@ -101,11 +102,18 @@ const RegisterComponent = ({
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Enter your password"
+            autoComplete="new-password"
             {...register("password", {
               required: "Password is required",
               minLength: {
                 value: 6,
                 message: "Password must be at least 6 characters",
+              },
+              pattern: {
+                value:
+                  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+                message:
+                  "Password must include uppercase, lowercase, number, and special character",
               },
             })}
             className={`w-full pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:outline-none transition-all duration-200 ${

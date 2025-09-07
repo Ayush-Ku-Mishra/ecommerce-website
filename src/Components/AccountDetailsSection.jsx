@@ -7,12 +7,13 @@ import { HiOutlineShoppingBag } from "react-icons/hi";
 import axios from "axios";
 import { Context } from "../main";
 import ReactDOM from "react-dom";
-import { useEffect } from "react";
 import { toast } from "react-toastify";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const menuItems = [
   {
-    text: "My Profile",
+    text: "My Account",
     icon: <FaRegUser />,
     to: "/account/profile",
   },
@@ -31,7 +32,6 @@ const menuItems = [
     icon: <HiOutlineShoppingBag />,
     to: "/account/orders",
   },
-  // REMOVE Logout from menuItems!
 ];
 
 const defaultAvatar = "https://cdn-icons-png.flaticon.com/128/3135/3135715.png";
@@ -41,40 +41,110 @@ const AccountDetailsSection = () => {
   const { user, setIsAuthenticated, setUser } = useContext(Context);
   const navigate = useNavigate();
 
-  // Use user email (or id) for storage key
   const localStorageKey = user ? `avatarUrl_${user.email}` : "avatarUrl_guest";
 
-  const [avatar, setAvatar] = useState(defaultAvatar);
+  const [avatar, setAvatar] = useState(user?.avatar || defaultAvatar);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    const storedAvatar = localStorage.getItem(localStorageKey);
-    setAvatar(storedAvatar || defaultAvatar);
-  }, [localStorageKey]);
+  React.useEffect(() => {
+    // Use user avatar from context first, then localStorage, then default
+    if (user?.avatar) {
+      setAvatar(user.avatar);
+    } else {
+      const storedAvatar = localStorage.getItem(localStorageKey);
+      setAvatar(storedAvatar || defaultAvatar);
+    }
+  }, [localStorageKey, user?.avatar]);
 
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-
+  // ✅ Fixed image upload function
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        const base64String = await toBase64(file);
-        setAvatar(base64String);
-        localStorage.setItem(localStorageKey, base64String);
-      } catch (error) {
-        console.error("Failed to read file as base64:", error);
+    
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please select a valid jpg, png or webp file.");
+      return;
+    }
+
+    // Validate file size (optional - e.g., max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("File size should be less than 5MB.");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      console.log("Uploading to:", `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/user-avtar`);
+
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/user-avtar`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Upload response:", data);
+
+      if (data.success) {
+        // Backend returns avatar as array, take first element
+        const newAvatarUrl = Array.isArray(data.avatar) ? data.avatar[0] : data.avatar;
+        
+        // Update avatar in state
+        setAvatar(newAvatarUrl);
+        
+        // Update user context with new avatar
+        setUser(prevUser => ({
+          ...prevUser,
+          avatar: newAvatarUrl
+        }));
+        
+        // Update localStorage
+        localStorage.setItem(localStorageKey, newAvatarUrl);
+        
+        // Update user info in localStorage
+        const userInfo = localStorage.getItem("user-info");
+        if (userInfo) {
+          const parsedUserInfo = JSON.parse(userInfo);
+          parsedUserInfo.avatar = newAvatarUrl;
+          localStorage.setItem("user-info", JSON.stringify(parsedUserInfo));
+        }
+        
+        toast.success("Profile picture updated successfully!");
+      } else {
+        toast.error(data.message || "Image upload failed");
       }
+    } catch (error) {
+      console.error("Image upload error:", error);
+      if (error.response?.status === 404) {
+        toast.error("Upload endpoint not found. Please check server configuration.");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to upload image. Please try again.");
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
-  // Logout logic and modal
-  const [showConfirm, setShowConfirm] = useState(false);
   const handleLogout = async () => {
+    setLoading(true);
     try {
       await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
@@ -84,12 +154,15 @@ const AccountDetailsSection = () => {
       );
       setIsAuthenticated(false);
       setUser(null);
+      localStorage.removeItem("user-info"); // Clear user info on logout
       toast.success("Logged out successfully.");
       navigate("/");
     } catch {
       toast.error("Logout failed. Please try again.");
+    } finally {
+      setLoading(false);
+      setShowConfirm(false);
     }
-    setShowConfirm(false);
   };
 
   return (
@@ -98,13 +171,21 @@ const AccountDetailsSection = () => {
       <div className="bg-white w-full shadow py-5 flex flex-col items-center justify-center relative cursor-pointer overflow-hidden">
         <label
           htmlFor="avatar-upload"
-          className="relative w-28 h-28 block rounded-full overflow-hidden"
+          className="relative w-28 h-28 block rounded-full overflow-hidden cursor-pointer"
         >
-          <img
-            src={avatar}
-            alt="Account Avatar"
-            className="w-28 h-28 rounded-full object-cover"
-          />
+          {uploading ? (
+            <div className="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center">
+              <CircularProgress color="inherit" size={24} />
+            </div>
+          ) : (
+            <img
+              src={avatar}
+              alt="Account Avatar"
+              className="w-28 h-28 rounded-full object-cover"
+              onError={() => setAvatar(defaultAvatar)} // Fallback if image fails to load
+            />
+          )}
+
           {/* Overlay on hover */}
           <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-full">
             <FaCloudUploadAlt className="text-white text-3xl" />
@@ -112,10 +193,11 @@ const AccountDetailsSection = () => {
         </label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/jpg,image/webp"
           id="avatar-upload"
           className="hidden"
           onChange={handleImageChange}
+          disabled={uploading}
         />
 
         <div className="flex flex-col items-start mt-3 px-5 w-auto min-w-0">
@@ -139,7 +221,6 @@ const AccountDetailsSection = () => {
       {/* Menu */}
       <div className="w-full bg-gray-100 shadow px-4 py-5 flex flex-col gap-1">
         {menuItems.map((item) => {
-          // Dynamically check if current path matches or starts with this menu item's 'to'
           const isActive = location.pathname.startsWith(item.to);
 
           return (
@@ -167,13 +248,22 @@ const AccountDetailsSection = () => {
           className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition text-gray-800 font-medium text-[15px]"
           onClick={() => setShowConfirm(true)}
           type="button"
+          disabled={loading}
         >
           <IoPowerSharp />
           <span>Logout</span>
         </button>
       </div>
 
-      {/* Logout confirmation modal */}
+      {/* Loader Backdrop */}
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      {/* Logout Confirmation */}
       {showConfirm &&
         ReactDOM.createPortal(
           <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-40">
@@ -185,14 +275,16 @@ const AccountDetailsSection = () => {
                 <button
                   onClick={() => setShowConfirm(false)}
                   className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+                  disabled={loading}
                 >
-                  Logout
+                  {loading ? "Logging out..." : "Logout"}
                 </button>
               </div>
             </div>

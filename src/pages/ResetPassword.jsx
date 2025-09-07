@@ -26,6 +26,10 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { token } = useParams();
 
+  // Strong password regex
+  const regex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+
   const onSubmit = async (data) => {
     const { newPassword, confirmPassword } = data;
     if (newPassword !== confirmPassword) {
@@ -91,6 +95,11 @@ const ResetPassword = () => {
               minLength: {
                 value: 6,
                 message: "Password must be at least 6 characters",
+              },
+              pattern: {
+                value: regex,
+                message:
+                  "Must include uppercase, lowercase, number & special character",
               },
             })}
             className={`w-full pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:outline-none transition-all duration-200 ${

@@ -1,7 +1,7 @@
 import React from "react";
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
-
+import CircularProgress from "@mui/material/CircularProgress";
 
 const LoginComponent = ({
   register,
@@ -12,8 +12,8 @@ const LoginComponent = ({
   setCurrentView,
   handleGoogleSignIn,
   toggleLoginRegister,
+  loginLoading, // loader prop to control spinner & disable
 }) => {
-  
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -43,6 +43,7 @@ const LoginComponent = ({
           <input
             type={showPassword ? "text" : "password"}
             placeholder="enter your password"
+            autoComplete="new-password"
             {...register("password", { required: "Password is required" })}
             className={`w-full pl-12 pr-12 py-3 bg-gray-50 border rounded-xl focus:outline-none transition-all duration-200 ${
               errors.password
@@ -62,17 +63,23 @@ const LoginComponent = ({
             )}
           </button>
           {errors.password && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.password.message}
-            </p>
+            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
           )}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+          disabled={loginLoading}
         >
-          Sign In
+          {loginLoading ? (
+            <>
+              <CircularProgress size={20} color="inherit" />
+              Signing In...
+            </>
+          ) : (
+            "Sign In"
+          )}
         </button>
       </form>
 
@@ -80,7 +87,7 @@ const LoginComponent = ({
         <button
           type="button"
           onClick={() => setCurrentView("forgotPassword")}
-          className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors duration-200"
+          className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors duration-200 hover:underline"
         >
           FORGOT PASSWORD
         </button>

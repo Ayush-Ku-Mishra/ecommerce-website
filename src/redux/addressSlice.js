@@ -1,72 +1,117 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
-
-// Helper to load addresses from localStorage
-const loadAddressesFromStorage = () => {
-  try {
-    const serializedState = localStorage.getItem("addresses");
-    if (!serializedState) return [];
-    return JSON.parse(serializedState);
-  } catch (e) {
-    console.error("Failed to load addresses from localStorage", e);
-    return [];
-  }
-};
-
-// Helper to save addresses to localStorage
-const saveAddressesToStorage = (addresses) => {
-  try {
-    const serializedState = JSON.stringify(addresses);
-    localStorage.setItem("addresses", serializedState);
-  } catch (e) {
-    console.error("Failed to save addresses to localStorage", e);
-  }
-};
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  addresses: loadAddressesFromStorage(), // initialize from localStorage or empty
+  addresses: [],
+  loading: false,
+  error: null,
 };
 
 const addressSlice = createSlice({
   name: "addresses",
   initialState,
   reducers: {
-    addAddress: {
-      reducer(state, action) {
-        // Add new address at the beginning (top) of the list
-        state.addresses.unshift(action.payload);
-        saveAddressesToStorage(state.addresses);
-      },
-      prepare(address) {
-        return { payload: { ...address, id: nanoid() } };
-      },
+    setLoading(state, action) {
+      state.loading = action.payload;
     },
-
+    setError(state, action) {
+      state.error = action.payload;
+    },
+    setAddresses(state, action) {
+      // ✅ FIXED: Properly map addresses with consistent default handling
+      console.log("Setting addresses in Redux:", action.payload); // Debug log
+      state.addresses = action.payload.map(addr => {
+        const isDefault = addr.default || addr.isDefault || false;
+        return {
+          ...addr,
+          isDefault: isDefault,
+          default: isDefault, // Keep both fields for consistency
+        };
+      });
+      state.error = null;
+    },
+    addAddress(state, action) {
+      console.log("Adding address to Redux:", action.payload); // Debug log
+      const isDefault = action.payload.default || action.payload.isDefault || false;
+      
+      const newAddress = {
+        ...action.payload,
+        isDefault: isDefault,
+        default: isDefault, // Keep both fields
+      };
+      
+      // If the new address is default, unset all other addresses as default
+      if (isDefault) {
+        state.addresses.forEach((addr) => {
+          addr.default = false;
+          addr.isDefault = false;
+        });
+      }
+      
+      state.addresses.unshift(newAddress);
+      state.error = null;
+    },
     editAddress(state, action) {
-      const idx = state.addresses.findIndex(
-        (addr) => addr.id === action.payload.id
-      );
+      console.log("Editing address in Redux:", action.payload); // Debug log
+      const idx = state.addresses.findIndex((addr) => addr._id === action.payload._id);
       if (idx !== -1) {
-        state.addresses[idx] = action.payload;
-        saveAddressesToStorage(state.addresses);
+        const isDefault = action.payload.default || action.payload.isDefault || false;
+        
+        const updatedAddress = {
+          ...action.payload,
+          isDefault: isDefault,
+          default: isDefault, // Keep both fields
+        };
+        
+        // ✅ FIXED: If the edited address is being set as default, unset all other addresses as default
+        if (isDefault) {
+          state.addresses.forEach((addr, index) => {
+            if (index !== idx) { // Don't modify the address we're updating
+              addr.default = false;
+              addr.isDefault = false;
+            }
+          });
+        }
+        
+        state.addresses[idx] = updatedAddress;
+        state.error = null;
       }
     },
     deleteAddress(state, action) {
-      state.addresses = state.addresses.filter(
-        (addr) => addr.id !== action.payload
-      );
-      saveAddressesToStorage(state.addresses);
+      state.addresses = state.addresses.filter((addr) => addr._id !== action.payload);
+      state.error = null;
     },
     setDefaultAddress(state, action) {
-      state.addresses.forEach((addr) => (addr.isDefault = false));
-      const def = state.addresses.find((addr) => addr.id === action.payload);
-      if (def) {
-        def.isDefault = true;
-        saveAddressesToStorage(state.addresses);
+      console.log("Setting default address in Redux:", action.payload); // Debug log
+      // First, set all addresses to non-default
+      state.addresses.forEach((addr) => {
+        addr.default = false;
+        addr.isDefault = false;
+      });
+      
+      // Then set the specified address as default
+      const defaultAddr = state.addresses.find((addr) => addr._id === action.payload);
+      if (defaultAddr) {
+        defaultAddr.default = true;
+        defaultAddr.isDefault = true;
       }
+      state.error = null;
+    },
+    clearAddresses(state) {
+      state.addresses = [];
+      state.error = null;
     },
   },
 });
 
-export const { addAddress, editAddress, deleteAddress, setDefaultAddress } =
-  addressSlice.actions;
+export const {
+  setLoading,
+  setError,
+  setAddresses,
+  addAddress,
+  editAddress,
+  deleteAddress,
+  setDefaultAddress,
+  clearAddresses,
+} = addressSlice.actions;
+
 export default addressSlice.reducer;

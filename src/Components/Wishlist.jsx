@@ -3,10 +3,11 @@ import { Context } from "../main"; // Adjust path
 import AccountDetailsSection from "./AccountDetailsSection";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { removeFromWishlist } from "../redux/wishlistSlice";
+import { removeFromWishlist, setWishlist } from "../redux/wishlistSlice"; // no addToWishlist needed here
 import { MdDeleteOutline } from "react-icons/md";
 import ContactUsPart from "./ContactUsPart";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const Wishlist = () => {
   const { isAuthenticated } = useContext(Context);
@@ -19,12 +20,72 @@ const Wishlist = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Set backend URL from env or fallback
+  const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+
+  // Fetch wishlist on login
   useEffect(() => {
     if (!isAuthenticated) {
-      // Replace Wishlist with login in history stack for correct back behavior
       navigate("/login", { state: { from: location }, replace: true });
+      return;
     }
-  }, [isAuthenticated, navigate, location]);
+
+    const fetchWishlist = async () => {
+      try {
+        const { data } = await axios.get(`${backendURL}/api/v1/wishlist`, {
+          withCredentials: true,
+        });
+        if (data.success) {
+          dispatch(setWishlist(data.wishlist));
+        }
+      } catch (error) {
+        console.error("Failed to fetch wishlist:", error);
+      }
+    };
+
+    fetchWishlist();
+  }, [isAuthenticated, navigate, location, dispatch, backendURL]);
+
+  // Remove item handler
+  const handleRemove = async (productId) => {
+    try {
+      const updatedItems = wishlist.filter((item) => item.id !== productId);
+      dispatch(setWishlist(updatedItems));
+      toast.info("Removed from wishlist");
+
+      await axios.post(
+        `${backendURL}/api/v1/wishlist`,
+        { items: updatedItems.map((item) => ({ product: item.id })) },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Failed to update wishlist:", error);
+      toast.error("Failed to update wishlist on server");
+    }
+  };
+
+  // Add to wishlist handler
+  const handleAddToWishlist = async (product) => {
+    try {
+      if (wishlist.some((item) => item.id === product.id)) {
+        toast.info("Already in wishlist");
+        return;
+      }
+
+      const updatedWishlist = [...wishlist, product];
+      dispatch(setWishlist(updatedWishlist));
+      toast.success("Added to wishlist");
+
+      await axios.post(
+        `${backendURL}/api/v1/wishlist`,
+        { items: updatedWishlist.map((item) => ({ product: item.id })) },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Failed to add to wishlist:", error);
+      toast.error("Failed to update wishlist on server");
+    }
+  };
 
   if (!isAuthenticated) return null;
 
@@ -110,10 +171,7 @@ const Wishlist = () => {
                     </Link>
                     <button
                       title="Remove"
-                      onClick={() => {
-                        dispatch(removeFromWishlist(product.id));
-                        toast.info("Removed from wishlist");
-                      }}
+                      onClick={() => handleRemove(product.id)}
                       className="p-2 text-xl text-gray-400 hover:text-red-500 flex-shrink-0"
                     >
                       <MdDeleteOutline />
@@ -125,7 +183,7 @@ const Wishlist = () => {
                 <div className="flex justify-center mt-6">
                   <button
                     onClick={loadMore}
-                    className=" text-[#2874f0] rounded-lg"
+                    className="text-[#2874f0] rounded-lg"
                   >
                     Load more items
                   </button>

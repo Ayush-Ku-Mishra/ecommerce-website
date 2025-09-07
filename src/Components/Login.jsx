@@ -10,6 +10,8 @@ import ResetPassword from "../pages/ResetPassword";
 import LoginComponent from "../pages/LoginComponent";
 import RegisterComponent from "../pages/RegisterComponent";
 import OtpVerification from "../pages/OtpVerification";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Login = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
@@ -22,6 +24,7 @@ const Login = () => {
   // Views: otp, forgotPassword, resetPassword
   const [currentView, setCurrentView] = useState("login");
   const [resetEmail, setResetEmail] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false); // loader state
 
   // We will store registration email/phone for OTP screen if needed.
   const [registerData, setRegisterData] = useState({ email: "", phone: "" });
@@ -55,6 +58,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     if (currentView === "register") {
+      setRegisterLoading(true); // show loader
       data.phone = data.phone.startsWith("+91")
         ? data.phone
         : `+91${data.phone}`;
@@ -77,14 +81,14 @@ const Login = () => {
         setCurrentView("otp");
       } catch (error) {
         toast.error(error.response?.data?.message || "Registration failed");
+      } finally {
+        setRegisterLoading(false); // hide loader after request
       }
       return;
     }
 
     if (currentView === "login") {
       try {
-        console.log("API URL:", import.meta.env.VITE_BACKEND_URL);
-
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
           { email: data.email, password: data.password },
@@ -181,6 +185,15 @@ const Login = () => {
       <div className="w-full max-w-sm bg-transparent rounded-2xl shadow-2xl overflow-hidden">
         <div className="p-10">
           {renderHeader()}
+          {/* Loader only for register form */}
+          {currentView === "register" && (
+            <Backdrop
+              sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+              open={registerLoading}
+            >
+              <CircularProgress color="inherit" />
+            </Backdrop>
+          )}
           {currentView === "otp" && (
             <OtpVerification
               email={registerData.email}
