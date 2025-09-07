@@ -100,6 +100,10 @@ const Login = () => {
           }
         );
 
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
@@ -111,7 +115,9 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google/callback`;
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_URL
+    }/auth/google/callback`;
   };
 
   const toggleLoginRegister = () => {

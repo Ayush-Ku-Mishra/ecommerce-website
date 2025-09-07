@@ -103,12 +103,15 @@ const Navbar = () => {
   const fetchCurrentLogo = async () => {
     setLogoLoading(true);
     try {
-      const response = await fetch("/api/v1/logo/all", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/all`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
