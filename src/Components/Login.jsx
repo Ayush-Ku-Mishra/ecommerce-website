@@ -88,7 +88,18 @@ const Login = () => {
     }
 
     if (currentView === "login") {
+      console.log("Login attempt with:", {
+        email: data.email,
+        password: data.password ? "***provided***" : "***MISSING***",
+        passwordLength: data.password?.length || 0,
+      });
       try {
+        const requestData = {
+          email: data.email,
+          password: data.password,
+        };
+
+        console.log("Sending request:", requestData);
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
           { email: data.email, password: data.password },
