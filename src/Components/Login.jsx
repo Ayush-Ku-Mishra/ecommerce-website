@@ -93,7 +93,6 @@ const Login = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
           { email: data.email, password: data.password },
           {
-            withCredentials: true,
             headers: {
               "Content-Type": "application/json",
             },
