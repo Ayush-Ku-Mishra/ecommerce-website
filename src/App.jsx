@@ -21,8 +21,6 @@ import Jewellery from "./Components/Jewellery";
 import ServicePage from "./Components/ServicePage";
 import ContactUsPart from "./Components/ContactUsPart";
 import SingleProductDetails from "./Components/SingleProductDetails";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import GlobalLoadingSkeleton from "./Components/GlobalLoadingSkeleton";
 import GridProductCategory from "./Components/GridProductCategory";
 import SidebarFilterComponent from "./Components/SidebarFilterComponent";
@@ -33,6 +31,9 @@ import CheckoutPage from "./Components/CheckoutPage";
 import MyProfile from "./Components/MyProfile";
 import ResetPassword from "./pages/ResetPassword";
 import NotFoundPage from "./Components/NotFoundPage";
+import { Toaster } from "react-hot-toast";
+import logo from "./assets/PickoraFavicon.png";
+import OrderSuccessPage from "./Components/OrderSuccessPage";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
       {
         path: "wishlist",
         element: <Wishlist />,
+      },
+      {
+        path: "order-success",
+        element: <OrderSuccessPage />,
       },
       {
         path: "cart",
@@ -136,11 +141,11 @@ const router = createBrowserRouter([
   },
   {
     path: "password/reset/:token",
-    element: <ResetPassword/>,
+    element: <ResetPassword />,
   },
   {
     path: "*",
-    element: <NotFoundPage/>,
+    element: <NotFoundPage />,
   },
 ]);
 
@@ -160,7 +165,26 @@ function App() {
 
   return (
     <div>
-      <ToastContainer position="top-center" autoClose={2000} />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 2000,
+          icon: (
+            <img
+              src={logo}
+              alt="logo"
+              style={{ width: 20, height: 20, borderRadius: "50%" }}
+            />
+          ),
+          style: {
+            borderRadius: "15px",
+            background: "#333",
+            color: "#fff",
+            marginBottom: "60px", 
+          },
+        }}
+      />
+
       <GlobalLoadingSkeleton />
       {showIntro ? (
         <div className="w-screen h-screen flex items-center justify-center bg-white z-[9999] fixed top-0 left-0">

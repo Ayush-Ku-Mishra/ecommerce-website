@@ -5,7 +5,7 @@ import SidebarFilterComponent from "./SidebarFilterComponent";
 const Fashion = () => {
   return (
     <GridProductCategory
-      categoryName="fashion"
+      categoryName="Fashion"
       SidebarFilterComponent={SidebarFilterComponent}
     />
   );

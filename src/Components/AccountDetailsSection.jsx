@@ -7,7 +7,7 @@ import { HiOutlineShoppingBag } from "react-icons/hi";
 import axios from "axios";
 import { Context } from "../main";
 import ReactDOM from "react-dom";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
@@ -61,7 +61,7 @@ const AccountDetailsSection = () => {
   // ✅ Fixed image upload function
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    
+
     if (!file) {
       return;
     }
@@ -86,7 +86,10 @@ const AccountDetailsSection = () => {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      console.log("Uploading to:", `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/user-avtar`);
+      console.log(
+        "Uploading to:",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/user-avtar`
+      );
 
       const { data } = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/user-avtar`,
@@ -103,20 +106,22 @@ const AccountDetailsSection = () => {
 
       if (data.success) {
         // Backend returns avatar as array, take first element
-        const newAvatarUrl = Array.isArray(data.avatar) ? data.avatar[0] : data.avatar;
-        
+        const newAvatarUrl = Array.isArray(data.avatar)
+          ? data.avatar[0]
+          : data.avatar;
+
         // Update avatar in state
         setAvatar(newAvatarUrl);
-        
+
         // Update user context with new avatar
-        setUser(prevUser => ({
+        setUser((prevUser) => ({
           ...prevUser,
-          avatar: newAvatarUrl
+          avatar: newAvatarUrl,
         }));
-        
+
         // Update localStorage
         localStorage.setItem(localStorageKey, newAvatarUrl);
-        
+
         // Update user info in localStorage
         const userInfo = localStorage.getItem("user-info");
         if (userInfo) {
@@ -124,7 +129,7 @@ const AccountDetailsSection = () => {
           parsedUserInfo.avatar = newAvatarUrl;
           localStorage.setItem("user-info", JSON.stringify(parsedUserInfo));
         }
-        
+
         toast.success("Profile picture updated successfully!");
       } else {
         toast.error(data.message || "Image upload failed");
@@ -132,7 +137,9 @@ const AccountDetailsSection = () => {
     } catch (error) {
       console.error("Image upload error:", error);
       if (error.response?.status === 404) {
-        toast.error("Upload endpoint not found. Please check server configuration.");
+        toast.error(
+          "Upload endpoint not found. Please check server configuration."
+        );
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -154,7 +161,8 @@ const AccountDetailsSection = () => {
       );
       setIsAuthenticated(false);
       setUser(null);
-      localStorage.removeItem("user-info"); // Clear user info on logout
+      localStorage.removeItem("user-info");
+      localStorage.removeItem("token"); // Add this line
       toast.success("Logged out successfully.");
       navigate("/");
     } catch {
@@ -166,8 +174,8 @@ const AccountDetailsSection = () => {
   };
 
   return (
-    <div className="flex flex-col items-center mt-5 mx-auto rounded-xl border-2">
-      {/* Avatar */}
+    <div className="flex flex-col items-center lg:mt-5 mt-0 mx-auto rounded-xl border-2">
+      {/* Avatar - Always at top */}
       <div className="bg-white w-full shadow py-5 flex flex-col items-center justify-center relative cursor-pointer overflow-hidden">
         <label
           htmlFor="avatar-upload"
@@ -202,15 +210,14 @@ const AccountDetailsSection = () => {
 
         <div className="flex flex-col items-start mt-3 px-5 w-auto min-w-0">
           <span
-            className="block font-semibold text-gray-700 leading-tight whitespace-nowrap"
-            style={{ fontSize: "clamp(12px, 5vw, 17px)" }}
+            className="block font-semibold text-gray-700 leading-tight whitespace-nowrap text-lg sm:text-base lg:text-[17px]"
             title={user?.name}
           >
             {user?.name || "Guest"}
           </span>
+
           <span
-            className="block text-gray-500 whitespace-nowrap"
-            style={{ fontSize: "clamp(10px, 3vw, 13px)" }}
+            className="block text-gray-500 whitespace-nowrap text-sm sm:text-sm lg:text-[13px]"
             title={user?.email}
           >
             {user?.email || ""}
@@ -218,41 +225,84 @@ const AccountDetailsSection = () => {
         </div>
       </div>
 
-      {/* Menu */}
-      <div className="w-full bg-gray-100 shadow px-4 py-5 flex flex-col gap-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.to);
+      {/* Menu - Desktop: Vertical list, Mobile/Tablet: Grid layout */}
+      <div className="w-full bg-gray-100 shadow px-4 py-5">
+        {/* Desktop Layout - Hidden on mobile/tablet */}
+        <div className="hidden lg:flex flex-col gap-1">
+          {menuItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.to);
+            return (
+              <Link
+                to={item.to}
+                key={item.text}
+                className={`
+                  flex items-center gap-2 p-2 rounded-lg hover:bg-white
+                  transition
+                  ${
+                    isActive
+                      ? "bg-white !text-pink-600 font-semibold"
+                      : "text-gray-800"
+                  }
+                `}
+              >
+                {item.icon}
+                <span className="font-medium text-[15px]">{item.text}</span>
+              </Link>
+            );
+          })}
 
-          return (
-            <Link
-              to={item.to}
-              key={item.text}
-              className={`
-                flex items-center gap-2 p-2 rounded-lg hover:bg-white
-                transition
-                ${
-                  isActive
-                    ? "bg-white !text-pink-600 font-semibold"
-                    : "text-gray-800"
-                }
-              `}
+          {/* Logout button - Desktop */}
+          <button
+            className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition text-gray-800 font-medium text-[15px]"
+            onClick={() => setShowConfirm(true)}
+            type="button"
+            disabled={loading}
+          >
+            <IoPowerSharp />
+            <span>Logout</span>
+          </button>
+        </div>
+
+        {/* Mobile/Tablet Layout - 2x2 grid + centered logout */}
+        <div className="lg:hidden">
+          {/* Grid for menu items - 2 items per row */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {menuItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.to);
+              return (
+                <Link
+                  to={item.to}
+                  key={item.text}
+                  className={`
+                    flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white
+                    transition text-center
+                    ${
+                      isActive
+                        ? "bg-white !text-pink-600 font-semibold"
+                        : "text-gray-800"
+                    }
+                  `}
+                >
+                  <div className="text-xl">{item.icon}</div>
+                  <span className="font-medium text-sm">{item.text}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Logout button - Mobile/Tablet - Centered */}
+          <div className="flex justify-center">
+            <button
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white transition text-gray-800 font-medium text-sm min-w-[120px]"
+              onClick={() => setShowConfirm(true)}
+              type="button"
+              disabled={loading}
             >
-              {item.icon}
-              <span className="font-medium text-[15px]">{item.text}</span>
-            </Link>
-          );
-        })}
-
-        {/* Logout button */}
-        <button
-          className="flex items-center gap-2 p-2 rounded-lg hover:bg-white transition text-gray-800 font-medium text-[15px]"
-          onClick={() => setShowConfirm(true)}
-          type="button"
-          disabled={loading}
-        >
-          <IoPowerSharp />
-          <span>Logout</span>
-        </button>
+              <IoPowerSharp className="text-xl" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Loader Backdrop */}

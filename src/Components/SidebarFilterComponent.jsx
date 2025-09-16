@@ -21,17 +21,22 @@ const SidebarFilterComponent = ({
   selectedColors = [],
   onColorChange,
   onResetFilters,
+  onApplyFilters, // Added this prop for mobile apply functionality
 }) => {
   const [priceRange, setPriceRange] = useState([selectedPrice.min, selectedPrice.max]);
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [brandExpanded, setBrandExpanded] = useState(false);
   const [colorExpanded, setColorExpanded] = useState(false);
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
+  const [expandedThirdLevel, setExpandedThirdLevel] = useState(null);
 
   useEffect(() => {
     if (categoryData?.sub?.length) {
       const firstWithSub = categoryData.sub.find(
-        (sub) => Array.isArray(sub.sub) && sub.sub.length > 0
+        (sub) => {
+          if (typeof sub === 'string') return false;
+          return Array.isArray(sub.sub) && sub.sub.length > 0;
+        }
       );
       if (firstWithSub) {
         setExpandedSubcategory(firstWithSub.name);
@@ -54,7 +59,6 @@ const SidebarFilterComponent = ({
   const handleInputChange = (e, index) => {
     const inputValue = e.target.value;
     
-    // Allow empty string for better UX
     if (inputValue === '') {
       const newRange = [...priceRange];
       newRange[index] = '';
@@ -68,7 +72,6 @@ const SidebarFilterComponent = ({
       newRange[index] = value;
       setPriceRange(newRange);
       
-      // Only call parent onChange if both values are valid numbers
       if (typeof newRange[0] === 'number' && typeof newRange[1] === 'number') {
         onPriceChange && onPriceChange({ 
           min: newRange[0], 
@@ -80,11 +83,100 @@ const SidebarFilterComponent = ({
 
   const valuetext = (value) => `₹${value}`;
 
-  if (!categoryData) return null; // vanish if not loaded
+  // Helper function to handle subcategory checkbox changes
+  const handleSubChange = (itemName) => {
+    const updated = selectedSubs?.includes(itemName)
+      ? selectedSubs.filter((s) => s !== itemName)
+      : [...(selectedSubs || []), itemName];
+    onSubChange && onSubChange(updated);
+  };
+
+  // Helper function to render subcategory items safely with 4-level support
+  const renderSubcategoryItems = (items, level = 1) => {
+    if (!Array.isArray(items)) return null;
+
+    return items.map((item, index) => {
+      if (!item) return null;
+
+      // Handle string items (leaf nodes)
+      if (typeof item === 'string') {
+        return (
+          <label
+            key={`string-${level}-${index}`}
+            className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1"
+            style={{ marginLeft: `${(level - 1) * 12}px` }}
+          >
+            <input
+              type="checkbox"
+              checked={selectedSubs?.includes(item)}
+              onChange={() => handleSubChange(item)}
+              className="w-4 h-4"
+            />
+            <span className={level === 1 ? "text-[15px] font-semibold text-gray-800" : ""}>{item}</span>
+          </label>
+        );
+      }
+
+      // Handle object items with nested structure
+      if (typeof item === 'object' && item !== null && item.name) {
+        const hasChildren = Array.isArray(item.sub) && item.sub.length > 0;
+        const isExpanded = level === 1 ? 
+          expandedSubcategory === item.name : 
+          expandedThirdLevel === item.name;
+
+        return (
+          <div key={`object-${level}-${index}`} style={{ marginLeft: `${(level - 1) * 12}px` }}>
+            {/* Category header with checkbox and expand/collapse */}
+            <div className="flex items-center justify-between mb-1">
+              <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  checked={selectedSubs?.includes(item.name)}
+                  onChange={() => handleSubChange(item.name)}
+                  className="w-4 h-4"
+                />
+                <span className={level === 1 ? "text-[15px] font-semibold text-gray-800" : "font-medium"}>{item.name}</span>
+              </label>
+              
+              {hasChildren && (
+                <span
+                  className="cursor-pointer text-gray-400 hover:text-gray-600 ml-2"
+                  onClick={() => {
+                    if (level === 1) {
+                      setExpandedSubcategory(isExpanded ? null : item.name);
+                    } else if (level === 2) {
+                      setExpandedThirdLevel(isExpanded ? null : item.name);
+                    }
+                  }}
+                >
+                  {isExpanded ? (
+                    <FaChevronUp size={12} />
+                  ) : (
+                    <FaChevronDown size={12} />
+                  )}
+                </span>
+              )}
+            </div>
+
+            {/* Render children if expanded */}
+            {hasChildren && isExpanded && (
+              <div className="ml-4 pl-2 border-l border-gray-200 max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
+                {renderSubcategoryItems(item.sub, level + 1)}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      return null;
+    }).filter(Boolean);
+  };
+
+  if (!categoryData) return null;
 
   return (
-    <div className="ml-10 space-y-6">
-      {/* CATEGORY SECTION */}
+    <div className="lg:ml-10 space-y-6">
+      {/* CATEGORY SECTION - Updated to support 4 levels */}
       {Array.isArray(categoryData.sub) && categoryData.sub.length > 0 && (
         <div>
           <div
@@ -95,76 +187,8 @@ const SidebarFilterComponent = ({
             {categoryExpanded ? <FaChevronUp /> : <FaChevronDown />}
           </div>
           {categoryExpanded && (
-            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 visible-scrollbar">
-              {categoryData.sub.map(
-                (subcat, i) =>
-                  subcat && (
-                    <div key={i}>
-                      {Array.isArray(subcat.sub) && subcat.sub.length > 0 ? (
-                        <>
-                          <div
-                            className="flex items-center justify-between font-semibold text-gray-800 text-[15px] mb-1 cursor-pointer"
-                            onClick={() =>
-                              setExpandedSubcategory(
-                                expandedSubcategory === subcat.name ? null : subcat.name
-                              )
-                            }
-                          >
-                            <span>{subcat.name}</span>
-                            <span className="text-xs">
-                              {expandedSubcategory === subcat.name ? (
-                                <FaChevronUp />
-                              ) : (
-                                <FaChevronDown />
-                              )}
-                            </span>
-                          </div>
-                          {expandedSubcategory === subcat.name && (
-                            <div className="ml-2 pl-2 border-l max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
-                              {subcat.sub?.map(
-                                (item, j) =>
-                                  item && (
-                                    <label
-                                      key={j}
-                                      className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedSubs?.includes(item)}
-                                        onChange={() => {
-                                          const updated = selectedSubs?.includes(item)
-                                            ? selectedSubs.filter((s) => s !== item)
-                                            : [...(selectedSubs || []), item];
-                                          onSubChange && onSubChange(updated);
-                                        }}
-                                        className="w-4 h-4"
-                                      />
-                                      <span>{item}</span>
-                                    </label>
-                                  )
-                              )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1">
-                          <input
-                            type="checkbox"
-                            checked={selectedSubs?.includes(subcat.name)}
-                            onChange={() => {
-                              const updated = selectedSubs?.includes(subcat.name)
-                                ? selectedSubs.filter((s) => s !== subcat.name)
-                                : [...(selectedSubs || []), subcat.name];
-                              onSubChange && onSubChange(updated);
-                            }}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-[15px] font-semibold text-gray-800">{subcat.name}</span>
-                        </label>
-                      )}
-                    </div>
-                  )
-              )}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 visible-scrollbar">
+              {renderSubcategoryItems(categoryData.sub)}
             </div>
           )}
         </div>
@@ -174,7 +198,7 @@ const SidebarFilterComponent = ({
       {onPriceChange && (
         <div>
           <h3 className="text-sm font-bold mb-2 text-gray-800">Filter by Price</h3>
-          <Box sx={{ width: 220, pl: 1 }}>
+          <Box sx={{ width: '100%', maxWidth: 220, pl: 1 }}>
             <Slider
               getAriaLabel={() => "Price range"}
               value={priceRange}
@@ -225,35 +249,36 @@ const SidebarFilterComponent = ({
               colorExpanded ? "max-h-[0px]" : "max-h-[120px]"
             }`}
           >
-            {colorOptions.map(
-              (color, i) =>
-                color && (
-                  <label
-                    key={i}
-                    className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer ml-2 mb-1"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedColors?.includes(color)}
-                      onChange={() => {
-                        const updated = selectedColors?.includes(color)
-                          ? selectedColors.filter((c) => c !== color)
-                          : [...(selectedColors || []), color];
-                        onColorChange && onColorChange(updated);
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span
-                      className="w-3 h-3 rounded-full inline-block border"
-                      style={{
-                        backgroundColor: color.toLowerCase(),
-                        borderColor: color.toLowerCase(),
-                      }}
-                    ></span>
-                    <span>{color}</span>
-                  </label>
-                )
-            )}
+            {colorOptions.map((color, i) => {
+              if (!color) return null;
+              
+              return (
+                <label
+                  key={i}
+                  className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer ml-2 mb-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedColors?.includes(color)}
+                    onChange={() => {
+                      const updated = selectedColors?.includes(color)
+                        ? selectedColors.filter((c) => c !== color)
+                        : [...(selectedColors || []), color];
+                      onColorChange && onColorChange(updated);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span
+                    className="w-3 h-3 rounded-full inline-block border"
+                    style={{
+                      backgroundColor: color.toLowerCase(),
+                      borderColor: color.toLowerCase(),
+                    }}
+                  ></span>
+                  <span>{color}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
@@ -327,36 +352,48 @@ const SidebarFilterComponent = ({
               brandExpanded ? "max-h-[0px]" : "max-h-[120px]"
             }`}
           >
-            {brandOptions.map(
-              (brand, i) =>
-                brand && (
-                  <label
-                    key={i}
-                    className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer ml-2 mb-1"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedBrands?.includes(brand)}
-                      onChange={() => {
-                        const updated = selectedBrands?.includes(brand)
-                          ? selectedBrands.filter((b) => b !== brand)
-                          : [...(selectedBrands || []), brand];
-                        onBrandChange && onBrandChange(updated);
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span>{brand}</span>
-                  </label>
-                )
-            )}
+            {brandOptions.map((brand, i) => {
+              if (!brand) return null;
+              
+              return (
+                <label
+                  key={i}
+                  className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer ml-2 mb-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedBrands?.includes(brand)}
+                    onChange={() => {
+                      const updated = selectedBrands?.includes(brand)
+                        ? selectedBrands.filter((b) => b !== brand)
+                        : [...(selectedBrands || []), brand];
+                      onBrandChange && onBrandChange(updated);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span>{brand}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* RESET BUTTON (Always visible) */}
-      <div className="flex flex-col gap-2 mt-6 mr-6">
+      {/* BUTTONS SECTION - Updated for mobile and desktop */}
+      <div className="flex flex-col gap-3 mt-6 lg:mr-6">
+        {/* Mobile Apply Filter Button - Only visible on small screens */}
+        {onApplyFilters && (
+          <button
+            className="md:hidden bg-green-500 hover:bg-green-600 text-white text-sm py-3 px-4 rounded font-medium"
+            onClick={onApplyFilters}
+          >
+            Apply Filters
+          </button>
+        )}
+        
+        {/* Reset Button - Always visible */}
         <button
-          className="bg-red-500 hover:bg-red-600 text-white text-sm py-2 rounded"
+          className="bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-4 rounded"
           onClick={onResetFilters}
         >
           Reset Filters

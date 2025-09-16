@@ -15,12 +15,75 @@ export const Context = createContext({
   setIsAuthenticated: () => {},
   user: null,
   setUser: () => {},
+  cartCount: 0,
+  updateCartCount: () => {},
+  wishlistCount: 0,
+  updateWishlistCount: () => {},
 });
 
 const AppWrapper = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Function to fetch cart count
+  const fetchCartCount = async () => {
+    if (!isAuthenticated) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/getCartItems`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        const totalCount = res.data.data.reduce(
+          (sum, item) => sum + item.quantity,
+          0
+        );
+        setCartCount(totalCount);
+      }
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+      setCartCount(0);
+    }
+  };
+
+  // Function to update cart count (can be called from components)
+  const updateCartCount = () => {
+    fetchCartCount();
+  };
+
+  const fetchWishlistCount = async () => {
+    if (!isAuthenticated) {
+      setWishlistCount(0);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        setWishlistCount(res.data.data.length);
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist count:", error);
+      setWishlistCount(0);
+    }
+  };
+
+  // Function to update wishlist count
+  const updateWishlistCount = () => {
+    fetchWishlistCount();
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,6 +107,17 @@ const AppWrapper = () => {
     checkAuth();
   }, []);
 
+  // Fetch cart count when authentication status changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCartCount();
+      fetchWishlistCount(); // Add this line
+    } else {
+      setCartCount(0);
+      setWishlistCount(0); // Add this line
+    }
+  }, [isAuthenticated]);
+
   return (
     <Context.Provider
       value={{
@@ -52,6 +126,10 @@ const AppWrapper = () => {
         user,
         setUser,
         authLoading,
+        cartCount,
+        updateCartCount,
+        wishlistCount,
+        updateWishlistCount,
       }}
     >
       <App />

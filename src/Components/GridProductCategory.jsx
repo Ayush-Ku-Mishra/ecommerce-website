@@ -5,36 +5,38 @@ import { TfiViewListAlt } from "react-icons/tfi";
 import { BsCart4 } from "react-icons/bs";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import ContactUsPart from "./ContactUsPart";
-import { products } from "../data/productItems";
-import { categories } from "../data/categories";
-
-import { useSelector, useDispatch } from "react-redux";
-import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice"; // adjust path if needed
-import { toast } from "react-toastify";
+import { categories } from "../data/categories"; // Fallback categories
+import axios from "axios";
+import { useContext } from "react";
+import { Context } from "../main";
+import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-import { addToCart } from "../redux/cartSlice";
 
-const GridProductCategory = ({ SidebarFilterComponent }) => {
+const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+const GridProductCategory = ({ 
+  SidebarFilterComponent, 
+  categoryName, 
+  shouldShowFilter = () => true, // Default function if not provided
+  onFilterClick = () => {} // Default function if not provided
+}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Redux wishlist hooks
-  const wishlist = useSelector((state) => state.wishlist.items);
-  const dispatch = useDispatch();
+  // API state management
+  const [products, setProducts] = useState([]);
+  const [backendCategories, setBackendCategories] = useState([]);
+  const [categoryData, setCategoryData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [wishlistItems, setWishlistItems] = useState(new Set());
 
-  // Use category from URL search params
-  const category = searchParams.get("category");
+  // Use category from URL search params or prop
+  const category = searchParams.get("category") || categoryName;
   console.log("Selected category:", category);
-
-  // Correctly find categoryData based on URL param category
-  const categoryData = Array.isArray(categories)
-    ? categories.find(
-        (cat) =>
-          typeof cat?.name === "string" &&
-          typeof category === "string" &&
-          cat.name.toLowerCase() === category.toLowerCase()
-      )
-    : null;
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubs, setSelectedSubs] = useState([]);
@@ -46,9 +48,222 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
   const [viewType, setViewType] = useState("grid");
   const [sortOption, setSortOption] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
+  const { isAuthenticated, updateCartCount, updateWishlistCount } =
+    useContext(Context);
 
+  // Fetch categories from backend
+  const fetchBackendCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/category/get-categories`
+      );
+
+      if (response.data.success) {
+        setBackendCategories(response.data.data);
+        console.log("Backend categories fetched:", response.data.data);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch categories");
+      }
+    } catch (error) {
+      console.error("Error fetching backend categories:", error);
+      // Fallback to static categories if backend fails
+      setBackendCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Transform backend category structure to match frontend expectations with 4 levels
+  const transformCategoryData = (backendCategories, targetCategoryName) => {
+    if (
+      !backendCategories ||
+      !backendCategories.length ||
+      !targetCategoryName
+    ) {
+      return null;
+    }
+
+    // Find the target category (case-insensitive)
+    const targetCategory = backendCategories.find(
+      (cat) =>
+        cat.name && cat.name.toLowerCase() === targetCategoryName.toLowerCase()
+    );
+
+    if (!targetCategory) {
+      console.log(`Category "${targetCategoryName}" not found in backend data`);
+      return null;
+    }
+
+    // Transform the structure recursively to support 4 levels
+    const transformChildren = (children, level = 1) => {
+      if (!children || !Array.isArray(children)) {
+        return [];
+      }
+
+      return children
+        .map((child) => {
+          if (!child || !child.name) {
+            return null;
+          }
+
+          // If child has children, create nested structure
+          if (child.children && child.children.length > 0) {
+            return {
+              name: child.name,
+              sub: transformChildren(child.children, level + 1),
+            };
+          }
+
+          // If no children, return just the name
+          return child.name;
+        })
+        .filter(Boolean); // Remove null values
+    };
+
+    const transformedData = {
+      name: targetCategory.name,
+      sub: targetCategory.children
+        ? transformChildren(targetCategory.children)
+        : [],
+    };
+
+    return transformedData;
+  };
+
+  // Helper function to get sizes from product
+  const getSizesFromProduct = (product) => {
+    const sizes = [];
+
+    if (product.dressSizes && product.dressSizes.length > 0) {
+      sizes.push(...product.dressSizes);
+    }
+
+    if (product.shoesSizes && product.shoesSizes.length > 0) {
+      sizes.push(...product.shoesSizes);
+    }
+
+    if (product.freeSize === "yes") {
+      sizes.push({ size: "Free Size", stock: product.stock || 0 });
+    }
+
+    if (sizes.length === 0) {
+      sizes.push({ size: "default", stock: product.stock || 0 });
+    }
+
+    return sizes;
+  };
+
+  // Helper function to generate consistent product ID
+  const generateStandardProductId = (productData, variantData) => {
+    const baseProductId = productData.id.split("_")[0];
+    return baseProductId;
+  };
+
+  // API function to fetch products
+  const fetchProducts = async (categoryName) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let endpoint = `${API_BASE_URL}/api/v1/product/getAllProducts`;
+      const params = new URLSearchParams();
+
+      params.append("page", "1");
+      params.append("perPage", "1000");
+
+      // If we have a specific category, use the category-specific endpoint
+      if (categoryName) {
+        endpoint = `${API_BASE_URL}/api/v1/product/getAllProductsByCatName`;
+        params.append("categoryName", categoryName);
+      }
+
+      console.log(`Fetching from: ${endpoint}?${params}`);
+
+      const response = await axios.get(`${endpoint}?${params}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = response.data;
+
+      if (data.success) {
+        // Transform backend data to match your frontend structure
+        const transformedProducts = data.products.map((product) => {
+          const transformed = {
+            id: product._id,
+            name: product.name,
+            brand: product.brand || "Unknown Brand",
+            category: [product.categoryName || "Uncategorized"],
+            subcategory: [
+              product.subCatName,
+              product.thirdSubCatName,
+              product.fourthSubCatName,
+            ].filter(Boolean),
+            rating: product.rating || 0,
+            discount: Number(product.discount || 0),
+            description: product.productDetails?.description || "",
+            images: product.images || [],
+            originalPrice: Math.round(
+              Number(product.oldPrice || product.price || 0)
+            ),
+            discountedPrice: Math.round(Number(product.price || 0)),
+            defaultVariant: {
+              id: `${product._id}_default`,
+              color: product.color || "Default",
+              images: product.images || [],
+              originalPrice: Math.round(
+                Number(product.oldPrice || product.price || 0)
+              ),
+              discountedPrice: Math.round(Number(product.price || 0)),
+              sizes: getSizesFromProduct(product),
+            },
+            variants: product.colorVariants
+              ? product.colorVariants.map((variant, index) => ({
+                  id: `${product._id}_variant_${index}`,
+                  color: variant.colorName || variant.color || "Default",
+                  images: variant.images || product.images || [],
+                  originalPrice: Math.round(
+                    Number(
+                      variant.oldPrice ||
+                        variant.price ||
+                        product.oldPrice ||
+                        product.price ||
+                        0
+                    )
+                  ),
+                  discountedPrice: Math.round(
+                    Number(variant.price || product.price || 0)
+                  ),
+                  sizes: getSizesFromProduct(variant),
+                }))
+              : [],
+          };
+
+          return transformed;
+        });
+
+        setProducts(transformedProducts);
+        setTotalProducts(data.count || transformedProducts.length);
+      } else {
+        throw new Error(data.message || "Failed to fetch products");
+      }
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setError(
+        err.response?.data?.message || err.message || "Failed to fetch products"
+      );
+      setProducts([]);
+      setTotalProducts(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter products based on current category
   const filteredProducts = useMemo(() => {
-    if (!category) return products; // fallback: show all if no category
+    if (!category) return products;
 
     return products.filter((product) => {
       const productCategories = Array.isArray(product.category)
@@ -82,6 +297,51 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     ].sort();
   }, [filteredProducts]);
 
+  // Update category data when backend categories are loaded or category changes
+  useEffect(() => {
+    if (backendCategories.length > 0 && category) {
+      const transformedData = transformCategoryData(
+        backendCategories,
+        category
+      );
+      if (transformedData) {
+        setCategoryData(transformedData);
+      } else {
+        // Fallback to static categories
+        const fallbackData = categories.find(
+          (cat) =>
+            typeof cat?.name === "string" &&
+            typeof category === "string" &&
+            cat.name.toLowerCase() === category.toLowerCase()
+        );
+        setCategoryData(fallbackData || null);
+      }
+    } else if (category) {
+      // Use static categories as fallback
+      const fallbackData = categories.find(
+        (cat) =>
+          typeof cat?.name === "string" &&
+          typeof category === "string" &&
+          cat.name.toLowerCase() === category.toLowerCase()
+      );
+      setCategoryData(fallbackData || null);
+    }
+  }, [backendCategories, category]);
+
+  // Fetch categories and products when component mounts
+  useEffect(() => {
+    fetchBackendCategories();
+  }, []);
+
+  // Fetch products when category changes
+  useEffect(() => {
+    if (category) {
+      fetchProducts(category);
+    } else {
+      fetchProducts();
+    }
+  }, [category]);
+
   useEffect(() => {
     const category = searchParams.get("category") || "";
     const subs = searchParams.getAll("sub");
@@ -93,8 +353,6 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     const sort = searchParams.get("sort") || "";
     const minPrice = parseInt(searchParams.get("minPrice")) || 0;
     const maxPrice = parseInt(searchParams.get("maxPrice")) || Infinity;
-
-    if (!category) return;
 
     setSelectedCategory(category);
     setSelectedSubs(subs);
@@ -112,7 +370,7 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
   useEffect(() => {
     if (!didMount.current) {
       didMount.current = true;
-      return; // skip initial run to avoid loop
+      return;
     }
 
     const params = new URLSearchParams();
@@ -141,36 +399,180 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     setSearchParams,
   ]);
 
-  const handleAddToCart = (product, variant, e) => {
-    e.stopPropagation(); // Prevent navigation on card click
-    dispatch(
-      addToCart({
-        id: variant.id,
-        title: product.name,
-        brand: product.brand,
-        color: variant.color || product.defaultVariant?.color,
-        size: variant.sizes?.[0]?.size || "default", // you can prompt user to pick size
-        price: variant.discountedPrice ?? product.discountedPrice,
-        originalPrice: variant.originalPrice ?? product.originalPrice,
-        quantity: 1,
-        image: variant.images?.[0] || product.images?.[0],
-        discount: product.discount,
-      })
+  const fetchWishlistStatus = async () => {
+    if (!isAuthenticated) {
+      setWishlistItems(new Set());
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        const wishlistProductIds = new Set(
+          response.data.data.map((item) => item.productId)
+        );
+        setWishlistItems(wishlistProductIds);
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist status:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlistStatus();
+  }, [isAuthenticated]);
+
+  const addToWishlistHandler = async (productData, variantData) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to wishlist");
+      return;
+    }
+
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
     );
-    toast.success("Added to cart!");
+
+    try {
+      const wishlistData = {
+        productId: standardProductId,
+        productTitle: `${productData.name} - ${variantData.color}`,
+        image: variantData.images?.[0] || productData.images?.[0],
+        rating: productData.rating || 0,
+        price: Math.round(
+          variantData.discountedPrice ?? productData.discountedPrice
+        ),
+        discount: productData.discount || 0,
+        oldPrice: Math.round(
+          variantData.originalPrice ?? productData.originalPrice
+        ),
+        brand: productData.brand,
+      };
+
+      await axios.post(
+        `${API_BASE_URL}/api/v1/wishlist/createWishlist`,
+        wishlistData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      setWishlistItems((prev) => new Set([...prev, standardProductId]));
+      toast.success("Added to wishlist");
+      updateWishlistCount();
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      if (error.response?.status === 409) {
+        toast.error("Item already in wishlist");
+        setWishlistItems((prev) => new Set([...prev, standardProductId]));
+      } else {
+        toast.error("Failed to add to wishlist");
+      }
+    }
+  };
+
+  const removeFromWishlistHandler = async (productData, variantData) => {
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
+
+    try {
+      const wishlistResponse = await axios.get(
+        `${API_BASE_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (wishlistResponse.data.success) {
+        const wishlistItem = wishlistResponse.data.data.find(
+          (item) => item.productId === standardProductId
+        );
+        if (wishlistItem) {
+          await axios.delete(
+            `${API_BASE_URL}/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
+            {
+              withCredentials: true,
+            }
+          );
+
+          setWishlistItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(standardProductId);
+            return newSet;
+          });
+          toast.success("Removed from wishlist");
+          updateWishlistCount();
+        }
+      }
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      toast.error("Failed to remove from wishlist");
+    }
+  };
+
+  const handleAddToCart = async (product, variant, e) => {
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
+
+    try {
+      const baseProductId = product.id.split("_")[0];
+      const standardVariantId = `${baseProductId}_${
+        variant.color || "default"
+      }_${variant.sizes?.[0]?.size || "default"}`;
+
+      const cartData = {
+        productId: baseProductId,
+        variantId: standardVariantId,
+        quantity: 1,
+        selectedSize: variant.sizes?.[0]?.size || null,
+        selectedColor: variant.color,
+        price: Math.round(variant.discountedPrice ?? product.discountedPrice),
+        originalPrice: Math.round(
+          variant.originalPrice ?? product.originalPrice
+        ),
+        productName: product.name,
+        productBrand: product.brand,
+        productImage: variant.images?.[0] || product.images?.[0],
+        discount: product.discount?.toString() || "",
+      };
+
+      await axios.post(`${API_BASE_URL}/api/v1/cart/createCart`, cartData, {
+        withCredentials: true,
+      });
+
+      toast.success("Added to cart!");
+      updateCartCount();
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      if (error.response?.status === 409) {
+        toast.info("Item already in cart");
+      } else {
+        toast.error("Failed to add to cart");
+      }
+    }
   };
 
   useEffect(() => {
     const handleScroll = () => {
-      // Assume products is your array of product data
-      const maxProducts = products.length;
+      const maxProducts = totalProducts;
       if (
         window.innerHeight + window.scrollY >=
           document.body.offsetHeight - 200 &&
-        visibleCount < maxProducts // Only load more if not all shown
+        visibleCount < maxProducts
       ) {
         setVisibleCount((prev) => {
-          // Calculate new count, capped at maxProducts
           const newCount = Math.min(prev + 10, maxProducts);
           return newCount;
         });
@@ -179,14 +581,12 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
 
     window.addEventListener("scroll", handleScroll);
 
-    // Clean up: remove listener if all products are shown
-    if (visibleCount >= products.length) {
+    if (visibleCount >= totalProducts) {
       window.removeEventListener("scroll", handleScroll);
     }
 
-    // Cleanup on unmount
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [visibleCount, products.length]); // Add dependencies here!
+  }, [visibleCount, totalProducts]);
 
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
@@ -225,7 +625,6 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
         ? product.subcategory
         : [];
 
-      // ✅ Get default variant price for product-level price check
       const defaultPrice =
         product.defaultVariant?.discountedPrice ?? product.discountedPrice ?? 0;
 
@@ -238,7 +637,6 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
           selectedDiscount.some((d) => parseInt(product.discount) >= d)) &&
         (selectedBrands.length === 0 ||
           selectedBrands.includes(product.brand)) &&
-        // ✅ Add product-level price check
         defaultPrice >= selectedPrice.min &&
         defaultPrice <= selectedPrice.max
       ) {
@@ -257,7 +655,6 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
           return colorMatch && priceMatch;
         });
 
-        // ✅ Add price check for defaultVariant push
         if (
           selectedColors.length === 0 &&
           matchingVariants.length === 0 &&
@@ -322,7 +719,6 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     return sortedVariants.slice(0, visibleCount);
   }, [sortedVariants, visibleCount]);
 
-  // Fisher-Yates shuffle function (unchanged)
   const shuffleArray = (array) => {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -332,62 +728,100 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
     return arr;
   };
 
-  // Remove state and useEffect, instead useMemo with conditional shuffle:
   const shuffledVisibleVariants = React.useMemo(() => {
     if (!sortOption) {
-      // No sorting applied, shuffle variants for better UX
       return shuffleArray(visibleVariants);
     }
-    // Sorting applied, do not shuffle to preserve sort order
     return visibleVariants;
   }, [visibleVariants, sortOption]);
 
-  // Updated handleProductClick that now navigates with variant id
   const handleProductClick = (variantId) => {
     sessionStorage.setItem("scrollPosition", window.scrollY);
-    navigate(`/product/${variantId}`);
+    const baseProductId = variantId.split("_")[0];
+    navigate(`/product/${baseProductId}`);
   };
 
-  // Check if variant is in wishlist
-  const isInWishlist = (variantId) => {
-    return wishlist.some((item) => item.id === variantId);
+  const isInWishlistCheck = (productData, variantData) => {
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
+    return wishlistItems.has(standardProductId);
   };
+
+  // Prepare filter props for SidebarFilterComponent
+  const filterProps = {
+    categoryData,
+    onRatingChange: setSelectedRating,
+    onDiscountChange: setSelectedDiscount,
+    onSubChange: setSelectedSubs,
+    onPriceChange: setSelectedPrice,
+    selectedSubs,
+    selectedRating,
+    selectedDiscount,
+    selectedPrice,
+    brandOptions,
+    selectedBrands,
+    onBrandChange: setSelectedBrands,
+    colorOptions,
+    selectedColors,
+    onColorChange: setSelectedColors,
+    onApplyFilters: handleApplyFilters,
+    onResetFilters: handleResetFilters,
+  };
+
+  // Loading state
+  if (loading || categoriesLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {categoriesLoading
+              ? "Loading categories..."
+              : "Loading products..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-center">
+          <div className="text-red-500 text-lg mb-4">
+            ⚠️ Error loading products
+          </div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => fetchProducts(category)}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="p-4 mb-4">
-        <div className="flex gap-6">
+        <div className="flex flex-wrap lg:flex-nowrap gap-6">
           {/* Sidebar */}
-          <aside className="w-[24%] bg-white sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-2 custom-scroll z-10">
+          <aside className="hidden lg:block lg:w-1/4 bg-white sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-2 custom-scroll z-10">
             {SidebarFilterComponent && categoryData && (
-              <SidebarFilterComponent
-                categoryData={categoryData}
-                onCategoryChange={setSelectedCategory}
-                onRatingChange={setSelectedRating}
-                onDiscountChange={setSelectedDiscount}
-                onSubChange={setSelectedSubs}
-                onPriceChange={setSelectedPrice}
-                onBrandChange={setSelectedBrands}
-                onColorChange={setSelectedColors}
-                selectedCategory={selectedCategory}
-                selectedRating={selectedRating}
-                selectedDiscount={selectedDiscount}
-                selectedSubs={selectedSubs}
-                selectedPrice={selectedPrice}
-                selectedBrands={selectedBrands}
-                selectedColors={selectedColors}
-                brandOptions={brandOptions}
-                colorOptions={colorOptions}
-                onApplyFilters={handleApplyFilters}
-                onResetFilters={handleResetFilters}
-              />
+              <SidebarFilterComponent {...filterProps} />
             )}
           </aside>
 
           {/* Main Product Area */}
-          <main className="scrollbar-hide w-[76%] sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-4">
-            <div className="flex sticky top-0 z-30 items-center justify-between mb-4 px-3 py-2 bg-gray-100 shadow rounded-md">
-              <div className="flex items-center gap-2">
+          <main className="scrollbar-hide w-full lg:w-3/4 sticky top-24 h-[calc(100vh-96px)] overflow-y-auto ">
+            <div className="flex flex-col sm:flex-row lg:sticky top-0 z-30 items-start sm:items-center justify-between mb-4 px-3 py-2 bg-gray-100 shadow rounded-md gap-3">
+              {/* Left section */}
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setViewType("grid")}
                   className={`p-1 rounded ${
@@ -404,19 +838,20 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                 >
                   <TfiViewListAlt size={14} />
                 </button>
-                <span className="text-sm text-gray-700 ml-2">
+                <span className="text-sm text-gray-700 ml-1 sm:ml-2">
                   There are {filteredVariants.length} products.
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">
+              {/* Right section */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                   Sort by:
                 </label>
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="flex-1 sm:flex-none border border-gray-300 rounded px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-pink-500"
                 >
                   <option value="">-- Select --</option>
                   <option value="name-asc">Name (A-Z)</option>
@@ -433,9 +868,7 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                 {shuffledVisibleVariants.map(({ product, variant }) => {
                   const productImage =
                     variant.images?.[0] || product.images?.[0];
-
-                  // new: isInWishlist for this card
-                  const inWishlist = isInWishlist(variant.id);
+                  const inWishlist = isInWishlistCheck(product, variant);
 
                   return (
                     <div key={variant.id} className="w-full shadow-md bg-white">
@@ -447,32 +880,17 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                           src={productImage}
                           alt={`${product.name} - ${variant.color}`}
                           className="w-full h-full object-top object-cover"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-image.jpg";
+                          }}
                         />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             if (inWishlist) {
-                              dispatch(removeFromWishlist(variant.id));
-                              toast.info("Removed from wishlist");
+                              removeFromWishlistHandler(product, variant);
                             } else {
-                              dispatch(
-                                addToWishlist({
-                                  id: variant.id,
-                                  title: product.name,
-                                  brand: product.brand,
-                                  image:
-                                    variant.images?.[0] || product.images?.[0],
-                                  price:
-                                    variant.discountedPrice ??
-                                    product.discountedPrice,
-                                  originalPrice:
-                                    variant.originalPrice ??
-                                    product.originalPrice,
-                                  discount: product.discount,
-                                  description: product.description || "",
-                                })
-                              );
-                              toast.success("Added to wishlist");
+                              addToWishlistHandler(product, variant);
                             }
                           }}
                           className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
@@ -509,20 +927,20 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                         <div className="flex items-center justify-between">
                           <span className="line-through text-gray-500 font-[16px]">
                             ₹
-                            {(
+                            {Math.round(
                               variant.originalPrice ?? product.originalPrice
-                            ).toLocaleString()}
+                            )}
                           </span>
-                          <span className="text-red-500 font-[600]">
+                          <span className="text-red-500 font-semibold text-md">
                             ₹
-                            {(
+                            {Math.round(
                               variant.discountedPrice ?? product.discountedPrice
-                            ).toLocaleString()}
+                            )}
                           </span>
                         </div>
-                        {product.discount && (
+                        {product.discount > 0 && (
                           <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
-                            {product.discount} off
+                            {product.discount}% off
                           </div>
                         )}
                         <button
@@ -544,48 +962,33 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                 {shuffledVisibleVariants.map(({ product, variant }) => {
                   const productImage =
                     variant.images?.[0] || product.images?.[0];
-
-                  const inWishlist = isInWishlist(variant.id);
+                  const inWishlist = isInWishlistCheck(product, variant);
 
                   return (
                     <div
                       key={variant.id}
-                      className="w-full bg-white shadow rounded-lg overflow-hidden flex"
+                      className="w-full bg-white shadow rounded-lg overflow-hidden flex flex-col sm:flex-row"
                     >
+                      {/* Image section */}
                       <div
-                        className="w-[25%] h-[320px] relative cursor-pointer"
+                        className="w-full h-72 sm:w-[25%] sm:h-[320px] relative cursor-pointer"
                         onClick={() => handleProductClick(variant.id)}
                       >
                         <img
                           src={productImage}
                           alt={`${product.name} - ${variant.color}`}
                           className="w-full h-full object-cover p-1 rounded-lg"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-image.jpg";
+                          }}
                         />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             if (inWishlist) {
-                              dispatch(removeFromWishlist(variant.id));
-                              toast.info("Removed from wishlist");
+                              removeFromWishlistHandler(product, variant);
                             } else {
-                              dispatch(
-                                addToWishlist({
-                                  id: variant.id,
-                                  title: product.name,
-                                  brand: product.brand,
-                                  image:
-                                    variant.images?.[0] || product.images?.[0],
-                                  price:
-                                    variant.discountedPrice ??
-                                    product.discountedPrice,
-                                  originalPrice:
-                                    variant.originalPrice ??
-                                    product.originalPrice,
-                                  discount: product.discount,
-                                  description: product.description || "",
-                                })
-                              );
-                              toast.success("Added to wishlist");
+                              addToWishlistHandler(product, variant);
                             }
                           }}
                           className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
@@ -607,7 +1010,8 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                         </button>
                       </div>
 
-                      <div className="w-[60%] p-4 flex flex-col justify-between">
+                      {/* Details section */}
+                      <div className="w-full sm:w-[60%] p-4 flex flex-col justify-between">
                         <div>
                           <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis hover:text-red-500">
                             {product.brand}
@@ -620,28 +1024,25 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                               {product.name} - {variant.color}
                             </Link>
                           </h3>
-                          <p className="text-sm text-gray-600 mt-2">
-                            Lorem Ipsum is simply dummy text of the printing and
-                            typesetting industry.
-                          </p>
+
                           <div className="flex items-center gap-3 mt-2 mb-2">
                             <span className="line-through text-gray-500 text-md">
                               ₹
-                              {(
+                              {Math.round(
                                 variant.originalPrice ?? product.originalPrice
-                              ).toLocaleString()}
+                              )}
                             </span>
                             <span className="text-red-500 font-semibold text-md">
                               ₹
-                              {(
+                              {Math.round(
                                 variant.discountedPrice ??
-                                product.discountedPrice
-                              ).toLocaleString()}
+                                  product.discountedPrice
+                              )}
                             </span>
                           </div>
-                          {product.discount && (
+                          {product.discount > 0 && (
                             <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
-                              {product.discount} off
+                              {product.discount}% off
                             </div>
                           )}
                         </div>
@@ -658,10 +1059,23 @@ const GridProductCategory = ({ SidebarFilterComponent }) => {
                 })}
               </div>
             )}
+
+            {/* Empty state */}
+            {!loading && shuffledVisibleVariants.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-500 text-lg mb-2">
+                  No products found
+                </div>
+                <p className="text-gray-400">
+                  Try adjusting your filters or check back later.
+                </p>
+              </div>
+            )}
           </main>
         </div>
       </div>
-      <ContactUsPart />
+
+      
     </div>
   );
 };

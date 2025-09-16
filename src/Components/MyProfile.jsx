@@ -39,7 +39,6 @@ const MyProfile = () => {
   });
 
   const [showPasswords, setShowPasswords] = useState({
-    currentPassword: false,
     newPassword: false,
     confirmPassword: false,
   });
@@ -134,9 +133,9 @@ const MyProfile = () => {
     }
   };
 
-  const handleChangePassword = async (data) => {
+  const handleSetPassword = async (data) => {
     if (data.newPassword !== data.confirmPassword) {
-      toast.error("New passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -144,9 +143,8 @@ const MyProfile = () => {
 
     try {
       const { data: resData } = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/change-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/set-password`,
         {
-          currentPassword: data.currentPassword,
           newPassword: data.newPassword,
           confirmPassword: data.confirmPassword,
         },
@@ -156,23 +154,22 @@ const MyProfile = () => {
       );
 
       if (resData.success) {
-        toast.success("Password changed successfully!");
+        toast.success("Password set successfully!");
         reset();
         setShowPasswords({
-          currentPassword: false,
           newPassword: false,
           confirmPassword: false,
         });
         setPasswordDialogOpen(false);
       } else {
-        toast.error(resData.message || "Failed to change password");
+        toast.error(resData.message || "Failed to set password");
       }
     } catch (error) {
-      console.error("Password change error:", error);
+      console.error("Password set error:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to change password. Please try again.");
+        toast.error("Failed to set password. Please try again.");
       }
     } finally {
       setPasswordLoading(false);
@@ -182,7 +179,6 @@ const MyProfile = () => {
   const handleClosePasswordDialog = () => {
     reset();
     setShowPasswords({
-      currentPassword: false,
       newPassword: false,
       confirmPassword: false,
     });
@@ -198,14 +194,19 @@ const MyProfile = () => {
   }
 
   return (
-    <div className="flex gap-6 ml-10 mt-2 max-w-[1200px] mx-auto mb-8">
-      {/* Left Sidebar */}
-      <div className="sidebar flex-shrink-0 min-w-[20%] w-auto sticky top-28 self-start">
+    <div className="px-0 md:px-0 md:flex md:gap-6 lg:ml-10 ml-0 lg:mt-2 max-w-[1200px] mx-auto">
+      {/* Mobile: AccountDetailsSection at top */}
+      <div className="md:hidden mb-4">
+        <AccountDetailsSection />
+      </div>
+
+      {/* Desktop: Left Sidebar */}
+      <div className="hidden md:block sidebar flex-shrink-0 min-w-[20%] w-auto sticky top-28 self-start">
         <AccountDetailsSection />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 mt-5 relative">
+      <div className="flex-1 md:mt-5 relative">
         <Card className="shadow-lg relative">
           {/* Local Loader inside Personal Information Card */}
           {loading && (
@@ -214,18 +215,20 @@ const MyProfile = () => {
             </div>
           )}
 
-          <CardContent className="p-8">
-            <div className="flex justify-between items-center mb-6">
-              <Typography variant="h4" className="font-bold text-gray-800">
+          <CardContent className="p-4 md:p-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3 sm:gap-0">
+              <h2 className="font-semibold text-gray-800 text-2xl md:text-base lg:text-3xl">
                 Personal Information
-              </Typography>
+              </h2>
+
               <Button
                 variant="outlined"
                 color="secondary"
                 onClick={() => setPasswordDialogOpen(true)}
                 size="small"
+                className="self-start sm:self-center"
               >
-                Change Password
+                Set Password
               </Button>
             </div>
 
@@ -254,10 +257,14 @@ const MyProfile = () => {
                   onChange={handleChange}
                   type="tel"
                   fullWidth
-                  disabled
+                  disabled={!isEditing}
                   size="small"
                   variant="outlined"
-                  helperText="Phone number cannot be changed"
+                  helperText={
+                    !isEditing
+                      ? "Click Edit Profile to change phone number"
+                      : "Enter your mobile number"
+                  }
                 />
               </Grid>
 
@@ -278,13 +285,14 @@ const MyProfile = () => {
             </Grid>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-5">
+            <div className="flex flex-col sm:flex-row gap-3 mt-5">
               {!isEditing ? (
                 <Button
                   variant="contained"
                   color="primary"
                   onClick={handleEdit}
                   size="medium"
+                  className="w-full sm:w-auto"
                 >
                   Edit Profile
                 </Button>
@@ -297,6 +305,7 @@ const MyProfile = () => {
                       color="primary"
                       disabled={loading}
                       size="medium"
+                      className="w-full sm:w-auto"
                     >
                       {loading ? "Updating..." : "Save Changes"}
                     </Button>
@@ -307,6 +316,7 @@ const MyProfile = () => {
                     onClick={handleCancel}
                     disabled={loading}
                     size="medium"
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -317,7 +327,7 @@ const MyProfile = () => {
         </Card>
       </div>
 
-      {/* Change Password Dialog */}
+      {/* Set Password Dialog */}
       <Dialog
         open={passwordDialogOpen}
         onClose={handleClosePasswordDialog}
@@ -326,46 +336,13 @@ const MyProfile = () => {
       >
         <DialogTitle>
           <Typography variant="h5" className="font-semibold">
-            Change Password
+            Set Password
           </Typography>
         </DialogTitle>
 
-        <form onSubmit={handleSubmit(handleChangePassword)}>
+        <form onSubmit={handleSubmit(handleSetPassword)}>
           <DialogContent>
             <div className="space-y-4 pt-2">
-              {/* Current Password */}
-              <TextField
-                label="Current Password"
-                type={showPasswords.currentPassword ? "text" : "password"}
-                fullWidth
-                size="small"
-                disabled={passwordLoading}
-                error={!!errors.currentPassword}
-                helperText={errors.currentPassword?.message}
-                {...register("currentPassword", {
-                  required: "Current password is required",
-                })}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() =>
-                          togglePasswordVisibility("currentPassword")
-                        }
-                        edge="end"
-                        size="small"
-                      >
-                        {showPasswords.currentPassword ? (
-                          <AiOutlineEyeInvisible />
-                        ) : (
-                          <AiOutlineEye />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
               {/* New Password */}
               <TextField
                 label="New Password"
@@ -379,7 +356,7 @@ const MyProfile = () => {
                   "At least 6 chars, including uppercase, lowercase, number & special char"
                 }
                 {...register("newPassword", {
-                  required: "New password is required",
+                  required: "Password is required",
                   minLength: {
                     value: 6,
                     message: "Password must be at least 6 characters",
@@ -411,7 +388,7 @@ const MyProfile = () => {
 
               {/* Confirm New Password */}
               <TextField
-                label="Confirm New Password"
+                label="Confirm Password"
                 type={showPasswords.confirmPassword ? "text" : "password"}
                 fullWidth
                 size="small"
@@ -419,7 +396,7 @@ const MyProfile = () => {
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword?.message}
                 {...register("confirmPassword", {
-                  required: "Please confirm your new password",
+                  required: "Please confirm your password",
                   validate: (value) =>
                     value === newPassword || "Passwords do not match",
                 })}
@@ -447,7 +424,10 @@ const MyProfile = () => {
           </DialogContent>
 
           <DialogActions className="p-6 pt-2">
-            <Button onClick={handleClosePasswordDialog} disabled={passwordLoading}>
+            <Button
+              onClick={handleClosePasswordDialog}
+              disabled={passwordLoading}
+            >
               Cancel
             </Button>
             <Button
@@ -456,7 +436,7 @@ const MyProfile = () => {
               color="primary"
               disabled={passwordLoading}
             >
-              {passwordLoading ? "Changing..." : "Change Password"}
+              {passwordLoading ? "Setting..." : "Set Password"}
             </Button>
           </DialogActions>
         </form>

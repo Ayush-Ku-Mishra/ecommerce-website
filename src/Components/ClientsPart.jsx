@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
-import { EffectCoverflow } from 'swiper/modules';
+import { EffectCoverflow, Autoplay } from 'swiper/modules';
 
 const testimonials = [
   {
@@ -26,13 +26,23 @@ const testimonials = [
 ];
 
 const ClientsPart = () => {
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 640);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 640);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className='mt-10 border-t mx-16'>
+    <div className='mt-10 border-t mx-4 sm:mx-8 md:mx-16'>
       <div className='mt-6 text-center'>
-        <h3 className='text-2xl font-semibold mb-6'>What Our Clients Say</h3>
+        <h3 className='text-xl sm:text-2xl font-semibold mb-6'>What Our Clients Say</h3>
 
         <div className='w-full flex justify-center'>
-          <div className='w-[340px]'>
+          <div className='w-full max-w-xs sm:max-w-sm md:max-w-md'>
             <Swiper
               effect={'coverflow'}
               grabCursor={true}
@@ -46,8 +56,13 @@ const ClientsPart = () => {
                 modifier: 1,
                 slideShadows: true,
               }}
-              modules={[EffectCoverflow]}
+              modules={[EffectCoverflow, Autoplay]}
               className="mySwiper"
+              loop={isSmallScreen}                          // Loop only in small screens
+              autoplay={isSmallScreen ? {                  // Autoplay only if small screen
+                delay: 3000,
+                disableOnInteraction: false,
+              } : false}
             >
               {testimonials.map((t, index) => (
                 <SwiperSlide key={index}>
@@ -55,11 +70,11 @@ const ClientsPart = () => {
                     <img
                       src={t.image}
                       alt={t.name}
-                      className='w-16 h-16 object-cover rounded-full mb-4'
+                      className='w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full mb-4'
                     />
-                    <h4 className='font-semibold text-[16px]'>{t.name}</h4>
-                    <p className='text-gray-500 text-[14px]'>{t.role}</p>
-                    <p className='text-gray-600 text-[15px] mt-2'>{t.feedback}</p>
+                    <h4 className='font-semibold text-base sm:text-[16px]'>{t.name}</h4>
+                    <p className='text-gray-500 text-sm sm:text-[14px]'>{t.role}</p>
+                    <p className='text-gray-600 text-[14px] sm:text-[15px] mt-2'>{t.feedback}</p>
                   </div>
                 </SwiperSlide>
               ))}

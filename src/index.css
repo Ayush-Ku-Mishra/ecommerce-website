@@ -15,7 +15,7 @@
 body {
     
     background-color: #f9f9f9;
-    
+    /* overflow-x:hidden; */
 }
 
 ::-webkit-scrollbar {
@@ -181,5 +181,45 @@ body {
 /* Always show scrollbar space to prevent layout shift */
 html {
   overflow-y: scroll;
+}
+
+.category-image {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  object-position: center;
+  background-color: #f3f4f6;
+}
+
+.fixed-bottom-nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  /* Ensure no transforms on parent containers affect it */
+  transform: none !important;
+  will-change: transform;
+}
+
+@media (max-width: 640px) {
+  html, body {
+    overflow-y: scroll;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;      /* Firefox */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 

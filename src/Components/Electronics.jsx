@@ -5,7 +5,7 @@ import SidebarFilterComponent from "./SidebarFilterComponent";
 const Electronics = () => {
   return (
     <GridProductCategory
-      categoryName="electronics"
+      categoryName="Electronics"
       SidebarFilterComponent={SidebarFilterComponent}
     />
   );
