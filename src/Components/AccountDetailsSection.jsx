@@ -162,7 +162,8 @@ const AccountDetailsSection = () => {
       setIsAuthenticated(false);
       setUser(null);
       localStorage.removeItem("user-info");
-      localStorage.removeItem("token"); // Add this line
+      localStorage.removeItem("client_token");
+      localStorage.removeItem("client_user");
       toast.success("Logged out successfully.");
       navigate("/");
     } catch {
