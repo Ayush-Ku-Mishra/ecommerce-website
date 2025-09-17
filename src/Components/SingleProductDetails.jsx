@@ -946,7 +946,7 @@ const SingleProductDetails = () => {
         </div>
       </Dialog>
 
-      <div className={`${isMobile ? "lg:px-4" : "lg:ml-11 ml-0"}`}>
+      <div className={`${isMobile ? "lg:px-4 lg:mb-0 mb-20" : "lg:ml-11 ml-0"}`}>
         <RelatedProductsSlider
           currentProduct={product}
           currentCategory={product?.category?.[0]}
