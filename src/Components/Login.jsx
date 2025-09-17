@@ -68,7 +68,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     if (currentView === "register") {
-      setRegisterLoading(true);
+      setRegisterLoading(true); // show loader
       data.phone = data.phone.startsWith("+91")
         ? data.phone
         : `+91${data.phone}`;
@@ -78,10 +78,7 @@ const Login = () => {
           data,
           {
             withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-              "X-Client-Request": "true",
-            },
+            headers: { "Content-Type": "application/json" },
           }
         );
 
@@ -89,19 +86,18 @@ const Login = () => {
         setRegisterData({
           email: data.email,
           phone: data.phone,
-          verificationMethod: data.verificationMethod,
+          verificationMethod: data.verificationMethod, // user’s actual choice
         });
         setCurrentView("otp");
       } catch (error) {
         toast.error(error.response?.data?.message || "Registration failed");
       } finally {
-        setRegisterLoading(false);
+        setRegisterLoading(false); // hide loader after request
       }
       return;
     }
 
     if (currentView === "login") {
-      setRegisterLoading(true); // Add loading state for login
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
@@ -110,12 +106,10 @@ const Login = () => {
             withCredentials: true,
             headers: {
               "Content-Type": "application/json",
-              "X-Client-Request": "true",
             },
           }
         );
 
-        // Store client-specific tokens
         if (response.data.token) {
           localStorage.setItem("client_token", response.data.token);
           localStorage.setItem(
@@ -127,11 +121,9 @@ const Login = () => {
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
-        navigate(redirectTo, { replace: true });
+        navigate(redirectTo, { replace: true }); // <--- Redirect to wishlist or home
       } catch (error) {
         toast.error(error.response?.data?.message || "Login failed");
-      } finally {
-        setRegisterLoading(false);
       }
     }
   };
@@ -140,6 +132,7 @@ const Login = () => {
     setRegisterLoading(true);
 
     try {
+      // Configure popup to avoid CORS issues
       const provider = new GoogleAuthProvider();
       provider.addScope("email");
       provider.addScope("profile");
@@ -162,6 +155,7 @@ const Login = () => {
 
       console.log("Sending user data to backend:", userData);
 
+      // Send data to backend - always use authWithGoogle endpoint
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`,
         userData,
@@ -169,28 +163,27 @@ const Login = () => {
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
-            "X-Client-Request": "true",
           },
-          timeout: 10000,
+          timeout: 10000, // 10 second timeout
         }
       );
 
       console.log("Backend response:", response.data);
 
+      // Handle successful authentication
       if (response.data.success) {
-        // Store client-specific token
+        // Store token if provided
         if (response.data.token) {
-          localStorage.setItem("client_token", response.data.token);
-          localStorage.setItem(
-            "client_user",
-            JSON.stringify(response.data.user)
-          );
+          localStorage.setItem("token", response.data.token);
         }
 
         toast.success(response.data.message || "Login successful!");
 
+        // Update context
         setIsAuthenticated(true);
         setUser(response.data.user);
+
+        // Navigate to intended page
         navigate(redirectTo, { replace: true });
       } else {
         throw new Error(response.data.message || "Authentication failed");
