@@ -125,10 +125,14 @@ const PincodeChecker = ({
 
       <div className="flex items-center gap-2 w-full max-w-md">
         <input
-          type="text"
+          type="tel"
           maxLength={6}
           value={pincode}
-          onChange={(e) => setPincode(e.target.value)}
+          onChange={(e) => {
+            // Only allow digits and limit length to 6
+            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+            setPincode(value);
+          }}
           placeholder="Enter Pin-code"
           className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
         />
