@@ -279,20 +279,20 @@ const Wishlist = () => {
                     key={product._id}
                     className="flex lg:px-6 px-0 py-6 items-center gap-5 bg-white hover:bg-gray-50 transition-colors md:flex-row"
                   >
-                    <Link
-                      to={`/product/${product.id.split("_")[0]}`}
-                      className="flex flex-1 min-w-0 items-center gap-5 no-underline group md:flex-row"
-                    >
+                    <div className="flex flex-1 min-w-0 items-center gap-5 no-underline group md:flex-row">
                       {/* Desktop Layout - Same as before */}
                       <div className="hidden md:flex md:flex-1 md:min-w-0 md:items-center md:gap-5">
-                        <div className="w-20 h-24 overflow-hidden rounded flex-shrink-0">
+                        <Link
+                          to={`/product/${product.id.split("_")[0]}`}
+                          className="w-20 h-24 overflow-hidden rounded flex-shrink-0"
+                        >
                           <img
                             src={product.image}
                             alt={product.title}
                             className="w-full h-full object-cover object-top"
                             loading="lazy"
                           />
-                        </div>
+                        </Link>
 
                         <div className="flex-1 px-2 min-w-0">
                           <div className="mb-2">
@@ -411,7 +411,7 @@ const Wishlist = () => {
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
 
                     {/* Action buttons for desktop only */}
                     <div className="hidden md:flex items-center gap-2 flex-shrink-0">
