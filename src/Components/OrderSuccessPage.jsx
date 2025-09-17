@@ -19,12 +19,26 @@ const OrderSuccessPage = () => {
 
   useEffect(() => {
     if (!orderData) {
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
 
     // Trigger animation after component mounts
     setTimeout(() => setShowAnimation(true), 100);
+
+    // Replace current history entry so back button won't go back to success page
+    window.history.replaceState(null, document.title);
+
+    // Listen for browser back button and redirect to homepage
+    const handlePopState = () => {
+      navigate("/", { replace: true });
+    };
+    window.addEventListener("popstate", handlePopState);
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, [orderData, navigate]);
 
   if (!orderData) return null;
@@ -54,10 +68,8 @@ const OrderSuccessPage = () => {
 ORDER INVOICE
 ============
 
-
 Order ID: ${orderDetails?.orderId || "ORD" + Date.now()}
 Date: ${new Date().toLocaleDateString()}
-
 
 BILLING ADDRESS:
 ${address?.name}
@@ -65,7 +77,6 @@ ${address?.address_line}
 ${address?.locality}, ${address?.city}
 ${address?.state} - ${address?.pincode}
 Phone: ${address?.phone}
-
 
 ITEMS:
 ${cart
@@ -77,16 +88,13 @@ ${cart
   )
   .join("\n") || ""}
 
-
 SUMMARY:
 Subtotal: ₹${subtotal.toLocaleString()}
 Discount: -₹${totalDiscount.toLocaleString()}
 Shipping: Free
 Total: ₹${total.toLocaleString()}
 
-
 Payment Method: ${paymentMethod}
-
 
 Thank you for your order!
     `;
