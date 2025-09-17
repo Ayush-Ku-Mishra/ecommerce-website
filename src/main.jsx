@@ -54,7 +54,7 @@ const AppWrapper = () => {
     }
   };
 
-  // Function to update cart count (can be called from components)
+  // Function to update cart count
   const updateCartCount = () => {
     fetchCartCount();
   };
@@ -80,7 +80,6 @@ const AppWrapper = () => {
     }
   };
 
-  // Function to update wishlist count
   const updateWishlistCount = () => {
     fetchWishlistCount();
   };
@@ -92,8 +91,21 @@ const AppWrapper = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
           { withCredentials: true }
         );
-        setUser(res.data.user);
-        setIsAuthenticated(true);
+
+        // ✅ Role check: only allow "user" in client app
+        if (res.data.user.role === "user") {
+          setUser(res.data.user);
+          setIsAuthenticated(true);
+        } else {
+          // If admin/seller/moderator tries to login to client app → logout immediately
+          await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+            { withCredentials: true }
+          );
+          setUser(null);
+          setIsAuthenticated(false);
+          toast.error("Unauthorized access. Please login with a user account.");
+        }
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
@@ -107,14 +119,14 @@ const AppWrapper = () => {
     checkAuth();
   }, []);
 
-  // Fetch cart count when authentication status changes
+  // Fetch cart & wishlist count when auth changes
   useEffect(() => {
     if (isAuthenticated) {
       fetchCartCount();
-      fetchWishlistCount(); // Add this line
+      fetchWishlistCount();
     } else {
       setCartCount(0);
-      setWishlistCount(0); // Add this line
+      setWishlistCount(0);
     }
   }, [isAuthenticated]);
 
