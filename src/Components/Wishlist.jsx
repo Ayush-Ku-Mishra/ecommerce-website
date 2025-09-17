@@ -322,12 +322,14 @@ const Wishlist = () => {
                       <div className="flex md:hidden w-full gap-3">
                         {/* Left side - Product Image */}
                         <div className="w-20 h-24 overflow-hidden rounded flex-shrink-0">
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="w-full h-full object-cover object-top"
-                            loading="lazy"
-                          />
+                          <Link to={`/product/${product.id.split("_")[0]}`}>
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-full h-full object-cover object-top"
+                              loading="lazy"
+                            />
+                          </Link>
                         </div>
 
                         {/* Right side - Product Details Stacked */}
