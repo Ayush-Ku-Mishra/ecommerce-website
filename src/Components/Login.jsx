@@ -18,7 +18,8 @@ const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 const Login = () => {
-  const { isAuthenticated, setIsAuthenticated, setUser, user } = useContext(Context);
+  const { isAuthenticated, setIsAuthenticated, setUser, user } =
+    useContext(Context);
   const navigate = useNavigate();
   const location = useLocation();
 

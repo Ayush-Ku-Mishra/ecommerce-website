@@ -1,7 +1,1 @@
-# Netlify redirects file - place this in your public folder as "_redirects" (no extension)
-
-# Handle React Router - redirect all routes to index.html
 /*    /index.html   200
-
-# Optional: Handle API calls to your backend (if you want to proxy)
-/api/*  https://myecommerce-backend-p8ca.onrender.com/api/:splat  200
