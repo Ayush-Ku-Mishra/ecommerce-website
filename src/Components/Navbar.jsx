@@ -40,7 +40,7 @@ const Navbar = ({ onFilterClick }) => {
   const [isSticky, setIsSticky] = useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [loading, setLoading] = useState(false);
-  const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
+  const [currentLogo, setCurrentLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
   const [backendCategories, setBackendCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -76,6 +76,12 @@ const Navbar = ({ onFilterClick }) => {
     location.pathname.startsWith("/order-success");
 
   useEffect(() => {
+    if (!currentLogo) {
+      setCurrentLogo(
+        `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+      );
+    }
+
     const data = localStorage.getItem("user-info");
     if (data) {
       setLocalUser(JSON.parse(data));
@@ -178,31 +184,37 @@ const Navbar = ({ onFilterClick }) => {
   const fetchCurrentLogo = async () => {
     setLogoLoading(true);
     try {
-      const response = await fetch("/api/v1/logo/all", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const logos = data.logos || [];
-
-        if (logos.length > 0) {
-          setCurrentLogo(logos[0].url);
-        } else {
-          setCurrentLogo("/api/placeholder/100/50");
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/all`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logos: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const logos = data.logos || [];
+
+      if (logos.length > 0) {
+        setCurrentLogo(logos[0].url);
+      } else {
+        setCurrentLogo(
+          `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+        );
       }
     } catch (error) {
       console.error("Error fetching current logo:", error);
-      setCurrentLogo("/api/placeholder/100/50");
+      setCurrentLogo(
+        `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+      );
     } finally {
       setLogoLoading(false);
     }
   };
-
   useEffect(() => {
     const handleLogoUpdate = () => {
       console.log("Logo update event received, fetching new logo...");
