@@ -4,7 +4,6 @@ import { HiViewGrid } from "react-icons/hi";
 import { TfiViewListAlt } from "react-icons/tfi";
 import { BsCart4 } from "react-icons/bs";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
-import ContactUsPart from "./ContactUsPart";
 import { categories } from "../data/categories"; // Fallback categories
 import axios from "axios";
 import { useContext } from "react";
@@ -15,11 +14,11 @@ import { Link } from "react-router-dom";
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-const GridProductCategory = ({ 
-  SidebarFilterComponent, 
-  categoryName, 
+const GridProductCategory = ({
+  SidebarFilterComponent,
+  categoryName,
   shouldShowFilter = () => true, // Default function if not provided
-  onFilterClick = () => {} // Default function if not provided
+  onFilterClick = () => {}, // Default function if not provided
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -56,7 +55,7 @@ const GridProductCategory = ({
     setCategoriesLoading(true);
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/category/get-categories`
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/get-categories`
       );
 
       if (response.data.success) {
@@ -67,6 +66,7 @@ const GridProductCategory = ({
       }
     } catch (error) {
       console.error("Error fetching backend categories:", error);
+      toast.error("Failed to fetch backend categories");
       // Fallback to static categories if backend fails
       setBackendCategories([]);
     } finally {
@@ -166,15 +166,18 @@ const GridProductCategory = ({
     setError(null);
 
     try {
-      let endpoint = `${API_BASE_URL}/api/v1/product/getAllProducts`;
+      let endpoint = `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/v1/product/getAllProducts`;
       const params = new URLSearchParams();
 
       params.append("page", "1");
       params.append("perPage", "1000");
 
-      // If we have a specific category, use the category-specific endpoint
       if (categoryName) {
-        endpoint = `${API_BASE_URL}/api/v1/product/getAllProductsByCatName`;
+        endpoint = `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/getAllProductsByCatName`;
         params.append("categoryName", categoryName);
       }
 
@@ -189,60 +192,55 @@ const GridProductCategory = ({
       const data = response.data;
 
       if (data.success) {
-        // Transform backend data to match your frontend structure
-        const transformedProducts = data.products.map((product) => {
-          const transformed = {
-            id: product._id,
-            name: product.name,
-            brand: product.brand || "Unknown Brand",
-            category: [product.categoryName || "Uncategorized"],
-            subcategory: [
-              product.subCatName,
-              product.thirdSubCatName,
-              product.fourthSubCatName,
-            ].filter(Boolean),
-            rating: product.rating || 0,
-            discount: Number(product.discount || 0),
-            description: product.productDetails?.description || "",
+        const transformedProducts = data.products.map((product) => ({
+          id: product._id,
+          name: product.name,
+          brand: product.brand || "Unknown Brand",
+          category: [product.categoryName || "Uncategorized"],
+          subcategory: [
+            product.subCatName,
+            product.thirdSubCatName,
+            product.fourthSubCatName,
+          ].filter(Boolean),
+          rating: product.rating || 0,
+          discount: Number(product.discount || 0),
+          description: product.productDetails?.description || "",
+          images: product.images || [],
+          originalPrice: Math.round(
+            Number(product.oldPrice || product.price || 0)
+          ),
+          discountedPrice: Math.round(Number(product.price || 0)),
+          defaultVariant: {
+            id: `${product._id}_default`,
+            color: product.color || "Default",
             images: product.images || [],
             originalPrice: Math.round(
               Number(product.oldPrice || product.price || 0)
             ),
             discountedPrice: Math.round(Number(product.price || 0)),
-            defaultVariant: {
-              id: `${product._id}_default`,
-              color: product.color || "Default",
-              images: product.images || [],
-              originalPrice: Math.round(
-                Number(product.oldPrice || product.price || 0)
-              ),
-              discountedPrice: Math.round(Number(product.price || 0)),
-              sizes: getSizesFromProduct(product),
-            },
-            variants: product.colorVariants
-              ? product.colorVariants.map((variant, index) => ({
-                  id: `${product._id}_variant_${index}`,
-                  color: variant.colorName || variant.color || "Default",
-                  images: variant.images || product.images || [],
-                  originalPrice: Math.round(
-                    Number(
-                      variant.oldPrice ||
-                        variant.price ||
-                        product.oldPrice ||
-                        product.price ||
-                        0
-                    )
-                  ),
-                  discountedPrice: Math.round(
-                    Number(variant.price || product.price || 0)
-                  ),
-                  sizes: getSizesFromProduct(variant),
-                }))
-              : [],
-          };
-
-          return transformed;
-        });
+            sizes: getSizesFromProduct(product),
+          },
+          variants: product.colorVariants
+            ? product.colorVariants.map((variant, index) => ({
+                id: `${product._id}_variant_${index}`,
+                color: variant.colorName || variant.color || "Default",
+                images: variant.images || product.images || [],
+                originalPrice: Math.round(
+                  Number(
+                    variant.oldPrice ||
+                      variant.price ||
+                      product.oldPrice ||
+                      product.price ||
+                      0
+                  )
+                ),
+                discountedPrice: Math.round(
+                  Number(variant.price || product.price || 0)
+                ),
+                sizes: getSizesFromProduct(variant),
+              }))
+            : [],
+        }));
 
         setProducts(transformedProducts);
         setTotalProducts(data.count || transformedProducts.length);
@@ -251,6 +249,9 @@ const GridProductCategory = ({
       }
     } catch (err) {
       console.error("Error fetching products:", err);
+      toast.error(
+        err.response?.data?.message || err.message || "Failed to fetch products"
+      );
       setError(
         err.response?.data?.message || err.message || "Failed to fetch products"
       );
@@ -407,7 +408,7 @@ const GridProductCategory = ({
 
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/wishlist/getWishlist`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
         {
           withCredentials: true,
         }
@@ -418,9 +419,12 @@ const GridProductCategory = ({
           response.data.data.map((item) => item.productId)
         );
         setWishlistItems(wishlistProductIds);
+      } else {
+        toast.error("Failed to fetch wishlist status");
       }
     } catch (error) {
       console.error("Error fetching wishlist status:", error);
+      toast.error("Error fetching wishlist status");
     }
   };
 
@@ -456,7 +460,7 @@ const GridProductCategory = ({
       };
 
       await axios.post(
-        `${API_BASE_URL}/api/v1/wishlist/createWishlist`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/createWishlist`,
         wishlistData,
         {
           withCredentials: true,
@@ -485,7 +489,7 @@ const GridProductCategory = ({
 
     try {
       const wishlistResponse = await axios.get(
-        `${API_BASE_URL}/api/v1/wishlist/getWishlist`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
         {
           withCredentials: true,
         }
@@ -497,7 +501,9 @@ const GridProductCategory = ({
         );
         if (wishlistItem) {
           await axios.delete(
-            `${API_BASE_URL}/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
+            `${
+              import.meta.env.VITE_BACKEND_URL
+            }/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
             {
               withCredentials: true,
             }
@@ -548,9 +554,13 @@ const GridProductCategory = ({
         discount: product.discount?.toString() || "",
       };
 
-      await axios.post(`${API_BASE_URL}/api/v1/cart/createCart`, cartData, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/createCart`,
+        cartData,
+        {
+          withCredentials: true,
+        }
+      );
 
       toast.success("Added to cart!");
       updateCartCount();
@@ -1074,8 +1084,6 @@ const GridProductCategory = ({
           </main>
         </div>
       </div>
-
-      
     </div>
   );
 };

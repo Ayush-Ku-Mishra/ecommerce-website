@@ -10,13 +10,12 @@ import { Context } from "../main";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 const HeadPhoneSlider = () => {
   const [audioDevices, setAudioDevices] = useState([]);
   const [wishlistItems, setWishlistItems] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated, updateCartCount, updateWishlistCount } = useContext(Context);
+  const { isAuthenticated, updateCartCount, updateWishlistCount } =
+    useContext(Context);
 
   // Helper function to get sizes from product
   const getSizesFromProduct = (product) => {
@@ -58,7 +57,9 @@ const HeadPhoneSlider = () => {
         id: `${product._id}_default`,
         color: product.color || "Default",
         images: product.images || [],
-        originalPrice: Math.round(Number(product.oldPrice || product.price || 0)),
+        originalPrice: Math.round(
+          Number(product.oldPrice || product.price || 0)
+        ),
         discountedPrice: Math.round(Number(product.price || 0)),
         sizes: getSizesFromProduct(product),
       },
@@ -76,7 +77,9 @@ const HeadPhoneSlider = () => {
                   0
               )
             ),
-            discountedPrice: Math.round(Number(variant.price || product.price || 0)),
+            discountedPrice: Math.round(
+              Number(variant.price || product.price || 0)
+            ),
             sizes: getSizesFromProduct(variant),
           }))
         : [],
@@ -88,20 +91,27 @@ const HeadPhoneSlider = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/product/getAllProductsByCatName?categoryName=Electronics&page=1&perPage=50`
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/getAllProductsByCatName?categoryName=Electronics&page=1&perPage=50`
       );
-      
+
       if (response.data.success) {
         // Filter for Audio Devices subcategory
-        const audioDevicesData = response.data.products.filter(product => 
-          product.subCatName && product.subCatName.toLowerCase() === "audio devices"
+        const audioDevicesData = response.data.products.filter(
+          (product) =>
+            product.subCatName &&
+            product.subCatName.toLowerCase() === "audio devices"
         );
-        
+
         const transformedProducts = audioDevicesData.map(transformProduct);
         setAudioDevices(transformedProducts);
+      } else {
+        toast.error("Failed to fetch audio devices");
       }
     } catch (error) {
       console.error("Error fetching audio devices:", error);
+      toast.error("Error fetching audio devices");
     } finally {
       setLoading(false);
     }
@@ -115,18 +125,24 @@ const HeadPhoneSlider = () => {
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/wishlist/getWishlist`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.data.success) {
         const wishlistProductIds = new Set(
           response.data.data.map((item) => item.productId)
         );
         setWishlistItems(wishlistProductIds);
+      } else {
+        toast.error("Failed to fetch wishlist status");
       }
     } catch (error) {
       console.error("Error fetching wishlist status:", error);
+      toast.error("Error fetching wishlist status");
     }
   };
 
@@ -142,7 +158,10 @@ const HeadPhoneSlider = () => {
       return;
     }
 
-    const standardProductId = generateStandardProductId(productData, variantData);
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
 
     try {
       const wishlistData = {
@@ -150,15 +169,23 @@ const HeadPhoneSlider = () => {
         productTitle: `${productData.name} - ${variantData.color}`,
         image: variantData.images?.[0] || productData.images?.[0],
         rating: productData.rating || 0,
-        price: Math.round(variantData.discountedPrice ?? productData.discountedPrice),
+        price: Math.round(
+          variantData.discountedPrice ?? productData.discountedPrice
+        ),
         discount: productData.discount || 0,
-        oldPrice: Math.round(variantData.originalPrice ?? productData.originalPrice),
+        oldPrice: Math.round(
+          variantData.originalPrice ?? productData.originalPrice
+        ),
         brand: productData.brand,
       };
 
-      await axios.post(`${API_BASE_URL}/api/v1/wishlist/createWishlist`, wishlistData, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/createWishlist`,
+        wishlistData,
+        {
+          withCredentials: true,
+        }
+      );
 
       setWishlistItems((prev) => new Set([...prev, standardProductId]));
       toast.success("Added to wishlist");
@@ -176,12 +203,18 @@ const HeadPhoneSlider = () => {
 
   // Remove from wishlist
   const removeFromWishlistHandler = async (productData, variantData) => {
-    const standardProductId = generateStandardProductId(productData, variantData);
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
 
     try {
-      const wishlistResponse = await axios.get(`${API_BASE_URL}/api/v1/wishlist/getWishlist`, {
-        withCredentials: true,
-      });
+      const wishlistResponse = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
+      );
 
       if (wishlistResponse.data.success) {
         const wishlistItem = wishlistResponse.data.data.find(
@@ -189,7 +222,9 @@ const HeadPhoneSlider = () => {
         );
         if (wishlistItem) {
           await axios.delete(
-            `${API_BASE_URL}/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
+            `${
+              import.meta.env.VITE_BACKEND_URL
+            }/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
             { withCredentials: true }
           );
 
@@ -219,9 +254,9 @@ const HeadPhoneSlider = () => {
 
     try {
       const baseProductId = product.id.split("_")[0];
-      const standardVariantId = `${baseProductId}_${variant.color || "default"}_${
-        variant.sizes?.[0]?.size || "default"
-      }`;
+      const standardVariantId = `${baseProductId}_${
+        variant.color || "default"
+      }_${variant.sizes?.[0]?.size || "default"}`;
 
       const cartData = {
         productId: baseProductId,
@@ -230,16 +265,22 @@ const HeadPhoneSlider = () => {
         selectedSize: variant.sizes?.[0]?.size || null,
         selectedColor: variant.color,
         price: Math.round(variant.discountedPrice ?? product.discountedPrice),
-        originalPrice: Math.round(variant.originalPrice ?? product.originalPrice),
+        originalPrice: Math.round(
+          variant.originalPrice ?? product.originalPrice
+        ),
         productName: product.name,
         productBrand: product.brand,
         productImage: variant.images?.[0] || product.images?.[0],
         discount: product.discount?.toString() || "",
       };
 
-      await axios.post(`${API_BASE_URL}/api/v1/cart/createCart`, cartData, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/createCart`,
+        cartData,
+        {
+          withCredentials: true,
+        }
+      );
 
       toast.success("Added to cart!");
       updateCartCount();
@@ -255,7 +296,10 @@ const HeadPhoneSlider = () => {
 
   // Check if product is in wishlist
   const isInWishlistCheck = (productData, variantData) => {
-    const standardProductId = generateStandardProductId(productData, variantData);
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
     return wishlistItems.has(standardProductId);
   };
 
@@ -310,7 +354,7 @@ const HeadPhoneSlider = () => {
               <SwiperSlide key={product.id}>
                 <div className="w-full shadow-md min-w-0 flex-shrink-0">
                   <div className="w-full h-48 overflow-hidden rounded-md relative group">
-                    <Link to={`/product/${variant.id.split('_')[0]}`}>
+                    <Link to={`/product/${variant.id.split("_")[0]}`}>
                       <div>
                         <img
                           src={productImage}
@@ -338,15 +382,21 @@ const HeadPhoneSlider = () => {
                           ? "text-red-500 bg-white"
                           : "text-gray-600 bg-white hover:text-red-500"
                       }`}
-                      title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+                      title={
+                        inWishlist ? "Remove from Wishlist" : "Add to Wishlist"
+                      }
                     >
-                      {inWishlist ? <FaHeart size={18} /> : <FaRegHeart size={18} />}
+                      {inWishlist ? (
+                        <FaHeart size={18} />
+                      ) : (
+                        <FaRegHeart size={18} />
+                      )}
                     </button>
                   </div>
                   <div className="p-2 shadow-md">
                     <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
                       <Link
-                        to={`/product/${variant.id.split('_')[0]}`}
+                        to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
                       >
                         {product.brand}
@@ -354,7 +404,7 @@ const HeadPhoneSlider = () => {
                     </h6>
                     <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
                       <Link
-                        to={`/product/${variant.id.split('_')[0]}`}
+                        to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
                       >
                         {product.name} - {variant.color}
@@ -362,10 +412,16 @@ const HeadPhoneSlider = () => {
                     </h3>
                     <div className="flex items-center justify-between mb-1">
                       <span className="line-through text-gray-500 font-[16px]">
-                        ₹{Math.round(variant.originalPrice ?? product.originalPrice).toLocaleString()}
+                        ₹
+                        {Math.round(
+                          variant.originalPrice ?? product.originalPrice
+                        ).toLocaleString()}
                       </span>
                       <span className="text-red-500 font-[600]">
-                        ₹{Math.round(variant.discountedPrice ?? product.discountedPrice).toLocaleString()}
+                        ₹
+                        {Math.round(
+                          variant.discountedPrice ?? product.discountedPrice
+                        ).toLocaleString()}
                       </span>
                     </div>
                     {product.discount > 0 && (
