@@ -213,19 +213,10 @@ const Wishlist = () => {
   // Loading state
   if (loading) {
     return (
-      <div>
-        <div className="flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
-          <div className="min-w-[20%] w-auto sticky top-28 self-start">
-            <AccountDetailsSection />
-          </div>
-          <div className="flex-1 flex w-[80%] flex-col border-2 shadow mt-5 rounded-xl bg-white p-6">
-            <div className="flex justify-center items-center min-h-[400px]">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading wishlist...</p>
-              </div>
-            </div>
-          </div>
+      <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading wishlist...</p>
         </div>
       </div>
     );
@@ -282,17 +273,16 @@ const Wishlist = () => {
                     <div className="flex flex-1 min-w-0 items-center gap-5 no-underline group md:flex-row">
                       {/* Desktop Layout - Same as before */}
                       <div className="hidden md:flex md:flex-1 md:min-w-0 md:items-center md:gap-5">
-                        <Link
-                          to={`/product/${product.id.split("_")[0]}`}
-                          className="w-20 h-24 overflow-hidden rounded flex-shrink-0"
-                        >
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="w-full h-full object-cover object-top"
-                            loading="lazy"
-                          />
-                        </Link>
+                        <div className="w-20 h-24 overflow-hidden rounded flex-shrink-0">
+                          <Link to={`/product/${product.id.split("_")[0]}`}>
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-full h-full object-cover object-top"
+                              loading="lazy"
+                            />
+                          </Link>
+                        </div>
 
                         <div className="flex-1 px-2 min-w-0">
                           <div className="mb-2">
