@@ -5,6 +5,7 @@ import "swiper/css/pagination";
 
 import { Navigation } from "swiper/modules";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const HomeCatSlider = () => {
   const [categories, setCategories] = useState([]);
@@ -15,7 +16,10 @@ const HomeCatSlider = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/v1/category/get-categories");
+        const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+        const response = await fetch(
+          `${BASE_URL}/api/v1/category/get-categories`
+        );
         const data = await response.json();
 
         if (data.success) {
@@ -25,10 +29,12 @@ const HomeCatSlider = () => {
           setCategories(rootCategories);
         } else {
           setError("Failed to fetch categories");
+          toast.error("Failed to fetch categories");
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
         setError("Error loading categories");
+        toast.error("Error loading categories");
       } finally {
         setLoading(false);
       }
