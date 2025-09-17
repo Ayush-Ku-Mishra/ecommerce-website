@@ -153,20 +153,51 @@ const AccountDetailsSection = () => {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
-        {
-          withCredentials: true,
-        }
-      );
-      setIsAuthenticated(false);
-      setUser(null);
-      localStorage.removeItem("user-info");
+      const clientToken = localStorage.getItem("client_token");
+
+      if (clientToken) {
+        // Use token-based logout for client
+        await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+          {
+            headers: {
+              Authorization: `Bearer ${clientToken}`,
+              "X-Client-Request": "true",
+            },
+          }
+        );
+      } else {
+        // Fallback to cookie-based logout
+        await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+          {
+            withCredentials: true,
+            headers: {
+              "X-Client-Request": "true",
+            },
+          }
+        );
+      }
+
+      // Clear client-specific localStorage
       localStorage.removeItem("client_token");
       localStorage.removeItem("client_user");
+      localStorage.removeItem("user-info"); // Legacy cleanup
+
+      setIsAuthenticated(false);
+      setUser(null);
       toast.success("Logged out successfully.");
       navigate("/");
-    } catch {
+    } catch (error) {
+      console.error("Client logout error:", error);
+
+      // Even if backend call fails, clear local storage
+      localStorage.removeItem("client_token");
+      localStorage.removeItem("client_user");
+      localStorage.removeItem("user-info");
+
+      setIsAuthenticated(false);
+      setUser(null);
       toast.error("Logout failed. Please try again.");
     } finally {
       setLoading(false);

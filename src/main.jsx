@@ -8,7 +8,7 @@ import { createContext } from "react";
 import { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 export const Context = createContext({
   isAuthenticated: false,
@@ -36,9 +36,16 @@ const AppWrapper = () => {
     }
 
     try {
+      const clientToken = localStorage.getItem("client_token");
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/getCartItems`,
-        { withCredentials: true }
+        { 
+          headers: clientToken ? {
+            'Authorization': `Bearer ${clientToken}`,
+            'X-Client-Request': 'true'
+          } : {},
+          withCredentials: !clientToken // Use cookies only if no token
+        }
       );
 
       if (res.data.success) {
@@ -66,9 +73,16 @@ const AppWrapper = () => {
     }
 
     try {
+      const clientToken = localStorage.getItem("client_token");
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
-        { withCredentials: true }
+        { 
+          headers: clientToken ? {
+            'Authorization': `Bearer ${clientToken}`,
+            'X-Client-Request': 'true'
+          } : {},
+          withCredentials: !clientToken // Use cookies only if no token
+        }
       );
 
       if (res.data.success) {
@@ -87,35 +101,97 @@ const AppWrapper = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
-          { withCredentials: true }
-        );
+        // First check localStorage for client token
+        const clientToken = localStorage.getItem("client_token");
+        const clientUser = localStorage.getItem("client_user");
 
-        // ✅ Role check: only allow "user" in client app
-        if (res.data.user.role === "user") {
-          setUser(res.data.user);
-          setIsAuthenticated(true);
+        if (clientToken && clientUser) {
+          try {
+            const parsedUser = JSON.parse(clientUser);
+            
+            // Verify token with backend using Authorization header
+            const res = await axios.get(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
+              { 
+                headers: {
+                  'Authorization': `Bearer ${clientToken}`,
+                  'X-Client-Request': 'true' // Flag for client request
+                }
+              }
+            );
+
+            // ✅ Role check: only allow "user" in client app
+            if (res.data.user.role === "user") {
+              setUser(res.data.user);
+              setIsAuthenticated(true);
+            } else {
+              // Clear localStorage if role mismatch
+              localStorage.removeItem("client_token");
+              localStorage.removeItem("client_user");
+              setUser(null);
+              setIsAuthenticated(false);
+              toast.error("Unauthorized access. Please login with a user account.");
+            }
+          } catch (tokenError) {
+            // Token verification failed, clear localStorage
+            localStorage.removeItem("client_token");
+            localStorage.removeItem("client_user");
+            setUser(null);
+            setIsAuthenticated(false);
+            
+            if (tokenError.response?.status === 401) {
+              toast.info("Your session has expired. Please login again.");
+            }
+          }
         } else {
-          // If admin/seller/moderator tries to login to client app → logout immediately
-          await axios.get(
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
-            { withCredentials: true }
-          );
-          setUser(null);
-          setIsAuthenticated(false);
-          toast.error("Unauthorized access. Please login with a user account.");
+          // Fallback: Try cookie-based authentication (for backward compatibility)
+          try {
+            const res = await axios.get(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
+              { 
+                withCredentials: true,
+                headers: {
+                  'X-Client-Request': 'true'
+                }
+              }
+            );
+
+            // ✅ Role check: only allow "user" in client app
+            if (res.data.user.role === "user") {
+              setUser(res.data.user);
+              setIsAuthenticated(true);
+            } else {
+              // If admin/seller/moderator tries to login to client app → logout immediately
+              await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+                { 
+                  withCredentials: true,
+                  headers: {
+                    'X-Client-Request': 'true'
+                  }
+                }
+              );
+              setUser(null);
+              setIsAuthenticated(false);
+              toast.error("Unauthorized access. Please login with a user account.");
+            }
+          } catch (cookieError) {
+            setUser(null);
+            setIsAuthenticated(false);
+            if (cookieError.response?.status === 401) {
+              toast.info("Your session has expired. Please login again.");
+            }
+          }
         }
       } catch (error) {
+        console.error("Auth check error:", error);
         setUser(null);
         setIsAuthenticated(false);
-        if (error.response?.status === 401) {
-          toast.info("Your session has expired. Please login again.");
-        }
       } finally {
         setAuthLoading(false);
       }
     };
+
     checkAuth();
   }, []);
 
@@ -129,6 +205,14 @@ const AppWrapper = () => {
       setWishlistCount(0);
     }
   }, [isAuthenticated]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <Context.Provider
