@@ -41,18 +41,23 @@ const Home = () => {
         <div className="lg:ml-16 lg:mt-14 mt-6 ml-0">
           <div className="flex items-center justify-between">
             <h3 className="lg:text-[22px] text-md font-[600] mb-4 font-custom ml-3">
-            Audio Devices
-          </h3>
-          <IoArrowForward className="text-2xl text-gray-600 cursor-pointer hover:text-gray-900 transition lg:mr-9 mr-3" />
+              Audio Devices
+            </h3>
+            <IoArrowForward className="text-2xl text-gray-600 cursor-pointer hover:text-gray-900 transition lg:mr-9 mr-3" />
           </div>
           <HeadPhoneSlider />
         </div>
 
-        <div className="lg:ml-16 lg:mt-10 mt-6 ml-4">
-          <h3 className="lg:text-[22px] text-md font-[600] mb-4 font-custom">
-            Bags
-          </h3>
-          <BagSlider />
+        <div className="lg:ml-16 lg:mt-14 mt-6 ml-0">
+          <div className="flex items-center justify-between">
+            <h3 className="lg:text-[22px] text-md font-[600] mb-4 font-custom lg:ml-2 ml-3">
+              Bags
+            </h3>
+            <IoArrowForward className="text-2xl text-gray-600 cursor-pointer hover:text-gray-900 transition lg:mr-9 mr-3" />
+          </div>
+          <div>
+            <BagSlider />
+          </div>
         </div>
 
         <div className="lg:mt-10 mt-8 border-t mx-16 overflow-x-hidden">

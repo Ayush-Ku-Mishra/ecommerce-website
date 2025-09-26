@@ -4,9 +4,6 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import { FreeMode } from "swiper/modules";
 import { Link } from "react-router-dom";
-import Button from "@mui/material/Button";
-import { MdZoomOutMap } from "react-icons/md";
-import { VscGitCompare } from "react-icons/vsc";
 import { FaRegHeart, FaHeart } from "react-icons/fa";
 import { BsCart4 } from "react-icons/bs";
 import { Context } from "../main";
@@ -101,13 +98,13 @@ const BagSlider = () => {
 
       if (response.data.success) {
         console.log("All Fashion products:", response.data.products);
-        
+
         // Log all subcategories to debug
-        const allSubcategories = response.data.products.map(p => ({
+        const allSubcategories = response.data.products.map((p) => ({
           name: p.name,
           categoryName: p.categoryName,
           subCatName: p.subCatName,
-          thirdSubCatName: p.thirdSubCatName
+          thirdSubCatName: p.thirdSubCatName,
         }));
         console.log("All subcategories:", allSubcategories);
 
@@ -116,9 +113,9 @@ const BagSlider = () => {
           (product) =>
             product.subCatName &&
             (product.subCatName.toLowerCase().includes("bag") ||
-             product.subCatName.toLowerCase() === "bags" ||
-             product.thirdSubCatName?.toLowerCase().includes("bag") ||
-             product.name?.toLowerCase().includes("bag"))
+              product.subCatName.toLowerCase() === "bags" ||
+              product.thirdSubCatName?.toLowerCase().includes("bag") ||
+              product.name?.toLowerCase().includes("bag"))
         );
 
         console.log("Filtered bags data:", bagsData);
@@ -385,7 +382,7 @@ const BagSlider = () => {
             return (
               <SwiperSlide key={product.id}>
                 <div className="w-full shadow-md min-w-0 flex-shrink-0">
-                  <div className="w-full h-40 sm:h-44 md:h-48 overflow-hidden rounded-md relative group">
+                  <div className="w-full h-48 overflow-hidden rounded-md relative group">
                     <Link to={`/product/${variant.id.split("_")[0]}`}>
                       <div>
                         <img
@@ -399,32 +396,31 @@ const BagSlider = () => {
                       </div>
                     </Link>
 
-                    <div className="popularProducts absolute top-[-200px] right-[5px] z-50 flex flex-col items-center gap-2 w-[50px] group-hover:top-[15px] transition-all duration-500 opacity-0 group-hover:opacity-100">
-                      <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white !text-black hover:!bg-red-500 hover:text-white transition group">
-                        <MdZoomOutMap className="text-[22px] !text-black group-hover:text-white transition" />
-                      </Button>
-                      <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white !text-black hover:!bg-red-500 hover:text-white transition group">
-                        <VscGitCompare className="text-[22px] !text-black group-hover:text-white transition" />
-                      </Button>
-                      <Button
-                        onClick={(e) => toggleWishlist(product, e)}
-                        className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white hover:!bg-red-500 hover:text-white transition group ${
-                          inWishlist ? "text-red-500" : "text-gray-600"
-                        }`}
-                        title={
-                          inWishlist
-                            ? "Remove from Wishlist"
-                            : "Add to Wishlist"
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (inWishlist) {
+                          removeFromWishlistHandler(product, variant);
+                        } else {
+                          addToWishlistHandler(product, variant);
                         }
-                        aria-label="Toggle wishlist"
-                      >
-                        {inWishlist ? (
-                          <FaHeart className="text-[22px] transition text-red-500 group-hover:text-red-700" />
-                        ) : (
-                          <FaRegHeart className="text-[22px] !text-black group-hover:text-white transition" />
-                        )}
-                      </Button>
-                    </div>
+                      }}
+                      className={`absolute top-3 right-3 p-2 rounded-full shadow-md transition ${
+                        inWishlist
+                          ? "text-red-500 bg-white"
+                          : "text-gray-600 bg-white hover:text-red-500"
+                      }`}
+                      title={
+                        inWishlist ? "Remove from Wishlist" : "Add to Wishlist"
+                      }
+                    >
+                      {inWishlist ? (
+                        <FaHeart size={18} />
+                      ) : (
+                        <FaRegHeart size={18} />
+                      )}
+                    </button>
                   </div>
                   <div className="p-2 shadow-md">
                     <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">

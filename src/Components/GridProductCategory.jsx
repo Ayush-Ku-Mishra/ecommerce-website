@@ -801,9 +801,6 @@ const GridProductCategory = ({
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="text-center">
-          <div className="text-red-500 text-lg mb-4">
-            ⚠️ Error loading products
-          </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => fetchProducts(category)}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -7,74 +7,341 @@ import { FaRegHeart, FaHeart } from "react-icons/fa";
 import { BsCart4 } from "react-icons/bs";
 import { Navigation } from "swiper/modules";
 import { Link } from "react-router-dom";
-import { products } from "../data/productItems.js";
-import { useSelector, useDispatch } from "react-redux";
-import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
-import { toast } from "react-toastify";
+import { Context } from "../main";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const ProductSlider = () => {
-  const dispatch = useDispatch();
-  const wishlist = useSelector((state) => state.wishlist.items);
-  const popularProducts = products.filter((item) =>
-    item.category.includes("popular")
-  );
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, updateCartCount, updateWishlistCount } =
+    useContext(Context);
 
-  const isVariantInWishlist = (variantId) =>
-    wishlist.some((item) => item.id === variantId);
+  // Helper function to get sizes from product
+  const getSizesFromProduct = (product) => {
+    const sizes = [];
+    if (product.dressSizes && product.dressSizes.length > 0) {
+      sizes.push(...product.dressSizes);
+    }
+    if (product.shoesSizes && product.shoesSizes.length > 0) {
+      sizes.push(...product.shoesSizes);
+    }
+    if (product.freeSize === "yes") {
+      sizes.push({ size: "Free Size", stock: product.stock || 0 });
+    }
+    if (sizes.length === 0) {
+      sizes.push({ size: "default", stock: product.stock || 0 });
+    }
+    return sizes;
+  };
 
-  const toggleWishlist = (product, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Transform backend product data
+  const transformProduct = (product) => {
+    return {
+      id: product._id,
+      name: product.name,
+      brand: product.brand || "Unknown Brand",
+      category: [product.categoryName || "Uncategorized"],
+      subcategory: [
+        product.subCatName,
+        product.thirdSubCatName,
+        product.fourthSubCatName,
+      ].filter(Boolean),
+      rating: product.rating || 0,
+      discount: Number(product.discount || 0),
+      description: product.productDetails?.description || "",
+      images: product.images || [],
+      originalPrice: Math.round(Number(product.oldPrice || product.price || 0)),
+      discountedPrice: Math.round(Number(product.price || 0)),
+      isFeatured: product.isFeatured || false,
+      defaultVariant: {
+        id: `${product._id}_default`,
+        color: product.color || "Default",
+        images: product.images || [],
+        originalPrice: Math.round(
+          Number(product.oldPrice || product.price || 0)
+        ),
+        discountedPrice: Math.round(Number(product.price || 0)),
+        sizes: getSizesFromProduct(product),
+      },
+      variants: product.colorVariants
+        ? product.colorVariants.map((variant, index) => ({
+            id: `${product._id}_variant_${index}`,
+            color: variant.colorName || variant.color || "Default",
+            images: variant.images || product.images || [],
+            originalPrice: Math.round(
+              Number(
+                variant.oldPrice ||
+                  variant.price ||
+                  product.oldPrice ||
+                  product.price ||
+                  0
+              )
+            ),
+            discountedPrice: Math.round(
+              Number(variant.price || product.price || 0)
+            ),
+            sizes: getSizesFromProduct(variant),
+          }))
+        : [],
+    };
+  };
 
-    if (!product?.variants || product.variants.length === 0) {
-      toast.error("Product variants not available");
+  // Fetch Featured Products from all categories
+  const fetchFeaturedProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/getAllProducts?page=1&perPage=100`
+      );
+
+      if (response.data.success) {
+        console.log("All products:", response.data.products);
+        
+        // Filter for featured products
+        const featuredData = response.data.products.filter(
+          (product) => product.isFeatured === true
+        );
+
+        console.log("Featured products found:", featuredData);
+
+        const transformedProducts = featuredData.map(transformProduct);
+        setFeaturedProducts(transformedProducts);
+      } else {
+        toast.error("Failed to fetch featured products");
+      }
+    } catch (error) {
+      console.error("Error fetching featured products:", error);
+      toast.error("Error fetching featured products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch wishlist status
+  const fetchWishlistStatus = async () => {
+    if (!isAuthenticated) {
+      setWishlistItems(new Set());
       return;
     }
 
-    const variant = product.variants[0];
-    const inWishlist = isVariantInWishlist(variant.id);
-
-    if (inWishlist) {
-      dispatch(removeFromWishlist(variant.id));
-      toast.info("Removed from wishlist");
-    } else {
-      dispatch(
-        addToWishlist({
-          id: variant.id,
-          title: product.name,
-          brand: product.brand,
-          image: variant.images?.[0] || product.images?.[0],
-          price: variant.discountedPrice ?? product.discountedPrice,
-          originalPrice: variant.originalPrice ?? product.originalPrice,
-          discount: product.discount,
-          description: product.description || "",
-        })
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
       );
-      toast.success("Added to wishlist");
+
+      if (response.data.success) {
+        const wishlistProductIds = new Set(
+          response.data.data.map((item) => item.productId)
+        );
+        setWishlistItems(wishlistProductIds);
+      } else {
+        toast.error("Failed to fetch wishlist status");
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist status:", error);
+      toast.error("Error fetching wishlist status");
     }
   };
 
-  const handleAddToCart = (product, variant, e) => {
-    e.stopPropagation();
-    dispatch(
-      addToCart({
-        id: variant.id,
-        title: product.name,
-        brand: product.brand,
-        color: variant.color || product.defaultVariant?.color,
-        size: variant.sizes?.[0]?.size || "default",
-        price: variant.discountedPrice ?? product.discountedPrice,
-        originalPrice: variant.originalPrice ?? product.originalPrice,
-        quantity: 1,
-        image: variant.images?.[0] || product.images?.[0],
-        discount: product.discount,
-      })
-    );
-    toast.success("Added to cart!");
+  // Generate standard product ID
+  const generateStandardProductId = (productData, variantData) => {
+    return productData.id.split("_")[0];
   };
 
-  if (!popularProducts || popularProducts.length === 0) {
-    return null;
+  // Add to wishlist
+  const addToWishlistHandler = async (productData, variantData) => {
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to wishlist");
+      return;
+    }
+
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
+
+    try {
+      const wishlistData = {
+        productId: standardProductId,
+        productTitle: `${productData.name} - ${variantData.color}`,
+        image: variantData.images?.[0] || productData.images?.[0],
+        rating: productData.rating || 0,
+        price: Math.round(
+          variantData.discountedPrice ?? productData.discountedPrice
+        ),
+        discount: productData.discount || 0,
+        oldPrice: Math.round(
+          variantData.originalPrice ?? productData.originalPrice
+        ),
+        brand: productData.brand,
+      };
+
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/createWishlist`,
+        wishlistData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      setWishlistItems((prev) => new Set([...prev, standardProductId]));
+      toast.success("Added to wishlist");
+      updateWishlistCount();
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      if (error.response?.status === 409) {
+        toast.error("Item already in wishlist");
+        setWishlistItems((prev) => new Set([...prev, standardProductId]));
+      } else {
+        toast.error("Failed to add to wishlist");
+      }
+    }
+  };
+
+  // Remove from wishlist
+  const removeFromWishlistHandler = async (productData, variantData) => {
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
+
+    try {
+      const wishlistResponse = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (wishlistResponse.data.success) {
+        const wishlistItem = wishlistResponse.data.data.find(
+          (item) => item.productId === standardProductId
+        );
+        if (wishlistItem) {
+          await axios.delete(
+            `${
+              import.meta.env.VITE_BACKEND_URL
+            }/api/v1/wishlist/deleteWishlist/${wishlistItem._id}`,
+            { withCredentials: true }
+          );
+
+          setWishlistItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(standardProductId);
+            return newSet;
+          });
+          toast.success("Removed from wishlist");
+          updateWishlistCount();
+        }
+      }
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      toast.error("Failed to remove from wishlist");
+    }
+  };
+
+  // Add to cart
+  const handleAddToCart = async (product, variant, e) => {
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
+
+    try {
+      const baseProductId = product.id.split("_")[0];
+      const standardVariantId = `${baseProductId}_${
+        variant.color || "default"
+      }_${variant.sizes?.[0]?.size || "default"}`;
+
+      const cartData = {
+        productId: baseProductId,
+        variantId: standardVariantId,
+        quantity: 1,
+        selectedSize: variant.sizes?.[0]?.size || null,
+        selectedColor: variant.color,
+        price: Math.round(variant.discountedPrice ?? product.discountedPrice),
+        originalPrice: Math.round(
+          variant.originalPrice ?? product.originalPrice
+        ),
+        productName: product.name,
+        productBrand: product.brand,
+        productImage: variant.images?.[0] || product.images?.[0],
+        discount: product.discount?.toString() || "",
+      };
+
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/createCart`,
+        cartData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      toast.success("Added to cart!");
+      updateCartCount();
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      if (error.response?.status === 409) {
+        toast.info("Item already in cart");
+      } else {
+        toast.error("Failed to add to cart");
+      }
+    }
+  };
+
+  // Check if product is in wishlist
+  const isInWishlistCheck = (productData, variantData) => {
+    const standardProductId = generateStandardProductId(
+      productData,
+      variantData
+    );
+    return wishlistItems.has(standardProductId);
+  };
+
+  // Toggle wishlist for a product's first variant
+  const toggleWishlist = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const variant = product.defaultVariant;
+    const inWishlist = isInWishlistCheck(product, variant);
+    if (inWishlist) {
+      removeFromWishlistHandler(product, variant);
+    } else {
+      addToWishlistHandler(product, variant);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  useEffect(() => {
+    fetchWishlistStatus();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
+
+  if (!featuredProducts.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">No featured products found</p>
+      </div>
+    );
   }
 
   return (
@@ -95,34 +362,42 @@ const ProductSlider = () => {
             1280: { slidesPerView: 6, spaceBetween: 10 }, // desktops
           }}
         >
-          {popularProducts.map((product) => {
-            const variant = product.variants && product.variants[0];
-            if (!variant) return null;
-
-            const inWishlist = isVariantInWishlist(variant.id);
+          {featuredProducts.map((product) => {
+            const variant = product.defaultVariant;
+            const productImage = variant.images?.[0] || product.images?.[0];
+            const productHoverImage = variant.images?.[1] || product.images?.[1];
+            const inWishlist = isInWishlistCheck(product, variant);
 
             return (
               <SwiperSlide key={product.id}>
                 <div className="w-full shadow-md min-w-0 flex-shrink-0">
                   <div className="w-full h-40 sm:h-44 md:h-48 overflow-hidden rounded-md relative group">
-                    <Link to={`/product/${product.id}`}>
+                    <Link to={`/product/${variant.id.split("_")[0]}`}>
                       <div>
                         <img
-                          src={product.images[0]}
-                          alt={product.name}
+                          src={productImage}
+                          alt={`${product.name} - ${variant.color}`}
                           className="w-full h-full object-top object-cover"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-image.jpg";
+                          }}
                         />
-                        {product.images[1] && (
+                        {productHoverImage && (
                           <img
-                            src={product.images[1]}
-                            alt={`${product.name} hover`}
+                            src={productHoverImage}
+                            alt={`${product.name} - ${variant.color} hover`}
                             className="w-full h-full top-0 left-0 object-top object-cover absolute opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:scale-100"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
                           />
                         )}
 
-                        <span className="flex items-center absolute z-50 top-[6px] left-[6px] sm:top-[10px] sm:left-[10px] bg-red-500 text-white rounded-md text-[10px] sm:text-xs px-1">
-                          {product.discount}
-                        </span>
+                        {product.discount > 0 && (
+                          <span className="flex items-center absolute z-50 top-[6px] left-[6px] sm:top-[10px] sm:left-[10px] bg-red-500 text-white rounded-md text-[10px] sm:text-xs px-1">
+                            {product.discount}% off
+                          </span>
+                        )}
 
                         <button
                           onClick={(e) => toggleWishlist(product, e)}
@@ -151,7 +426,7 @@ const ProductSlider = () => {
                   <div className="p-1 sm:p-2 shadow-md">
                     <h6 className="text-[10px] sm:text-xs md:text-sm mt-1 sm:mt-2 min-h-[12px] sm:min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
                       <Link
-                        to={`/product/${product.id}`}
+                        to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
                       >
                         {product.brand}
@@ -160,10 +435,10 @@ const ProductSlider = () => {
 
                     <h3 className="text-xs sm:text-sm md:text-base leading-[16px] sm:leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[16px] sm:min-h-[20px] line-clamp-1">
                       <Link
-                        to={`/product/${product.id}`}
+                        to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
                       >
-                        {product.name}
+                        {product.name} - {variant.color}
                       </Link>
                     </h3>
 
@@ -178,16 +453,22 @@ const ProductSlider = () => {
 
                     <div className="flex items-center justify-between mb-1">
                       <span className="line-through text-gray-500 text-[10px] sm:text-sm font-[16px]">
-                        ₹{product.originalPrice.toLocaleString()}
+                        ₹
+                        {Math.round(
+                          variant.originalPrice ?? product.originalPrice
+                        ).toLocaleString()}
                       </span>
                       <span className="text-red-500 font-[600] text-[10px] sm:text-sm">
-                        ₹{product.discountedPrice.toLocaleString()}
+                        ₹
+                        {Math.round(
+                          variant.discountedPrice ?? product.discountedPrice
+                        ).toLocaleString()}
                       </span>
                     </div>
 
-                    {product.discount && (
+                    {product.discount > 0 && (
                       <div className="text-green-500 font-semibold text-[10px] sm:text-sm mt-1 ml-1">
-                        {product.discount} off
+                        {product.discount}% off
                       </div>
                     )}
 
