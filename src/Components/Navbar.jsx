@@ -8,7 +8,6 @@ import { FaChevronDown } from "react-icons/fa";
 import { RiMenu2Fill } from "react-icons/ri";
 import { IoRocketOutline } from "react-icons/io5";
 import { IoCloseSharp } from "react-icons/io5";
-import { BiCategory, BiGift } from "react-icons/bi";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { categories } from "../data/categories.js"; // Fallback categories
 import { useNavigate } from "react-router-dom";
@@ -875,13 +874,13 @@ const Navbar = ({ onFilterClick }) => {
                           <Box sx={{ minWidth: 0, maxWidth: 160 }}>
                             <div className="flex flex-col items-start">
                               <span
-                                className="block font-semibold text-gray-700 truncate text-sm"
+                                className="block font-semibold text-gray-700 truncate max-w-[150px] text-sm"
                                 title={user.name}
                               >
                                 {user.name}
                               </span>
                               <span
-                                className="block text-gray-500 truncate text-xs"
+                                className="block text-gray-500 truncate max-w-[150px] text-xs"
                                 title={user.email}
                               >
                                 {user.email}
@@ -1059,7 +1058,7 @@ const Navbar = ({ onFilterClick }) => {
           >
             {/* Categories Bar */}
             <div className="border-t border-b w-full">
-              <div className="py-1 px-4 flex max-w-7xl items-center justify-evenly gap-6 text-sm font-medium text-gray-700">
+              <div className="py-1 px-4 flex max-w-7xl items-center justify-between gap-6 text-sm font-medium text-gray-700">
                 {/* Sidebar Toggle */}
                 <div
                   onClick={() => setSidebarOpen(true)}
