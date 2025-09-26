@@ -10,6 +10,7 @@ import { useContext } from "react";
 import { Context } from "../main";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import MobileBottomNav from "./MobileBottomNav";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -1080,6 +1081,15 @@ const GridProductCategory = ({
             )}
           </main>
         </div>
+
+        <MobileBottomNav
+          SidebarFilterComponent={SidebarFilterComponent}
+          filterProps={filterProps}
+          shouldShowFilter={shouldShowFilter}
+          setSidebarOpen={() => {}}
+          user={isAuthenticated ? {} : null}
+          onFilterClick={onFilterClick}
+        />
       </div>
     </div>
   );

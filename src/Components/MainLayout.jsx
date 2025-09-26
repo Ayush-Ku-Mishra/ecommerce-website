@@ -2,8 +2,8 @@ import React, { useContext, useState } from "react";
 import Navbar from "./Navbar";
 import ScrollToTop from "./ScrollToTop";
 import { Outlet, useLocation } from "react-router-dom";
-import MobileBottomNav from "./MobileBottomNav";
-import { Context } from '../main';
+import { Context } from "../main";
+
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,7 +20,7 @@ const MainLayout = () => {
     "/checkout",
     "/order-success",
   ];
-  const showMobileBottomNav = !mobileNavHiddenPaths.some(path =>
+  const showMobileBottomNav = !mobileNavHiddenPaths.some((path) =>
     location.pathname.startsWith(path)
   );
 
@@ -52,15 +52,6 @@ const MainLayout = () => {
       <div className={showMobileBottomNav ? "pb-16 lg:pb-0" : "pb-0"}>
         <Outlet />
       </div>
-
-      {showMobileBottomNav && (
-        <MobileBottomNav
-          onFilterClick={onFilterClick}
-          shouldShowFilter={shouldShowFilter}
-          setSidebarOpen={setSidebarOpen}
-          user={user}
-        />
-      )}
     </>
   );
 };

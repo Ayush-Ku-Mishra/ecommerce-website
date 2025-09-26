@@ -22,17 +22,16 @@ const MobileBottomNav = ({
   const location = useLocation();
 
   if (
-  location.pathname.startsWith("/product/") ||
-  location.pathname.startsWith("/cart") ||
-  location.pathname.startsWith("/account/address") ||
-  location.pathname.startsWith("/wishlist") ||
-  location.pathname.startsWith("/account/orders") ||
-  location.pathname.startsWith("/checkout") ||
-  location.pathname.startsWith("/order-success")
-) {
-  return null;
-}
-
+    location.pathname.startsWith("/product/") ||
+    location.pathname.startsWith("/cart") ||
+    location.pathname.startsWith("/account/address") ||
+    location.pathname.startsWith("/wishlist") ||
+    location.pathname.startsWith("/account/orders") ||
+    location.pathname.startsWith("/checkout") ||
+    location.pathname.startsWith("/order-success")
+  ) {
+    return null;
+  }
 
   const openFilterModal = () => {
     setFilterModalOpen(true);
@@ -151,7 +150,7 @@ const MobileBottomNav = ({
         aria-labelledby="filter-modal"
         aria-describedby="filter-modal-description"
       >
-        <div className="fixed inset-0 bg-white flex flex-col">
+        <div className="fixed inset-0 bg-white flex flex-col scrollbar-hide">
           {/* Header with close button */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
             <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
@@ -164,7 +163,7 @@ const MobileBottomNav = ({
           </div>
 
           {/* Filter content - scrollable */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 pb-28 scrollbar-hide">
             {/* Render SidebarFilterComponent if provided */}
             {SidebarFilterComponent ? (
               <SidebarFilterComponent {...enhancedFilterProps} />

@@ -23,7 +23,10 @@ const SidebarFilterComponent = ({
   onResetFilters,
   onApplyFilters, // Added this prop for mobile apply functionality
 }) => {
-  const [priceRange, setPriceRange] = useState([selectedPrice.min, selectedPrice.max]);
+  const [priceRange, setPriceRange] = useState([
+    selectedPrice.min,
+    selectedPrice.max,
+  ]);
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [brandExpanded, setBrandExpanded] = useState(false);
   const [colorExpanded, setColorExpanded] = useState(false);
@@ -32,12 +35,10 @@ const SidebarFilterComponent = ({
 
   useEffect(() => {
     if (categoryData?.sub?.length) {
-      const firstWithSub = categoryData.sub.find(
-        (sub) => {
-          if (typeof sub === 'string') return false;
-          return Array.isArray(sub.sub) && sub.sub.length > 0;
-        }
-      );
+      const firstWithSub = categoryData.sub.find((sub) => {
+        if (typeof sub === "string") return false;
+        return Array.isArray(sub.sub) && sub.sub.length > 0;
+      });
       if (firstWithSub) {
         setExpandedSubcategory(firstWithSub.name);
       }
@@ -58,25 +59,26 @@ const SidebarFilterComponent = ({
 
   const handleInputChange = (e, index) => {
     const inputValue = e.target.value;
-    
-    if (inputValue === '') {
+
+    if (inputValue === "") {
       const newRange = [...priceRange];
-      newRange[index] = '';
+      newRange[index] = "";
       setPriceRange(newRange);
       return;
     }
-    
+
     const value = Number(inputValue);
     if (!isNaN(value) && value >= 0) {
       const newRange = [...priceRange];
       newRange[index] = value;
       setPriceRange(newRange);
-      
-      if (typeof newRange[0] === 'number' && typeof newRange[1] === 'number') {
-        onPriceChange && onPriceChange({ 
-          min: newRange[0], 
-          max: newRange[1] 
-        });
+
+      if (typeof newRange[0] === "number" && typeof newRange[1] === "number") {
+        onPriceChange &&
+          onPriceChange({
+            min: newRange[0],
+            max: newRange[1],
+          });
       }
     }
   };
@@ -95,81 +97,101 @@ const SidebarFilterComponent = ({
   const renderSubcategoryItems = (items, level = 1) => {
     if (!Array.isArray(items)) return null;
 
-    return items.map((item, index) => {
-      if (!item) return null;
+    return items
+      .map((item, index) => {
+        if (!item) return null;
 
-      // Handle string items (leaf nodes)
-      if (typeof item === 'string') {
-        return (
-          <label
-            key={`string-${level}-${index}`}
-            className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1"
-            style={{ marginLeft: `${(level - 1) * 12}px` }}
-          >
-            <input
-              type="checkbox"
-              checked={selectedSubs?.includes(item)}
-              onChange={() => handleSubChange(item)}
-              className="w-4 h-4"
-            />
-            <span className={level === 1 ? "text-[15px] font-semibold text-gray-800" : ""}>{item}</span>
-          </label>
-        );
-      }
+        // Handle string items (leaf nodes)
+        if (typeof item === "string") {
+          return (
+            <label
+              key={`string-${level}-${index}`}
+              className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer mb-1"
+              style={{ marginLeft: `${(level - 1) * 12}px` }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedSubs?.includes(item)}
+                onChange={() => handleSubChange(item)}
+                className="w-4 h-4"
+              />
+              <span
+                className={
+                  level === 1 ? "text-[15px] font-semibold text-gray-800" : ""
+                }
+              >
+                {item}
+              </span>
+            </label>
+          );
+        }
 
-      // Handle object items with nested structure
-      if (typeof item === 'object' && item !== null && item.name) {
-        const hasChildren = Array.isArray(item.sub) && item.sub.length > 0;
-        const isExpanded = level === 1 ? 
-          expandedSubcategory === item.name : 
-          expandedThirdLevel === item.name;
+        // Handle object items with nested structure
+        if (typeof item === "object" && item !== null && item.name) {
+          const hasChildren = Array.isArray(item.sub) && item.sub.length > 0;
+          const isExpanded =
+            level === 1
+              ? expandedSubcategory === item.name
+              : expandedThirdLevel === item.name;
 
-        return (
-          <div key={`object-${level}-${index}`} style={{ marginLeft: `${(level - 1) * 12}px` }}>
-            {/* Category header with checkbox and expand/collapse */}
-            <div className="flex items-center justify-between mb-1">
-              <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer flex-1">
-                <input
-                  type="checkbox"
-                  checked={selectedSubs?.includes(item.name)}
-                  onChange={() => handleSubChange(item.name)}
-                  className="w-4 h-4"
-                />
-                <span className={level === 1 ? "text-[15px] font-semibold text-gray-800" : "font-medium"}>{item.name}</span>
-              </label>
-              
-              {hasChildren && (
-                <span
-                  className="cursor-pointer text-gray-400 hover:text-gray-600 ml-2"
-                  onClick={() => {
-                    if (level === 1) {
-                      setExpandedSubcategory(isExpanded ? null : item.name);
-                    } else if (level === 2) {
-                      setExpandedThirdLevel(isExpanded ? null : item.name);
+          return (
+            <div
+              key={`object-${level}-${index}`}
+              style={{ marginLeft: `${(level - 1) * 12}px` }}
+            >
+              {/* Category header with checkbox and expand/collapse */}
+              <div className="flex items-center justify-between mb-1">
+                <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer flex-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedSubs?.includes(item.name)}
+                    onChange={() => handleSubChange(item.name)}
+                    className="w-4 h-4"
+                  />
+                  <span
+                    className={
+                      level === 1
+                        ? "text-[15px] font-semibold text-gray-800"
+                        : "font-medium"
                     }
-                  }}
-                >
-                  {isExpanded ? (
-                    <FaChevronUp size={12} />
-                  ) : (
-                    <FaChevronDown size={12} />
-                  )}
-                </span>
+                  >
+                    {item.name}
+                  </span>
+                </label>
+
+                {hasChildren && (
+                  <span
+                    className="cursor-pointer text-gray-400 hover:text-gray-600 ml-2"
+                    onClick={() => {
+                      if (level === 1) {
+                        setExpandedSubcategory(isExpanded ? null : item.name);
+                      } else if (level === 2) {
+                        setExpandedThirdLevel(isExpanded ? null : item.name);
+                      }
+                    }}
+                  >
+                    {isExpanded ? (
+                      <FaChevronUp size={12} />
+                    ) : (
+                      <FaChevronDown size={12} />
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {/* Render children if expanded */}
+              {hasChildren && isExpanded && (
+                <div className="ml-4 pl-2 border-l border-gray-200 max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
+                  {renderSubcategoryItems(item.sub, level + 1)}
+                </div>
               )}
             </div>
+          );
+        }
 
-            {/* Render children if expanded */}
-            {hasChildren && isExpanded && (
-              <div className="ml-4 pl-2 border-l border-gray-200 max-h-[130px] overflow-y-auto visible-scrollbar space-y-1">
-                {renderSubcategoryItems(item.sub, level + 1)}
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      return null;
-    }).filter(Boolean);
+        return null;
+      })
+      .filter(Boolean);
   };
 
   if (!categoryData) return null;
@@ -183,7 +205,9 @@ const SidebarFilterComponent = ({
             className="flex justify-between items-center cursor-pointer mb-2"
             onClick={() => setCategoryExpanded(!categoryExpanded)}
           >
-            <h3 className="text-sm font-bold text-gray-800">Shop by Category</h3>
+            <h3 className="text-sm font-bold text-gray-800">
+              Shop by Category
+            </h3>
             {categoryExpanded ? <FaChevronUp /> : <FaChevronDown />}
           </div>
           {categoryExpanded && (
@@ -197,8 +221,10 @@ const SidebarFilterComponent = ({
       {/* PRICE SECTION */}
       {onPriceChange && (
         <div>
-          <h3 className="text-sm font-bold mb-2 text-gray-800">Filter by Price</h3>
-          <Box sx={{ width: '100%', maxWidth: 220, pl: 1 }}>
+          <h3 className="text-sm font-bold mb-2 text-gray-800">
+            Filter by Price
+          </h3>
+          <Box sx={{ width: "100%", maxWidth: 220, pl: 1 }}>
             <Slider
               getAriaLabel={() => "Price range"}
               value={priceRange}
@@ -212,7 +238,9 @@ const SidebarFilterComponent = ({
             />
             <div className="flex items-center justify-between gap-3 mt-3">
               <div className="flex items-center gap-1">
-                <label className="text-[15px] font-medium text-gray-700">Min:</label>
+                <label className="text-[15px] font-medium text-gray-700">
+                  Min:
+                </label>
                 <input
                   type="number"
                   value={priceRange[0]}
@@ -221,7 +249,9 @@ const SidebarFilterComponent = ({
                 />
               </div>
               <div className="flex items-center gap-1">
-                <label className="text-[15px] font-medium text-gray-700">Max:</label>
+                <label className="text-[15px] font-medium text-gray-700">
+                  Max:
+                </label>
                 <input
                   type="number"
                   value={priceRange[1] === Infinity ? "" : priceRange[1]}
@@ -246,12 +276,12 @@ const SidebarFilterComponent = ({
           </div>
           <div
             className={`space-y-2 overflow-y-auto pr-1 transition-all duration-300 visible-scrollbar ${
-              colorExpanded ? "max-h-[0px]" : "max-h-[120px]"
+              colorExpanded ? "max-h-[120px]" : "max-h-[0px]"
             }`}
           >
             {colorOptions.map((color, i) => {
               if (!color) return null;
-              
+
               return (
                 <label
                   key={i}
@@ -286,10 +316,15 @@ const SidebarFilterComponent = ({
       {/* RATING SECTION */}
       {onRatingChange && (
         <div>
-          <h3 className="text-sm font-bold mb-2 text-gray-800">Filter by Rating</h3>
+          <h3 className="text-sm font-bold mb-2 text-gray-800">
+            Filter by Rating
+          </h3>
           <div className="space-y-2 ml-1">
             {[4, 3, 2, 1].map((rating) => (
-              <label key={rating} className="flex items-center gap-2 text-[14px] cursor-pointer">
+              <label
+                key={rating}
+                className="flex items-center gap-2 text-[14px] cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={selectedRating?.includes(rating)}
@@ -312,7 +347,9 @@ const SidebarFilterComponent = ({
       {/* DISCOUNT SECTION */}
       {onDiscountChange && (
         <div>
-          <h3 className="text-sm font-bold mb-2 text-gray-800">Filter by Discount</h3>
+          <h3 className="text-sm font-bold mb-2 text-gray-800">
+            Filter by Discount
+          </h3>
           <div className="space-y-2 ml-1">
             {[50, 30, 10].map((discount) => (
               <label
@@ -349,12 +386,12 @@ const SidebarFilterComponent = ({
           </div>
           <div
             className={`space-y-2 overflow-y-auto pr-1 transition-all duration-300 visible-scrollbar ${
-              brandExpanded ? "max-h-[0px]" : "max-h-[120px]"
+              brandExpanded ? "max-h-[120px]" : "max-h-[0px]"
             }`}
           >
             {brandOptions.map((brand, i) => {
               if (!brand) return null;
-              
+
               return (
                 <label
                   key={i}
@@ -379,25 +416,33 @@ const SidebarFilterComponent = ({
         </div>
       )}
 
-      {/* BUTTONS SECTION - Updated for mobile and desktop */}
+      {/* BUTTONS SECTION - Fixed at bottom for mobile */}
       <div className="flex flex-col gap-3 mt-6 lg:mr-6">
-        {/* Mobile Apply Filter Button - Only visible on small screens */}
+        {/* Desktop Reset Button */}
+        <button
+          className="hidden md:block bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-4 rounded"
+          onClick={onResetFilters}
+        >
+          Reset Filters
+        </button>
+      </div>
+
+      {/* Mobile Fixed Bottom Buttons */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 flex gap-3 z-50">
+        <button
+          className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-3 px-4 rounded font-medium"
+          onClick={onResetFilters}
+        >
+          Reset Filters
+        </button>
         {onApplyFilters && (
           <button
-            className="md:hidden bg-green-500 hover:bg-green-600 text-white text-sm py-3 px-4 rounded font-medium"
+            className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-3 px-4 rounded font-medium"
             onClick={onApplyFilters}
           >
             Apply Filters
           </button>
         )}
-        
-        {/* Reset Button - Always visible */}
-        <button
-          className="bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-4 rounded"
-          onClick={onResetFilters}
-        >
-          Reset Filters
-        </button>
       </div>
     </div>
   );
