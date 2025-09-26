@@ -96,16 +96,32 @@ const BagSlider = () => {
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/getAllProductsByCatName?categoryName=Bags&page=1&perPage=50`
+        }/api/v1/product/getAllProductsByCatName?categoryName=bags&page=1&perPage=50`
       );
 
       if (response.data.success) {
-        // Filter for Bags subcategory
+        console.log("All Fashion products:", response.data.products);
+        
+        // Log all subcategories to debug
+        const allSubcategories = response.data.products.map(p => ({
+          name: p.name,
+          categoryName: p.categoryName,
+          subCatName: p.subCatName,
+          thirdSubCatName: p.thirdSubCatName
+        }));
+        console.log("All subcategories:", allSubcategories);
+
+        // Filter for Bags subcategory with more flexible matching
         const bagsData = response.data.products.filter(
           (product) =>
             product.subCatName &&
-            product.subCatName.toLowerCase() === "bags"
+            (product.subCatName.toLowerCase().includes("bag") ||
+             product.subCatName.toLowerCase() === "bags" ||
+             product.thirdSubCatName?.toLowerCase().includes("bag") ||
+             product.name?.toLowerCase().includes("bag"))
         );
+
+        console.log("Filtered bags data:", bagsData);
 
         const transformedProducts = bagsData.map(transformProduct);
         setBags(transformedProducts);
