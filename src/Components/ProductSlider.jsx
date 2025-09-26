@@ -371,7 +371,7 @@ const ProductSlider = () => {
             return (
               <SwiperSlide key={product.id}>
                 <div className="w-full shadow-md min-w-0 flex-shrink-0">
-                  <div className="w-full h-40 sm:h-44 md:h-48 overflow-hidden rounded-md relative group">
+                  <div className="w-full h-48 overflow-hidden rounded-md relative group">
                     <Link to={`/product/${variant.id.split("_")[0]}`}>
                       <div>
                         <img
@@ -394,14 +394,14 @@ const ProductSlider = () => {
                         )}
 
                         {product.discount > 0 && (
-                          <span className="flex items-center absolute z-50 top-[6px] left-[6px] sm:top-[10px] sm:left-[10px] bg-red-500 text-white rounded-md text-[10px] sm:text-xs px-1">
+                          <span className="flex items-center absolute z-50 top-[6px] left-[6px] bg-red-500 text-white rounded-md text-[10px] px-1">
                             {product.discount}% off
                           </span>
                         )}
 
                         <button
                           onClick={(e) => toggleWishlist(product, e)}
-                          className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-1 rounded-full shadow-md transition ${
+                          className={`absolute top-3 right-3 p-2 rounded-full shadow-md transition ${
                             inWishlist
                               ? "text-red-500 bg-white"
                               : "text-gray-600 bg-white hover:text-red-500"
@@ -411,20 +411,18 @@ const ProductSlider = () => {
                               ? "Remove from Wishlist"
                               : "Add to Wishlist"
                           }
-                          aria-label="Toggle wishlist"
                         >
                           {inWishlist ? (
-                            <FaHeart size={14} className="sm:w-[18px] sm:h-[18px]" />
+                            <FaHeart size={18} />
                           ) : (
-                            <FaRegHeart size={14} className="sm:w-[18px] sm:h-[18px]" />
+                            <FaRegHeart size={18} />
                           )}
                         </button>
                       </div>
                     </Link>
                   </div>
-
-                  <div className="p-1 sm:p-2 shadow-md">
-                    <h6 className="text-[10px] sm:text-xs md:text-sm mt-1 sm:mt-2 min-h-[12px] sm:min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
+                  <div className="p-2 shadow-md">
+                    <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
@@ -432,8 +430,7 @@ const ProductSlider = () => {
                         {product.brand}
                       </Link>
                     </h6>
-
-                    <h3 className="text-xs sm:text-sm md:text-base leading-[16px] sm:leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[16px] sm:min-h-[20px] line-clamp-1">
+                    <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
                         className="hover:text-pink-600 transition"
@@ -441,8 +438,8 @@ const ProductSlider = () => {
                         {product.name} - {variant.color}
                       </Link>
                     </h3>
-
-                    <div className="hidden sm:block">
+                    
+                    <div className="mb-2">
                       <Rating
                         name="size-small"
                         defaultValue={product.rating}
@@ -452,29 +449,27 @@ const ProductSlider = () => {
                     </div>
 
                     <div className="flex items-center justify-between mb-1">
-                      <span className="line-through text-gray-500 text-[10px] sm:text-sm font-[16px]">
+                      <span className="line-through text-gray-500 font-[16px]">
                         ₹
                         {Math.round(
                           variant.originalPrice ?? product.originalPrice
                         ).toLocaleString()}
                       </span>
-                      <span className="text-red-500 font-[600] text-[10px] sm:text-sm">
+                      <span className="text-red-500 font-[600]">
                         ₹
                         {Math.round(
                           variant.discountedPrice ?? product.discountedPrice
                         ).toLocaleString()}
                       </span>
                     </div>
-
                     {product.discount > 0 && (
-                      <div className="text-green-500 font-semibold text-[10px] sm:text-sm mt-1 ml-1">
+                      <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
                         {product.discount}% off
                       </div>
                     )}
-
                     <button
                       onClick={(e) => handleAddToCart(product, variant, e)}
-                      className="group flex items-center w-full max-w-[97%] mx-auto gap-1 sm:gap-2 mt-3 sm:mt-6 mb-1 sm:mb-2 border border-red-500 pl-2 sm:pl-4 pr-2 sm:pr-4 pt-1 sm:pt-2 pb-1 sm:pb-2 rounded-md hover:bg-black transition"
+                      className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
                     >
                       <div className="text-[12px] sm:text-[15px] text-red-500 ml-2 sm:ml-5 group-hover:text-white transition">
                         <BsCart4 />

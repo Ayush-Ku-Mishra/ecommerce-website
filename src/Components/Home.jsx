@@ -34,7 +34,7 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="ml-0 md:ml-8 lg:ml-16 mt-5 overflow-x-hidden">
+        <div className="ml-0 md:ml-8 lg:ml-12 mt-5 overflow-x-hidden">
           <ProductSlider />
         </div>
 
