@@ -423,34 +423,34 @@ const BagSlider = () => {
                     </button>
                   </div>
                   <div className="p-2 shadow-md">
-                    <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis">
+                    <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
-                        className="hover:text-pink-600 transition"
+                        className="block w-full"
                       >
                         {product.brand}
                       </Link>
                     </h6>
-                    <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2">
+                    <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2 hover:text-red-500">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
-                        className="hover:text-pink-600 transition"
+                        className="block w-full"
                       >
                         {product.name} - {variant.color}
                       </Link>
                     </h3>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between">
                       <span className="line-through text-gray-500 font-[16px]">
                         ₹
                         {Math.round(
                           variant.originalPrice ?? product.originalPrice
-                        ).toLocaleString()}
+                        )}
                       </span>
-                      <span className="text-red-500 font-[600]">
+                      <span className="text-red-500 font-semibold text-md">
                         ₹
                         {Math.round(
                           variant.discountedPrice ?? product.discountedPrice
-                        ).toLocaleString()}
+                        )}
                       </span>
                     </div>
                     {product.discount > 0 && (
@@ -462,12 +462,10 @@ const BagSlider = () => {
                       onClick={(e) => handleAddToCart(product, variant, e)}
                       className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
                     >
-                      <div className="text-[12px] sm:text-[15px] text-red-500 ml-2 sm:ml-5 group-hover:text-white transition">
-                        <BsCart4 />
-                      </div>
-                      <div className="text-[10px] sm:text-[12px] md:text-sm text-red-500 font-[500] group-hover:text-white transition">
+                      <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
+                      <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
                         ADD TO CART
-                      </div>
+                      </span>
                     </button>
                   </div>
                 </div>
