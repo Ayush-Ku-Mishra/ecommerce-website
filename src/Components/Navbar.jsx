@@ -1228,6 +1228,7 @@ const Navbar = ({ onFilterClick }) => {
       {/* Spacer */}
       {isSticky && <div className="h-[112px] w-full"></div>}
 
+      {/* Mobile Notification Panel - Add this in your Navbar component */}
       <AnimatePresence>
         {isMobileNotificationOpen && (
           <>
@@ -1246,10 +1247,10 @@ const Navbar = ({ onFilterClick }) => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[130] shadow-xl md:hidden"
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-white z-[130] shadow-xl md:hidden flex flex-col"
             >
-              {/* Header */}
-              <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+              {/* Header - Fixed */}
+              <div className="bg-blue-600 text-white p-4 flex items-center justify-between flex-shrink-0">
                 <h3 className="text-lg font-semibold">Notifications</h3>
                 <div className="flex items-center gap-2">
                   {unreadCount > 0 && (
@@ -1269,8 +1270,10 @@ const Navbar = ({ onFilterClick }) => {
                 </div>
               </div>
 
-              {/* Notifications List */}
-              <div className="h-[calc(100vh-64px)] overflow-y-auto">
+              {/* Notifications List - Scrollable with bottom padding */}
+              <div className="flex-1 overflow-y-auto pb-16">
+                {" "}
+                {/* pb-16 accounts for bottom nav */}
                 {notificationLoading ? (
                   <div className="p-8 text-center text-gray-500">
                     Loading notifications...
@@ -1282,11 +1285,12 @@ const Navbar = ({ onFilterClick }) => {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
-                    {notifications.map((notification) => (
+                    {notifications.map((notification, index) => (
                       <motion.div
                         key={notification._id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
                         className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                           !notification.isRead ? "bg-blue-50" : ""
                         }`}
@@ -1326,9 +1330,15 @@ const Navbar = ({ onFilterClick }) => {
                         )}
                       </motion.div>
                     ))}
+
+                    {/* Extra padding at the bottom to ensure last item is visible */}
+                    <div className="h-4"></div>
                   </div>
                 )}
               </div>
+
+              {/* Optional: Bottom fade effect */}
+              <div className="absolute bottom-14 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
             </motion.div>
           </>
         )}
