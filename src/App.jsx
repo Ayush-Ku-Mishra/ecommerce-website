@@ -34,6 +34,7 @@ import NotFoundPage from "./Components/NotFoundPage";
 import { Toaster } from "react-hot-toast";
 import logo from "./assets/PickoraFavicon.png";
 import OrderSuccessPage from "./Components/OrderSuccessPage";
+import FloatingNotification from "./Components/FloatingNotification";
 
 const router = createBrowserRouter([
   {
@@ -197,6 +198,7 @@ function App() {
       ) : (
         <>
           <RouterProvider router={router} />
+          <FloatingNotification />
         </>
       )}
     </div>
