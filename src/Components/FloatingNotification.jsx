@@ -152,7 +152,8 @@ const FloatingNotification = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-24 right-6 z-50 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl overflow-hidden"
+            className="fixed bottom-24 right-6 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl overflow-hidden"
+            style={{ zIndex: 9999 }}
           >
             {/* Header */}
             <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
