@@ -1,103 +1,20 @@
 // Components/FloatingNotification.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState } from "react";
 import { IoNotifications, IoClose, IoTrashOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
-import { Context } from "../main";
+import { useNotifications } from "../hooks/useNotifications";
 
 const FloatingNotification = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const { isAuthenticated } = useContext(Context);
-
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/client-notifications/user`,
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        setNotifications(response.data.notifications);
-        setUnreadCount(response.data.unreadCount);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Mark as read
-  const markAsRead = async (notificationId) => {
-    try {
-      await axios.put(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/v1/client-notifications/user/mark-read/${notificationId}`,
-        {},
-        { withCredentials: true }
-      );
-
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, isRead: true } : notif
-        )
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Error marking as read:", error);
-    }
-  };
-
-  // Mark all as read
-  const markAllAsRead = async () => {
-    try {
-      await axios.put(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/v1/client-notifications/user/mark-all-read`,
-        {},
-        { withCredentials: true }
-      );
-
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, isRead: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-    }
-  };
-
-  // Delete notification
-  const deleteNotification = async (notificationId) => {
-    try {
-      await axios.delete(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/v1/client-notifications/user/delete/${notificationId}`,
-        { withCredentials: true }
-      );
-
-      setNotifications((prev) =>
-        prev.filter((notif) => notif._id !== notificationId)
-      );
-
-      // Update unread count if deleted notification was unread
-      const deletedNotif = notifications.find((n) => n._id === notificationId);
-      if (deletedNotif && !deletedNotif.isRead) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-    }
-  };
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
 
   // Handle notification click
   const handleNotificationClick = (notification) => {
@@ -106,24 +23,9 @@ const FloatingNotification = () => {
     }
     if (notification.link) {
       setIsOpen(false);
-       window.location.href = notification.link;
+      window.location.href = notification.link;
     }
   };
-
-  // Fetch notifications on mount and periodically
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchNotifications();
-
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
-
-  // Only show if user is authenticated
-  if (!isAuthenticated) return null;
 
   return (
     <>

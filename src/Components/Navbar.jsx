@@ -27,6 +27,10 @@ import toast from "react-hot-toast";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import MobileBottomNav from "./MobileBottomNav.jsx";
+import { useNotifications } from "../hooks/useNotifications";
+import { motion, AnimatePresence } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
+import { IoTrashOutline } from "react-icons/io5";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -53,6 +57,16 @@ const Navbar = ({ onFilterClick }) => {
   const [localUser, setLocalUser] = useState(null);
   const { isAuthenticated, wishlistCount } = useContext(Context);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobileNotificationOpen, setIsMobileNotificationOpen] =
+    useState(false);
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
 
   useEffect(() => {
     const handleResize = () => {
@@ -251,6 +265,17 @@ const Navbar = ({ onFilterClick }) => {
 
   const handleLogoError = () => {
     setCurrentLogo("/api/placeholder/100/50");
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+    if (notification.link) {
+      setIsMobileNotificationOpen(false);
+      navigate(notification.link);
+    }
   };
 
   // Use backend categories if available, otherwise fallback to static
@@ -611,8 +636,16 @@ const Navbar = ({ onFilterClick }) => {
             {/* Right - Icons */}
             <div className="flex items-center gap-1">
               {/* Notification Icon */}
-              <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button
+                onClick={() => setIsMobileNotificationOpen(true)}
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
                 <IoNotifications className="text-xl text-gray-700" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0 -right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center font-semibold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* Wishlist Icon */}
@@ -1194,6 +1227,112 @@ const Navbar = ({ onFilterClick }) => {
 
       {/* Spacer */}
       {isSticky && <div className="h-[112px] w-full"></div>}
+
+      <AnimatePresence>
+        {isMobileNotificationOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileNotificationOpen(false)}
+              className="fixed inset-0 bg-black bg-opacity-50 z-[120] md:hidden"
+            />
+
+            {/* Notification Panel - Slides from right */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[130] shadow-xl md:hidden"
+            >
+              {/* Header */}
+              <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Notifications</h3>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-sm hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsMobileNotificationOpen(false)}
+                    className="p-1 hover:bg-blue-700 rounded"
+                  >
+                    <IoCloseSharp className="text-xl" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Notifications List */}
+              <div className="h-[calc(100vh-64px)] overflow-y-auto">
+                {notificationLoading ? (
+                  <div className="p-8 text-center text-gray-500">
+                    Loading notifications...
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <IoNotifications className="text-4xl mx-auto mb-2 opacity-50" />
+                    <p>No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {notifications.map((notification) => (
+                      <motion.div
+                        key={notification._id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          !notification.isRead ? "bg-blue-50" : ""
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900">
+                              {notification.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              {formatDistanceToNow(
+                                new Date(notification.createdAt),
+                                {
+                                  addSuffix: true,
+                                }
+                              )}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification._id);
+                            }}
+                            className="ml-2 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                          >
+                            <IoTrashOutline className="text-gray-500 hover:text-red-500" />
+                          </button>
+                        </div>
+                        {notification.link && (
+                          <span className="text-blue-600 text-sm hover:underline mt-2 inline-block">
+                            View details →
+                          </span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
