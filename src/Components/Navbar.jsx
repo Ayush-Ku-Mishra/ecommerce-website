@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import logo from "../assets/PickoraLogo2.jpg";
 import { IoSearch, IoNotifications, IoHomeSharp } from "react-icons/io5";
 import { Link, NavLink, useLocation } from "react-router-dom";
@@ -31,6 +31,9 @@ import { useNotifications } from "../hooks/useNotifications";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { IoTrashOutline } from "react-icons/io5";
+import SearchModal from "./SearchModal";
+import DesktopSearchDropdown from "./DesktopSearchDropdown";
+import { debounce } from "lodash";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -67,6 +70,13 @@ const Navbar = ({ onFilterClick }) => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
+
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [desktopSearchQuery, setDesktopSearchQuery] = useState("");
+  const [desktopSearchResults, setDesktopSearchResults] = useState([]);
+  const [desktopSearchLoading, setDesktopSearchLoading] = useState(false);
+  const [showDesktopDropdown, setShowDesktopDropdown] = useState(false);
+  const desktopSearchRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -261,6 +271,80 @@ const Navbar = ({ onFilterClick }) => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const performDesktopSearch = async (query) => {
+    if (!query.trim()) {
+      setDesktopSearchResults([]);
+      setShowDesktopDropdown(false);
+      return;
+    }
+
+    setDesktopSearchLoading(true);
+    setShowDesktopDropdown(true);
+
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/search?query=${query}`
+      );
+
+      if (response.data.success) {
+        setDesktopSearchResults(response.data.data);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setDesktopSearchResults([]);
+    } finally {
+      setDesktopSearchLoading(false);
+    }
+  };
+
+  // Debounced desktop search
+  const debouncedDesktopSearch = useRef(
+    debounce((query) => performDesktopSearch(query), 300)
+  ).current;
+
+  // Handle desktop search input change
+  const handleDesktopSearchChange = (e) => {
+    const query = e.target.value;
+    setDesktopSearchQuery(query);
+    debouncedDesktopSearch(query);
+  };
+
+  // Handle desktop search submit
+  const handleDesktopSearchSubmit = (e) => {
+    e.preventDefault();
+    if (desktopSearchQuery.trim()) {
+      // Save to recent searches
+      const saved = localStorage.getItem("recentSearches");
+      const recentSearches = saved ? JSON.parse(saved) : [];
+      const updated = [
+        desktopSearchQuery,
+        ...recentSearches.filter((item) => item !== desktopSearchQuery),
+      ].slice(0, 5);
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
+
+      navigate(`/products?search=${encodeURIComponent(desktopSearchQuery)}`);
+      setShowDesktopDropdown(false);
+      setDesktopSearchQuery("");
+    }
+  };
+
+  // Handle clicking outside desktop search
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        desktopSearchRef.current &&
+        !desktopSearchRef.current.contains(event.target)
+      ) {
+        setShowDesktopDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogoError = () => {
@@ -690,7 +774,10 @@ const Navbar = ({ onFilterClick }) => {
 
           {/* Search Bar */}
           <div className="px-3 py-2">
-            <div className="relative w-full">
+            <div
+              className="relative w-full"
+              onClick={() => setMobileSearchOpen(true)}
+            >
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <IoSearch className="h-4 w-4 text-gray-400" />
               </div>
@@ -698,8 +785,10 @@ const Navbar = ({ onFilterClick }) => {
                 type="text"
                 placeholder="Search products..."
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
+                readOnly
+                style={{ cursor: "pointer" }}
               />
-              <button className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-1.5 rounded-lg hover:shadow-lg transition-all duration-200">
                   <IoSearch className="h-3 w-3" />
                 </div>
@@ -852,22 +941,60 @@ const Navbar = ({ onFilterClick }) => {
               </div>
 
               {/* Search - Hidden on mobile */}
-              <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-                <div className="relative w-full">
+              <div
+                className="hidden md:flex flex-1 max-w-2xl mx-8"
+                ref={desktopSearchRef}
+              >
+                <form
+                  onSubmit={handleDesktopSearchSubmit}
+                  className="relative w-full"
+                >
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <IoSearch className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
+                    value={desktopSearchQuery}
+                    onChange={handleDesktopSearchChange}
+                    onFocus={() =>
+                      desktopSearchQuery && setShowDesktopDropdown(true)
+                    }
                     placeholder="Search for products, brands and more"
                     className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
                   />
-                  <button className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                  <button
+                    type="submit"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  >
                     <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-xl hover:shadow-lg transition-all duration-200">
                       <IoSearch className="h-4 w-4" />
                     </div>
                   </button>
-                </div>
+
+                  {/* Desktop Search Dropdown */}
+                  <DesktopSearchDropdown
+                    isOpen={showDesktopDropdown}
+                    searchResults={desktopSearchResults}
+                    loading={desktopSearchLoading}
+                    searchQuery={desktopSearchQuery}
+                    onClose={() => setShowDesktopDropdown(false)}
+                    onResultClick={(product) => {
+                      const saved = localStorage.getItem("recentSearches");
+                      const recentSearches = saved ? JSON.parse(saved) : [];
+                      const updated = [
+                        product.name,
+                        ...recentSearches.filter(
+                          (item) => item !== product.name
+                        ),
+                      ].slice(0, 5);
+                      localStorage.setItem(
+                        "recentSearches",
+                        JSON.stringify(updated)
+                      );
+                      setDesktopSearchQuery("");
+                    }}
+                  />
+                </form>
               </div>
 
               {/* Actions */}
@@ -1343,6 +1470,11 @@ const Navbar = ({ onFilterClick }) => {
           </>
         )}
       </AnimatePresence>
+
+      <SearchModal
+        isOpen={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+      />
     </div>
   );
 };

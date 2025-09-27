@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Autoplay } from "swiper/modules";
+import { HomeSliderSkeleton } from "../Skeletons/HomeSliderSkeleton";
 
 const HomeSlider = () => {
   const [sliders, setSliders] = useState([]);
@@ -39,7 +40,7 @@ const HomeSlider = () => {
   }, []);
 
   if (loading) {
-    return <div className="text-center p-5">Loading sliders...</div>;
+    return <HomeSliderSkeleton />;
   }
 
   return (

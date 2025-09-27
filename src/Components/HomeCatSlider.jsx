@@ -6,6 +6,7 @@ import "swiper/css/pagination";
 import { Navigation } from "swiper/modules";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { HomeCatSliderSkeleton } from "../Skeletons/HomeCatSliderSkeleton";
 
 const HomeCatSlider = () => {
   const [categories, setCategories] = useState([]);
@@ -43,15 +44,8 @@ const HomeCatSlider = () => {
     fetchCategories();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="border">
-        <div className="flex justify-center items-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <span className="ml-2">Loading categories...</span>
-        </div>
-      </div>
-    );
+   if (loading) {
+    return <HomeCatSliderSkeleton />;
   }
 
   if (error) {

@@ -9,6 +9,7 @@ import { BsCart4 } from "react-icons/bs";
 import { Context } from "../main";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { HeadPhoneSliderSkeleton } from "../Skeletons/HeadPhoneSliderSkeleton";
 
 const HeadPhoneSlider = () => {
   const [audioDevices, setAudioDevices] = useState([]);
@@ -312,12 +313,8 @@ const HeadPhoneSlider = () => {
   }, [isAuthenticated]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-      </div>
-    );
-  }
+      return <HeadPhoneSliderSkeleton />;
+    }
 
   if (!audioDevices.length) {
     return (
