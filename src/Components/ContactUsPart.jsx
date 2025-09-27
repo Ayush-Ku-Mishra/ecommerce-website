@@ -625,7 +625,7 @@ const ContactUsPart = () => {
                 <div className="flex items-center gap-3">
                   <IoLocationSharp className="text-red-500 text-xl" />
                   <span className="text-sm">
-                    507-Union Trade Centre, France
+                    507-Union Trade Centre, India
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

@@ -1,11 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
-
 import { Autoplay } from "swiper/modules";
 
 const HomeSlider = () => {
+  const [sliders, setSliders] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchSliders = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/slider/all`
+      );
+
+      if (data.success && data.sliders) {
+        setSliders(data.sliders);
+        // toast.success("Sliders loaded successfully");
+      } else {
+        toast.error(data.message || "Failed to load sliders");
+      }
+    } catch (error) {
+      toast.error(
+        `Error loading sliders: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSliders();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center p-5">Loading sliders...</div>;
+  }
+
   return (
     <div className="w-full py-2 mx-auto bg-[#fff0f5]">
       <div className="w-full">
@@ -16,26 +52,27 @@ const HomeSlider = () => {
           loop={true}
           className="sliderHome"
         >
-          {[
-            "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            "https://i.postimg.cc/9Mh6bg2W/canva-9-EPx6fu8jq-Y.jpg",
-            "https://images.meesho.com/images/marketing/1746425994914.webp",
-            "https://serviceapi.spicezgold.com/download/1751685183248_NewProject(6).jpg",
-            "https://i.postimg.cc/CLBcZHyJ/canva-I0v7-Yqr-BXh8.jpg",
-          ].map((src, index) => (
-            <SwiperSlide key={index}>
-              <div className="w-full h-[140px] sm:h-[280px] md:h-[360px]">
-                <img
-                  src={src}
-                  alt={`Banner ${index + 1}`}
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            </SwiperSlide>
-          ))}
+          {sliders.length > 0 ? (
+            sliders.map((slider, index) => (
+              <SwiperSlide key={slider._id}>
+                <div className="w-full h-[140px] sm:h-[280px] md:h-[360px]">
+                  <img
+                    src={slider.imageUrl}
+                    alt={`Banner ${index + 1}`}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+              </SwiperSlide>
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              No sliders available
+            </div>
+          )}
         </Swiper>
       </div>
 
+      {/* Features section */}
       <div className="flex items-center justify-center gap-10 border mt-2 p-4 bg-white border-red-300 rounded-lg">
         <div className="flex items-center justify-center gap-2 text-xs sm:text-sm">
           <img
