@@ -1,15 +1,13 @@
-import { StrictMode } from "react";
+import { StrictMode, createContext, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
-import { createContext } from "react";
-import { useState } from "react";
-import { useEffect } from "react";
 import axios from "axios";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 
+// Create global context
 export const Context = createContext({
   isAuthenticated: false,
   setIsAuthenticated: () => {},
@@ -19,6 +17,8 @@ export const Context = createContext({
   updateCartCount: () => {},
   wishlistCount: 0,
   updateWishlistCount: () => {},
+  loadingAddresses: false,
+  setLoadingAddresses: () => {},
 });
 
 const AppWrapper = () => {
@@ -27,20 +27,19 @@ const AppWrapper = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [loadingAddresses, setLoadingAddresses] = useState(false); // NEW
 
-  // Function to fetch cart count
+  // Fetch cart count
   const fetchCartCount = async () => {
     if (!isAuthenticated) {
       setCartCount(0);
       return;
     }
-
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/getCartItems`,
         { withCredentials: true }
       );
-
       if (res.data.success) {
         const totalCount = res.data.data.reduce(
           (sum, item) => sum + item.quantity,
@@ -54,23 +53,21 @@ const AppWrapper = () => {
     }
   };
 
-  // Function to update cart count (can be called from components)
   const updateCartCount = () => {
     fetchCartCount();
   };
 
+  // Fetch wishlist count
   const fetchWishlistCount = async () => {
     if (!isAuthenticated) {
       setWishlistCount(0);
       return;
     }
-
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
         { withCredentials: true }
       );
-
       if (res.data.success) {
         setWishlistCount(res.data.data.length);
       }
@@ -80,11 +77,11 @@ const AppWrapper = () => {
     }
   };
 
-  // Function to update wishlist count
   const updateWishlistCount = () => {
     fetchWishlistCount();
   };
 
+  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -107,14 +104,14 @@ const AppWrapper = () => {
     checkAuth();
   }, []);
 
-  // Fetch cart count when authentication status changes
+  // Fetch cart & wishlist when auth changes
   useEffect(() => {
     if (isAuthenticated) {
       fetchCartCount();
-      fetchWishlistCount(); // Add this line
+      fetchWishlistCount();
     } else {
       setCartCount(0);
-      setWishlistCount(0); // Add this line
+      setWishlistCount(0);
     }
   }, [isAuthenticated]);
 
@@ -130,6 +127,8 @@ const AppWrapper = () => {
         updateCartCount,
         wishlistCount,
         updateWishlistCount,
+        loadingAddresses,       // NEW
+        setLoadingAddresses,    // NEW
       }}
     >
       <App />

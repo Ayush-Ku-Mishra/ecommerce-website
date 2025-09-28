@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { HiViewGrid } from "react-icons/hi";
 import { TfiViewListAlt } from "react-icons/tfi";
 import { BsCart4 } from "react-icons/bs";
@@ -12,14 +12,11 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import MobileBottomNav from "./MobileBottomNav";
 
-const API_BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 const GridProductCategory = ({
   SidebarFilterComponent,
   categoryName,
-  shouldShowFilter = () => true, // Default function if not provided
-  onFilterClick = () => {}, // Default function if not provided
+  shouldShowFilter = () => true,
+  onFilterClick = () => {},
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -33,6 +30,8 @@ const GridProductCategory = ({
   const [error, setError] = useState(null);
   const [totalProducts, setTotalProducts] = useState(0);
   const [wishlistItems, setWishlistItems] = useState(new Set());
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
 
   // Use category from URL search params or prop
   const category = searchParams.get("category") || categoryName;
@@ -48,8 +47,17 @@ const GridProductCategory = ({
   const [viewType, setViewType] = useState("grid");
   const [sortOption, setSortOption] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
+  const location = useLocation();
+  const [shouldApplyFilters, setShouldApplyFilters] = useState(false);
   const { isAuthenticated, updateCartCount, updateWishlistCount } =
     useContext(Context);
+
+  const searchQuery = searchParams.get("search");
+  const minPriceFromUrl = searchParams.get("minPrice");
+  const maxPriceFromUrl = searchParams.get("maxPrice");
+  const categoryFromUrl = searchParams.get("category");
+  const brandFromUrl = searchParams.get("brand");
+  const filterFromUrl = searchParams.get("filter");
 
   // Fetch categories from backend
   const fetchBackendCategories = async () => {
@@ -162,7 +170,7 @@ const GridProductCategory = ({
   };
 
   // API function to fetch products
-  const fetchProducts = async (categoryName) => {
+  const fetchProducts = async (categoryName, searchTerm = null) => {
     setLoading(true);
     setError(null);
 
@@ -175,14 +183,26 @@ const GridProductCategory = ({
       params.append("page", "1");
       params.append("perPage", "1000");
 
-      if (categoryName) {
+      // Check if we have a search term from URL or parameter
+      const currentSearchQuery = searchTerm || searchQuery;
+
+      if (currentSearchQuery) {
+        // Use search parameter
+        params.append("search", currentSearchQuery);
+
+        // Add other filters if present
+        if (minPriceFromUrl) params.append("minPrice", minPriceFromUrl);
+        if (maxPriceFromUrl) params.append("maxPrice", maxPriceFromUrl);
+        if (brandFromUrl) params.append("brand", brandFromUrl);
+        if (filterFromUrl) params.append("filter", filterFromUrl);
+      } else if (categoryName) {
         endpoint = `${
           import.meta.env.VITE_BACKEND_URL
         }/api/v1/product/getAllProductsByCatName`;
         params.append("categoryName", categoryName);
       }
 
-      console.log(`Fetching from: ${endpoint}?${params}`);
+      console.log("Fetching products from:", `${endpoint}?${params}`);
 
       const response = await axios.get(`${endpoint}?${params}`, {
         headers: {
@@ -190,10 +210,8 @@ const GridProductCategory = ({
         },
       });
 
-      const data = response.data;
-
-      if (data.success) {
-        const transformedProducts = data.products.map((product) => ({
+      if (response.data.success) {
+        const transformedProducts = response.data.products.map((product) => ({
           id: product._id,
           name: product.name,
           brand: product.brand || "Unknown Brand",
@@ -243,21 +261,23 @@ const GridProductCategory = ({
             : [],
         }));
 
-        setProducts(transformedProducts);
-        setTotalProducts(data.count || transformedProducts.length);
+        if (currentSearchQuery) {
+          // If this is a search query, update search results
+          setSearchResults(transformedProducts);
+          setTotalProducts(transformedProducts.length);
+        } else {
+          // Otherwise update all products
+          setProducts(transformedProducts);
+          setTotalProducts(response.data.count || transformedProducts.length);
+        }
       } else {
-        throw new Error(data.message || "Failed to fetch products");
+        throw new Error(response.data.message || "Failed to fetch products");
       }
     } catch (err) {
       console.error("Error fetching products:", err);
-      toast.error(
-        err.response?.data?.message || err.message || "Failed to fetch products"
-      );
       setError(
         err.response?.data?.message || err.message || "Failed to fetch products"
       );
-      setProducts([]);
-      setTotalProducts(0);
     } finally {
       setLoading(false);
     }
@@ -265,6 +285,12 @@ const GridProductCategory = ({
 
   // Filter products based on current category
   const filteredProducts = useMemo(() => {
+    if (loading) return [];
+
+    if (searchQuery) {
+      return searchResults; // Use search results when searching
+    }
+
     if (!category) return products;
 
     return products.filter((product) => {
@@ -278,7 +304,7 @@ const GridProductCategory = ({
           cat.toLowerCase() === category.toLowerCase()
       );
     });
-  }, [products, category]);
+  }, [products, searchResults, category, searchQuery, loading]);
 
   const brandOptions = useMemo(
     () => [...new Set(filteredProducts.map((p) => p.brand))].sort(),
@@ -337,19 +363,46 @@ const GridProductCategory = ({
 
   // Fetch products when category changes
   useEffect(() => {
-    if (category) {
-      fetchProducts(category);
-    } else {
-      fetchProducts();
-    }
-  }, [category]);
+    let isActive = true;
+
+    const doFetch = async () => {
+      if (searchQuery) {
+        await fetchProducts(null, searchQuery);
+      } else {
+        // Clear search results when not searching
+        setSearchResults([]);
+        if (category) {
+          await fetchProducts(category);
+        } else {
+          await fetchProducts();
+        }
+      }
+    };
+
+    doFetch();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    searchQuery,
+    category,
+    minPriceFromUrl,
+    maxPriceFromUrl,
+    brandFromUrl,
+    filterFromUrl,
+  ]);
 
   useEffect(() => {
     const category = searchParams.get("category") || "";
     const subs = searchParams.getAll("sub");
     const rating = searchParams.getAll("rating").map(Number);
     const discount = searchParams.getAll("discount").map(Number);
-    const brands = searchParams.getAll("brand");
+
+    // Handle brands - could be comma-separated string
+    const brandParam = searchParams.get("brand");
+    const brands = brandParam ? brandParam.split(",") : [];
+
     const colors = searchParams.getAll("color");
     const view = searchParams.get("view") || "grid";
     const sort = searchParams.get("sort") || "";
@@ -428,6 +481,10 @@ const GridProductCategory = ({
       toast.error("Error fetching wishlist status");
     }
   };
+
+  useEffect(() => {
+    setIsSearching(!!searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchWishlistStatus();
@@ -601,17 +658,24 @@ const GridProductCategory = ({
 
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
+
     if (selectedCategory) params.set("category", selectedCategory);
     selectedSubs.forEach((s) => params.append("sub", s));
     selectedRating.forEach((r) => params.append("rating", r));
     selectedDiscount.forEach((d) => params.append("discount", d));
-    selectedBrands.forEach((b) => params.append("brand", b));
+
+    // Handle brands
+    if (selectedBrands && selectedBrands.length > 0) {
+      selectedBrands.forEach((brand) => params.append("brand", brand));
+    }
+
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
     if (selectedPrice.max !== Infinity)
       params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
+
     setSearchParams(params, { replace: true });
   };
 
@@ -631,7 +695,9 @@ const GridProductCategory = ({
   const getFilteredVariants = () => {
     let result = [];
 
-    filteredProducts.forEach((product) => {
+    const productsToFilter = searchQuery ? searchResults : filteredProducts;
+
+    productsToFilter.forEach((product) => {
       const subcategories = Array.isArray(product.subcategory)
         ? product.subcategory
         : [];
@@ -760,9 +826,17 @@ const GridProductCategory = ({
     return wishlistItems.has(standardProductId);
   };
 
+  const handleFilterClick = () => {
+    setShouldApplyFilters(true);
+    handleApplyFilters();
+  };
+
   // Prepare filter props for SidebarFilterComponent
   const filterProps = {
-    categoryData,
+    categoryData: categoryData || {
+      name: searchQuery ? "Search Results" : "All Products",
+      sub: [],
+    },
     onRatingChange: setSelectedRating,
     onDiscountChange: setSelectedDiscount,
     onSubChange: setSelectedSubs,
@@ -773,6 +847,10 @@ const GridProductCategory = ({
     selectedPrice,
     brandOptions,
     selectedBrands,
+    onBrandChange: (brands) => {
+      console.log("Updating brands:", brands); // Debug log
+      setSelectedBrands(Array.isArray(brands) ? brands : []);
+    },
     onBrandChange: setSelectedBrands,
     colorOptions,
     selectedColors,
@@ -820,7 +898,7 @@ const GridProductCategory = ({
         <div className="flex flex-wrap lg:flex-nowrap gap-6">
           {/* Sidebar */}
           <aside className="hidden lg:block lg:w-1/4 bg-white sticky top-24 h-[calc(100vh-96px)] overflow-y-auto pr-2 custom-scroll z-10">
-            {SidebarFilterComponent && categoryData && (
+            {SidebarFilterComponent && (
               <SidebarFilterComponent {...filterProps} />
             )}
           </aside>
@@ -870,213 +948,277 @@ const GridProductCategory = ({
               </div>
             </div>
 
-            {/* Product Cards */}
-            {viewType === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {shuffledVisibleVariants.map(({ product, variant }) => {
-                  const productImage =
-                    variant.images?.[0] || product.images?.[0];
-                  const inWishlist = isInWishlistCheck(product, variant);
+            {searchQuery && (
+              <div className="mb-4 px-3">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Search results for "{searchQuery}"
+                </h2>
+                {searchResults.length > 0 ? (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Found {searchResults.length} products
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-600 mt-1">
+                    No products found
+                  </p>
+                )}
+              </div>
+            )}
 
-                  return (
-                    <div key={variant.id} className="w-full shadow-md bg-white">
-                      <div
-                        onClick={() => handleProductClick(variant.id)}
-                        className="w-full h-48 overflow-hidden rounded-md relative group cursor-pointer"
-                      >
-                        <img
-                          src={productImage}
-                          alt={`${product.name} - ${variant.color}`}
-                          className="w-full h-full object-top object-cover"
-                          onError={(e) => {
-                            e.target.src = "/placeholder-image.jpg";
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (inWishlist) {
-                              removeFromWishlistHandler(product, variant);
-                            } else {
-                              addToWishlistHandler(product, variant);
-                            }
-                          }}
-                          className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
-                            inWishlist
-                              ? "text-red-500 bg-white"
-                              : "text-gray-600 bg-white hover:text-red-500"
-                          }`}
-                          title={
-                            inWishlist
-                              ? "Remove from Wishlist"
-                              : "Add to Wishlist"
-                          }
-                        >
-                          {inWishlist ? (
-                            <FaHeart size={18} />
-                          ) : (
-                            <FaRegHeart size={18} />
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="p-2 shadow-md">
-                        <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
-                          {product.brand}
-                        </h6>
-                        <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2 hover:text-red-500">
-                          <Link
-                            to={`/product/${variant.id}`}
-                            className="block w-full"
-                          >
-                            {product.name} - {variant.color}
-                          </Link>
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <span className="line-through text-gray-500 font-[16px]">
-                            ₹
-                            {Math.round(
-                              variant.originalPrice ?? product.originalPrice
-                            )}
-                          </span>
-                          <span className="text-red-500 font-semibold text-md">
-                            ₹
-                            {Math.round(
-                              variant.discountedPrice ?? product.discountedPrice
-                            )}
-                          </span>
-                        </div>
-                        {product.discount > 0 && (
-                          <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
-                            {product.discount}% off
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => handleAddToCart(product, variant, e)}
-                          className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
-                        >
-                          <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
-                          <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
-                            ADD TO CART
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+            {loading ? (
+              <div className="flex justify-center items-center min-h-[400px]">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading products...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center min-h-[400px]">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => fetchProducts(category)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Retry
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                {shuffledVisibleVariants.map(({ product, variant }) => {
-                  const productImage =
-                    variant.images?.[0] || product.images?.[0];
-                  const inWishlist = isInWishlistCheck(product, variant);
+              <>
+                {/* Product Cards */}
+                {viewType === "grid" ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {shuffledVisibleVariants.map(({ product, variant }) => {
+                      const productImage =
+                        variant.images?.[0] || product.images?.[0];
+                      const inWishlist = isInWishlistCheck(product, variant);
 
-                  return (
-                    <div
-                      key={variant.id}
-                      className="w-full bg-white shadow rounded-lg overflow-hidden flex flex-col sm:flex-row"
-                    >
-                      {/* Image section */}
-                      <div
-                        className="w-full h-72 sm:w-[25%] sm:h-[320px] relative cursor-pointer"
-                        onClick={() => handleProductClick(variant.id)}
-                      >
-                        <img
-                          src={productImage}
-                          alt={`${product.name} - ${variant.color}`}
-                          className="w-full h-full object-cover p-1 rounded-lg"
-                          onError={(e) => {
-                            e.target.src = "/placeholder-image.jpg";
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (inWishlist) {
-                              removeFromWishlistHandler(product, variant);
-                            } else {
-                              addToWishlistHandler(product, variant);
-                            }
-                          }}
-                          className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
-                            inWishlist
-                              ? "text-red-500 bg-white"
-                              : "text-gray-600 bg-white hover:text-red-500"
-                          }`}
-                          title={
-                            inWishlist
-                              ? "Remove from Wishlist"
-                              : "Add to Wishlist"
-                          }
+                      return (
+                        <div
+                          key={variant.id}
+                          className="w-full shadow-md bg-white"
                         >
-                          {inWishlist ? (
-                            <FaHeart size={18} />
-                          ) : (
-                            <FaRegHeart size={18} />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Details section */}
-                      <div className="w-full sm:w-[60%] p-4 flex flex-col justify-between">
-                        <div>
-                          <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis hover:text-red-500">
-                            {product.brand}
-                          </h6>
-                          <h3 className="mt-2 hover:text-red-500">
-                            <Link
-                              to={`/product/${variant.id}`}
-                              className="block w-full"
+                          <div
+                            onClick={() => handleProductClick(variant.id)}
+                            className="w-full h-48 overflow-hidden rounded-md relative group cursor-pointer"
+                          >
+                            <img
+                              src={productImage}
+                              alt={`${product.name} - ${variant.color}`}
+                              className="w-full h-full object-top object-cover"
+                              onError={(e) => {
+                                e.target.src = "/placeholder-image.jpg";
+                              }}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (inWishlist) {
+                                  removeFromWishlistHandler(product, variant);
+                                } else {
+                                  addToWishlistHandler(product, variant);
+                                }
+                              }}
+                              className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
+                                inWishlist
+                                  ? "text-red-500 bg-white"
+                                  : "text-gray-600 bg-white hover:text-red-500"
+                              }`}
+                              title={
+                                inWishlist
+                                  ? "Remove from Wishlist"
+                                  : "Add to Wishlist"
+                              }
                             >
-                              {product.name} - {variant.color}
-                            </Link>
-                          </h3>
-
-                          <div className="flex items-center gap-3 mt-2 mb-2">
-                            <span className="line-through text-gray-500 text-md">
-                              ₹
-                              {Math.round(
-                                variant.originalPrice ?? product.originalPrice
+                              {inWishlist ? (
+                                <FaHeart size={18} />
+                              ) : (
+                                <FaRegHeart size={18} />
                               )}
-                            </span>
-                            <span className="text-red-500 font-semibold text-md">
-                              ₹
-                              {Math.round(
-                                variant.discountedPrice ??
-                                  product.discountedPrice
-                              )}
-                            </span>
+                            </button>
                           </div>
-                          {product.discount > 0 && (
-                            <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
-                              {product.discount}% off
+
+                          <div className="p-2 shadow-md">
+                            <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
+                              {product.brand}
+                            </h6>
+                            <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2 hover:text-red-500">
+                              <Link
+                                to={`/product/${variant.id}`}
+                                className="block w-full"
+                              >
+                                {product.name} - {variant.color}
+                              </Link>
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <span className="line-through text-gray-500 font-[16px]">
+                                ₹
+                                {Math.round(
+                                  variant.originalPrice ?? product.originalPrice
+                                )}
+                              </span>
+                              <span className="text-red-500 font-semibold text-md">
+                                ₹
+                                {Math.round(
+                                  variant.discountedPrice ??
+                                    product.discountedPrice
+                                )}
+                              </span>
                             </div>
-                          )}
+                            {product.discount > 0 && (
+                              <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
+                                {product.discount}% off
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) =>
+                                handleAddToCart(product, variant, e)
+                              }
+                              className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                            >
+                              <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
+                              <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
+                                ADD TO CART
+                              </span>
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={(e) => handleAddToCart(product, variant, e)}
-                          className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2"
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {shuffledVisibleVariants.map(({ product, variant }) => {
+                      const productImage =
+                        variant.images?.[0] || product.images?.[0];
+                      const inWishlist = isInWishlistCheck(product, variant);
+
+                      return (
+                        <div
+                          key={variant.id}
+                          className="w-full bg-white shadow rounded-lg overflow-hidden flex flex-col sm:flex-row"
                         >
-                          <BsCart4 />
-                          ADD TO CART
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          {/* Image section */}
+                          <div
+                            className="w-full h-72 sm:w-[25%] sm:h-[320px] relative cursor-pointer"
+                            onClick={() => handleProductClick(variant.id)}
+                          >
+                            <img
+                              src={productImage}
+                              alt={`${product.name} - ${variant.color}`}
+                              className="w-full h-full object-cover p-1 rounded-lg"
+                              onError={(e) => {
+                                e.target.src = "/placeholder-image.jpg";
+                              }}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (inWishlist) {
+                                  removeFromWishlistHandler(product, variant);
+                                } else {
+                                  addToWishlistHandler(product, variant);
+                                }
+                              }}
+                              className={`absolute top-3 right-3 p-1 rounded-full shadow-md transition ${
+                                inWishlist
+                                  ? "text-red-500 bg-white"
+                                  : "text-gray-600 bg-white hover:text-red-500"
+                              }`}
+                              title={
+                                inWishlist
+                                  ? "Remove from Wishlist"
+                                  : "Add to Wishlist"
+                              }
+                            >
+                              {inWishlist ? (
+                                <FaHeart size={18} />
+                              ) : (
+                                <FaRegHeart size={18} />
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Details section */}
+                          <div className="w-full sm:w-[60%] p-4 flex flex-col justify-between">
+                            <div>
+                              <h6 className="text-[13px] min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis hover:text-red-500">
+                                {product.brand}
+                              </h6>
+                              <h3 className="mt-2 hover:text-red-500">
+                                <Link
+                                  to={`/product/${variant.id}`}
+                                  className="block w-full"
+                                >
+                                  {product.name} - {variant.color}
+                                </Link>
+                              </h3>
+
+                              <div className="flex items-center gap-3 mt-2 mb-2">
+                                <span className="line-through text-gray-500 text-md">
+                                  ₹
+                                  {Math.round(
+                                    variant.originalPrice ??
+                                      product.originalPrice
+                                  )}
+                                </span>
+                                <span className="text-red-500 font-semibold text-md">
+                                  ₹
+                                  {Math.round(
+                                    variant.discountedPrice ??
+                                      product.discountedPrice
+                                  )}
+                                </span>
+                              </div>
+                              {product.discount > 0 && (
+                                <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
+                                  {product.discount}% off
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) =>
+                                handleAddToCart(product, variant, e)
+                              }
+                              className="flex items-center gap-2 border border-red-500 px-4 py-2 rounded-md text-md font-[500] text-red-500 hover:bg-black hover:text-white transition w-fit mt-2"
+                            >
+                              <BsCart4 />
+                              ADD TO CART
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Empty state */}
             {!loading && shuffledVisibleVariants.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500 text-lg mb-2">
-                  No products found
+                  {searchQuery
+                    ? `No products found for "${searchQuery}"`
+                    : "No products found"}
                 </div>
                 <p className="text-gray-400">
-                  Try adjusting your filters or check back later.
+                  {searchQuery
+                    ? "Try searching with different keywords or check the spelling."
+                    : "Try adjusting your filters or check back later."}
                 </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      navigate("/products");
+                      window.location.reload();
+                    }}
+                    className="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                  >
+                    View All Products
+                  </button>
+                )}
               </div>
             )}
           </main>
@@ -1084,11 +1226,14 @@ const GridProductCategory = ({
 
         <MobileBottomNav
           SidebarFilterComponent={SidebarFilterComponent}
-          filterProps={filterProps}
+          filterProps={{
+            ...filterProps,
+            onApplyFilters: handleFilterClick,
+          }}
           shouldShowFilter={shouldShowFilter}
           setSidebarOpen={() => {}}
           user={isAuthenticated ? {} : null}
-          onFilterClick={onFilterClick}
+          onFilterClick={handleFilterClick}
         />
       </div>
     </div>

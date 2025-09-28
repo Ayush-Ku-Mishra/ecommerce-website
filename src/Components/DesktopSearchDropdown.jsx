@@ -1,38 +1,45 @@
 // Components/DesktopSearchDropdown.jsx
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { 
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
   IoSearch,
   IoPricetagOutline,
   IoFilterOutline,
   IoSparklesOutline,
   IoFlashOutline,
-  IoLayersOutline
-} from 'react-icons/io5';
-import axios from 'axios';
+  IoLayersOutline,
+} from "react-icons/io5";
+import axios from "axios";
 
-const DesktopSearchDropdown = ({ 
-  isOpen, 
-  searchResults, 
-  loading, 
-  searchQuery,
+const DesktopSearchDropdown = ({
+  isOpen,
+  searchResults = [], // Add default empty array
+  loading = false, // Add default value
+  searchQuery = "",
   onClose,
-  onResultClick 
+  onResultClick,
 }) => {
   const navigate = useNavigate();
   const [suggestions, setSuggestions] = useState([]);
 
   // Icon mapping
   const getIcon = (iconType) => {
-    switch(iconType) {
-      case 'price': return <IoPricetagOutline className="text-green-600" />;
-      case 'priceRange': return <IoPricetagOutline className="text-blue-600" />;
-      case 'category': return <IoLayersOutline className="text-purple-600" />;
-      case 'brand': return <IoSparklesOutline className="text-pink-600" />;
-      case 'new': return <IoFlashOutline className="text-orange-600" />;
-      case 'sale': return <IoFilterOutline className="text-red-600" />;
-      default: return <IoSearch className="text-gray-600" />;
+    switch (iconType) {
+      case "price":
+        return <IoPricetagOutline className="text-green-600" />;
+      case "priceRange":
+        return <IoPricetagOutline className="text-blue-600" />;
+      case "category":
+        return <IoLayersOutline className="text-purple-600" />;
+      case "brand":
+        return <IoSparklesOutline className="text-pink-600" />;
+      case "new":
+        return <IoFlashOutline className="text-orange-600" />;
+      case "sale":
+        return <IoFilterOutline className="text-red-600" />;
+      default:
+        return <IoSearch className="text-gray-600" />;
     }
   };
 
@@ -43,14 +50,16 @@ const DesktopSearchDropdown = ({
 
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/product/search-suggestions?query=${searchQuery}`
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/v1/product/search-suggestions?query=${searchQuery}`
         );
-        
+
         if (response.data.success) {
-          setSuggestions(response.data.suggestions);
+          setSuggestions(response.data.suggestions || []);
         }
       } catch (error) {
-        console.error('Suggestions error:', error);
+        console.error("Suggestions error:", error);
         setSuggestions([]);
       }
     };
@@ -66,39 +75,50 @@ const DesktopSearchDropdown = ({
 
   const handleSuggestionClick = (suggestion) => {
     let searchParams = new URLSearchParams();
-    
-    switch(suggestion.type) {
-      case 'price':
-        searchParams.set('search', suggestion.query);
-        searchParams.set('maxPrice', suggestion.maxPrice);
+
+    // Always add the search query
+    searchParams.set("search", suggestion.query || suggestion.text);
+
+    // Handle different types of suggestions
+    switch (suggestion.type) {
+      case "price":
+        if (suggestion.maxPrice) {
+          searchParams.set("maxPrice", suggestion.maxPrice);
+        }
         break;
-      case 'priceRange':
-        searchParams.set('search', suggestion.query);
-        searchParams.set('minPrice', suggestion.minPrice);
-        searchParams.set('maxPrice', suggestion.maxPrice);
+      case "priceRange":
+        if (suggestion.minPrice)
+          searchParams.set("minPrice", suggestion.minPrice);
+        if (suggestion.maxPrice)
+          searchParams.set("maxPrice", suggestion.maxPrice);
         break;
-      case 'category':
-        searchParams.set('search', suggestion.query);
-        searchParams.set('category', suggestion.category);
+      case "category":
+        if (suggestion.category) {
+          searchParams.set("category", suggestion.category);
+        }
         break;
-      case 'brand':
-        searchParams.set('search', suggestion.query);
-        searchParams.set('brand', suggestion.brand);
+      case "brand":
+        if (suggestion.brand) {
+          // Handle brand as an array
+          searchParams.set("brand", suggestion.brand);
+        }
         break;
-      case 'filter':
-        searchParams.set('search', suggestion.query);
-        searchParams.set('filter', suggestion.filter);
+      case "filter":
+        if (suggestion.filter) {
+          searchParams.set("filter", suggestion.filter);
+        }
         break;
-      default:
-        searchParams.set('search', suggestion.text);
     }
-    
+
     // Save to recent searches
-    const saved = localStorage.getItem('recentSearches');
+    const saved = localStorage.getItem("recentSearches");
     const recentSearches = saved ? JSON.parse(saved) : [];
-    const updated = [suggestion.text, ...recentSearches.filter(item => item !== suggestion.text)].slice(0, 5);
-    localStorage.setItem('recentSearches', JSON.stringify(updated));
-    
+    const updated = [
+      suggestion.text,
+      ...recentSearches.filter((item) => item !== suggestion.text),
+    ].slice(0, 5);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+
     navigate(`/products?${searchParams.toString()}`);
     onClose();
   };
@@ -124,10 +144,12 @@ const DesktopSearchDropdown = ({
           ) : (
             <>
               {/* Suggestions Section */}
-              {suggestions.length > 0 && (
+              {suggestions && suggestions.length > 0 && (
                 <div className="border-b">
                   <div className="p-2">
-                    <p className="text-xs text-gray-500 px-2 py-1">Suggestions</p>
+                    <p className="text-xs text-gray-500 px-2 py-1">
+                      Suggestions
+                    </p>
                     {suggestions.slice(0, 5).map((suggestion, index) => (
                       <div
                         key={index}
@@ -137,7 +159,9 @@ const DesktopSearchDropdown = ({
                         <div className="text-lg">
                           {getIcon(suggestion.icon)}
                         </div>
-                        <span className="text-sm flex-1">{suggestion.displayText}</span>
+                        <span className="text-sm flex-1">
+                          {suggestion.displayText}
+                        </span>
                         <IoSearch className="text-gray-400 text-sm" />
                       </div>
                     ))}
@@ -145,8 +169,8 @@ const DesktopSearchDropdown = ({
                 </div>
               )}
 
-              {/* Products Section */}
-              {searchResults.length > 0 ? (
+              {/* Products Section - Add null check */}
+              {searchResults && searchResults.length > 0 ? (
                 <>
                   <div className="p-2">
                     <p className="text-xs text-gray-500 px-2 py-1">Products</p>
@@ -157,17 +181,28 @@ const DesktopSearchDropdown = ({
                         className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
                       >
                         <img
-                          src={product.image}
+                          src={
+                            product.images?.[0] ||
+                            product.image ||
+                            "/placeholder-image.jpg"
+                          }
                           alt={product.name}
                           className="w-10 h-10 object-cover rounded"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-image.jpg";
+                          }}
                         />
                         <div className="flex-1">
                           <h4 className="text-sm font-medium line-clamp-1">
                             {product.name}
                           </h4>
-                          <p className="text-xs text-gray-500">{product.brand}</p>
+                          <p className="text-xs text-gray-500">
+                            {product.brand}
+                          </p>
                         </div>
-                        <p className="text-sm font-semibold">₹{product.price}</p>
+                        <p className="text-sm font-semibold">
+                          ₹{product.price}
+                        </p>
                       </div>
                     ))}
                   </div>

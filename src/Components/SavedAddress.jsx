@@ -6,11 +6,8 @@ import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { BiCurrentLocation } from "react-icons/bi";
 import toast from "react-hot-toast";
 import axios from "axios";
-import ContactUsPart from "./ContactUsPart";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import { AddressCardSkeleton } from "../Skeletons/AddressCardSkeleton";
-import { SidebarSkeleton } from "../Skeletons/SidebarSkeleton";
 
 const emptyAddress = {
   name: "",
@@ -262,15 +259,8 @@ const SavedAddress = () => {
 
   if (loadingAddresses) {
     return (
-      <div className="flex gap-10 ml-10 mt-2 mb-8 max-w-[1190px]">
-        <div className="flex-shrink-0 min-w-[20%] w-auto sticky top-28 self-start">
-          <SidebarSkeleton />
-        </div>
-        <div className="w-[80%]">
-          {[...Array(2)].map((_, i) => (
-            <AddressCardSkeleton key={i} />
-          ))}
-        </div>
+      <div className="flex items-center justify-center w-full h-screen bg-white z-50">
+        <CircularProgress size={60} thickness={4} />
       </div>
     );
   }

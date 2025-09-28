@@ -3,7 +3,7 @@ import logo from "../assets/PickoraLogo2.jpg";
 import { IoSearch, IoNotifications, IoHomeSharp } from "react-icons/io5";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { FaRegHeart, FaPlus, FaRegUser } from "react-icons/fa6";
-import { FiShoppingCart, FiFilter } from "react-icons/fi";
+import { FiShoppingCart } from "react-icons/fi";
 import { FaChevronDown } from "react-icons/fa";
 import { RiMenu2Fill } from "react-icons/ri";
 import { IoRocketOutline } from "react-icons/io5";
@@ -34,6 +34,8 @@ import { IoTrashOutline } from "react-icons/io5";
 import SearchModal from "./SearchModal";
 import DesktopSearchDropdown from "./DesktopSearchDropdown";
 import { debounce } from "lodash";
+import Skeleton from "@mui/material/Skeleton";
+import { CategorySidebarSkeleton } from "../Skeletons/CategorySidebarSkeleton.jsx";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -284,18 +286,42 @@ const Navbar = ({ onFilterClick }) => {
     setShowDesktopDropdown(true);
 
     try {
+      // Use getAllProducts with search parameter
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/search?query=${query}`
+        }/api/v1/product/getAllProducts?search=${query}&page=1&perPage=10`
       );
 
       if (response.data.success) {
-        setDesktopSearchResults(response.data.data);
+        setDesktopSearchResults(response.data.products || []);
       }
     } catch (error) {
       console.error("Search error:", error);
-      setDesktopSearchResults([]);
+      // If search fails, try without search parameter
+      try {
+        const fallbackResponse = await axios.get(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/v1/product/getAllProducts?page=1&perPage=10`
+        );
+
+        if (fallbackResponse.data.success) {
+          // Filter products client-side
+          const filtered = fallbackResponse.data.products.filter((product) => {
+            const searchLower = query.toLowerCase();
+            return (
+              product.name?.toLowerCase().includes(searchLower) ||
+              product.brand?.toLowerCase().includes(searchLower) ||
+              product.categoryName?.toLowerCase().includes(searchLower)
+            );
+          });
+          setDesktopSearchResults(filtered);
+        }
+      } catch (fallbackError) {
+        console.error("Fallback search error:", fallbackError);
+        setDesktopSearchResults([]);
+      }
     } finally {
       setDesktopSearchLoading(false);
     }
@@ -671,10 +697,7 @@ const Navbar = ({ onFilterClick }) => {
 
         <div className="overflow-y-auto h-[calc(100%-140px)] px-2">
           {categoriesLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <CircularProgress size={24} className="text-purple-600" />
-              <span className="ml-3 text-gray-500">Loading categories...</span>
-            </div>
+            <CategorySidebarSkeleton count={6} />
           ) : (
             renderCategoryNavigation(categoriesToUse)
           )}
@@ -704,8 +727,26 @@ const Navbar = ({ onFilterClick }) => {
             {/* Center - Logo */}
             <Link to="/" className="flex-shrink-0">
               {logoLoading ? (
-                <div className="h-8 w-16 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse rounded-lg flex items-center justify-center">
-                  <span className="text-xs text-gray-500">...</span>
+                <div className="relative w-16 h-8 lg:w-20 lg:h-10 rounded-lg overflow-hidden">
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    animation="wave"
+                    sx={{
+                      bgcolor: "#C7CCD8", // very light background
+                      "&::after": {
+                        background:
+                          "linear-gradient(90deg, transparent, #DEE2EB, transparent)", // soft shimmer
+                      },
+                      borderRadius: 8,
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xs text-[#A1A7B5] animate-pulse">
+                      Logo
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <img
@@ -926,9 +967,20 @@ const Navbar = ({ onFilterClick }) => {
               <div className="flex items-center gap-4">
                 <Link to="/" className="flex-shrink-0">
                   {logoLoading ? (
-                    <div className="h-12 w-24 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse rounded-lg flex items-center justify-center">
-                      <span className="text-xs text-gray-500">Loading...</span>
-                    </div>
+                    <Skeleton
+                      variant="rectangular"
+                      width={96} // 24 * 4 px = 96px (Tailwind w-24)
+                      height={48} // 12 * 4 px = 48px (Tailwind h-12)
+                      animation="wave"
+                      sx={{
+                        bgcolor: "#C7CCD8",
+                        "&::after": {
+                          background:
+                            "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                        },
+                        borderRadius: 2, // rounded-lg equivalent
+                      }}
+                    />
                   ) : (
                     <img
                       src={currentLogo}
@@ -1355,7 +1407,7 @@ const Navbar = ({ onFilterClick }) => {
       {/* Spacer */}
       {isSticky && <div className="h-[112px] w-full"></div>}
 
-      {/* Mobile Notification Panel - Add this in your Navbar component */}
+      {/* Mobile Notification Panel */}
       <AnimatePresence>
         {isMobileNotificationOpen && (
           <>
@@ -1368,7 +1420,7 @@ const Navbar = ({ onFilterClick }) => {
               className="fixed inset-0 bg-black bg-opacity-50 z-[120] md:hidden"
             />
 
-            {/* Notification Panel - Slides from right */}
+            {/* Notification Panel */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -1376,35 +1428,69 @@ const Navbar = ({ onFilterClick }) => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-white z-[130] shadow-xl md:hidden flex flex-col"
             >
-              {/* Header - Fixed */}
+              {/* Header */}
               <div className="bg-blue-600 text-white p-4 flex items-center justify-between flex-shrink-0">
                 <h3 className="text-lg font-semibold">Notifications</h3>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-sm hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setIsMobileNotificationOpen(false)}
-                    className="p-1 hover:bg-blue-700 rounded"
-                  >
-                    <IoCloseSharp className="text-xl" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsMobileNotificationOpen(false)}
+                  className="p-1 hover:bg-blue-700 rounded"
+                >
+                  <IoCloseSharp className="text-xl" />
+                </button>
               </div>
 
-              {/* Notifications List - Scrollable with bottom padding */}
-              <div className="flex-1 overflow-y-auto pb-16">
-                {" "}
-                {/* pb-16 accounts for bottom nav */}
+              {/* Notifications List */}
+              <div className="flex-1 overflow-y-auto pb-16 px-2 scrollbar-hide">
                 {notificationLoading ? (
-                  <div className="p-8 text-center text-gray-500">
-                    Loading notifications...
-                  </div>
+                  // Skeleton Loader for Notifications
+                  [...Array(6)].map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 border-b border-gray-100 last:border-0"
+                    >
+                      <Skeleton
+                        variant="text"
+                        width="60%"
+                        height={20}
+                        animation="wave"
+                        sx={{
+                          bgcolor: "#C7CCD8",
+                          "&::after": {
+                            background:
+                              "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          },
+                        }}
+                      />
+                      <Skeleton
+                        variant="text"
+                        width="90%"
+                        height={14}
+                        animation="wave"
+                        sx={{
+                          bgcolor: "#C7CCD8",
+                          mt: 1,
+                          "&::after": {
+                            background:
+                              "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          },
+                        }}
+                      />
+                      <Skeleton
+                        variant="text"
+                        width="40%"
+                        height={12}
+                        animation="wave"
+                        sx={{
+                          bgcolor: "#C7CCD8",
+                          mt: 1,
+                          "&::after": {
+                            background:
+                              "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          },
+                        }}
+                      />
+                    </div>
+                  ))
                 ) : notifications.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
                     <IoNotifications className="text-4xl mx-auto mb-2 opacity-50" />
@@ -1457,15 +1543,9 @@ const Navbar = ({ onFilterClick }) => {
                         )}
                       </motion.div>
                     ))}
-
-                    {/* Extra padding at the bottom to ensure last item is visible */}
-                    <div className="h-4"></div>
                   </div>
                 )}
               </div>
-
-              {/* Optional: Bottom fade effect */}
-              <div className="absolute bottom-14 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
             </motion.div>
           </>
         )}

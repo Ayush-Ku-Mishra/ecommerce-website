@@ -21,22 +21,27 @@ const SearchModal = ({ isOpen, onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
-  const [popularSearches] = useState([
-    "iPhone",
-    "Laptop",
-    "Shoes",
-    "Watch",
-    "Headphones",
-    "T-shirt",
-    "Jeans",
-    "Backpack",
-    "Perfume",
-    "Sunglasses",
-  ]);
+  const [popularSearches, setPopularSearches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const fetchPopularSearches = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/product/popular-searches`
+      );
+
+      if (response.data.success) {
+        setPopularSearches(response.data.popularSearches);
+      }
+    } catch (error) {
+      console.error("Error fetching popular searches:", error);
+      // Fallback to some default searches if API fails
+      setPopularSearches(["T-shirts", "Shoes", "Bags"]);
+    }
+  };
 
   // Icon mapping for suggestions
   const getIcon = (iconType) => {
@@ -65,6 +70,12 @@ const SearchModal = ({ isOpen, onClose }) => {
       setRecentSearches(JSON.parse(saved));
     }
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchPopularSearches();
+    }
+  }, [isOpen]);
 
   // Focus input when modal opens
   useEffect(() => {
@@ -106,17 +117,17 @@ const SearchModal = ({ isOpen, onClose }) => {
     }
 
     setLoading(true);
-    setShowSuggestions(false);
+    // Remove setShowSuggestions(false);
 
     try {
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/search?query=${query}`
+        }/api/v1/product/getAllProducts?search=${query}&page=1&perPage=20`
       );
 
       if (response.data.success) {
-        setSearchResults(response.data.data);
+        setSearchResults(response.data.products || []);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -125,14 +136,13 @@ const SearchModal = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
-
   // Debounced functions
   const debouncedSearch = useRef(
     debounce((query) => performSearch(query), 500)
   ).current;
 
   const debouncedSuggestions = useRef(
-    debounce((query) => fetchSuggestions(query), 200)
+    debounce((query) => fetchSuggestions(query), 300)
   ).current;
 
   // Handle search input change
@@ -166,30 +176,25 @@ const SearchModal = ({ isOpen, onClose }) => {
   const handleSuggestionClick = (suggestion) => {
     let searchParams = new URLSearchParams();
 
-    switch (suggestion.type) {
-      case "price":
-        searchParams.set("search", suggestion.query);
-        searchParams.set("maxPrice", suggestion.maxPrice);
-        break;
-      case "priceRange":
-        searchParams.set("search", suggestion.query);
-        searchParams.set("minPrice", suggestion.minPrice);
-        searchParams.set("maxPrice", suggestion.maxPrice);
-        break;
-      case "category":
-        searchParams.set("search", suggestion.query);
-        searchParams.set("category", suggestion.category);
-        break;
-      case "brand":
-        searchParams.set("search", suggestion.query);
-        searchParams.set("brand", suggestion.brand);
-        break;
-      case "filter":
-        searchParams.set("search", suggestion.query);
-        searchParams.set("filter", suggestion.filter);
-        break;
-      default:
-        searchParams.set("search", suggestion.text);
+    // Always add the search query
+    searchParams.set("search", suggestion.query || suggestion.text);
+
+    // Add other parameters based on suggestion type
+    if (suggestion.maxPrice) {
+      searchParams.set("maxPrice", suggestion.maxPrice);
+    }
+    if (suggestion.minPrice) {
+      searchParams.set("minPrice", suggestion.minPrice);
+    }
+    if (suggestion.brand) {
+      // Handle brand as an array
+      searchParams.set("brand", suggestion.brand);
+    }
+    if (suggestion.category) {
+      searchParams.set("category", suggestion.category);
+    }
+    if (suggestion.filter) {
+      searchParams.set("filter", suggestion.filter);
     }
 
     saveToRecentSearches(suggestion.text);
@@ -202,7 +207,23 @@ const SearchModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       saveToRecentSearches(searchQuery);
-      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+
+      // Parse the query for special keywords
+      const queryLower = searchQuery.toLowerCase();
+      let searchParams = new URLSearchParams();
+
+      // Check for "under X" pattern
+      const underMatch = queryLower.match(/under\s+(\d+)/);
+      if (underMatch) {
+        const priceLimit = underMatch[1];
+        const searchTerm = searchQuery.replace(/under\s+\d+/i, "").trim();
+        searchParams.set("search", searchTerm);
+        searchParams.set("maxPrice", priceLimit);
+      } else {
+        searchParams.set("search", searchQuery);
+      }
+
+      navigate(`/products?${searchParams.toString()}`);
       onClose();
     }
   };
@@ -217,7 +238,20 @@ const SearchModal = ({ isOpen, onClose }) => {
   // Handle quick search
   const handleQuickSearch = (query) => {
     saveToRecentSearches(query);
-    navigate(`/products?search=${encodeURIComponent(query)}`);
+
+    const queryLower = query.toLowerCase();
+    let searchParams = new URLSearchParams();
+
+    // Extract price if mentioned
+    const priceMatch = queryLower.match(/under\s+(\d+)/);
+    if (priceMatch) {
+      searchParams.set("maxPrice", priceMatch[1]);
+      searchParams.set("search", query.replace(/under\s+\d+/i, "").trim());
+    } else {
+      searchParams.set("search", query);
+    }
+
+    navigate(`/products?${searchParams.toString()}`);
     onClose();
   };
 
@@ -262,131 +296,149 @@ const SearchModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto h-[calc(100vh-80px)]">
-          {/* Auto Suggestions */}
-          {searchQuery && showSuggestions && suggestions.length > 0 && (
-            <div className="border-b">
-              <div className="p-2">
-                {suggestions.map((suggestion, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
-                  >
-                    <div className="text-xl">{getIcon(suggestion.icon)}</div>
-                    <span className="text-sm flex-1">
-                      {suggestion.displayText}
-                    </span>
-                    <IoSearch className="text-gray-400 text-sm" />
-                  </motion.div>
-                ))}
+        <div className="overflow-y-auto h-[calc(100vh-80px)] scrollbar-hide pb-14">
+          {/* When searching, show both suggestions and products */}
+          {searchQuery && (
+            <div className="flex flex-col">
+              {/* Suggestions Section */}
+              {showSuggestions && suggestions && suggestions.length > 0 && (
+                <div className="border-b bg-gray-50">
+                  <div className="p-3">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-2">
+                      SUGGESTIONS
+                    </h3>
+                    <div className="space-y-1">
+                      {suggestions.slice(0, 5).map((suggestion, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer"
+                        >
+                          <div className="text-lg">
+                            {getIcon(suggestion.icon)}
+                          </div>
+                          <span className="text-sm flex-1">
+                            {suggestion.displayText}
+                          </span>
+                          <IoSearch className="text-gray-400 text-sm" />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Products Section - Always show when searching */}
+              <div className="p-4">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <p className="mt-2 text-gray-500">Searching...</p>
+                  </div>
+                ) : searchResults && searchResults.length > 0 ? (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-600 mb-3">
+                      PRODUCTS ({searchResults.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {searchResults.slice(0, 10).map((product) => (
+                        <motion.div
+                          key={product._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={() => handleResultClick(product)}
+                          className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        >
+                          <img
+                            src={
+                              product.images?.[0] || "/placeholder-image.jpg"
+                            }
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                            onError={(e) => {
+                              e.target.src = "/placeholder-image.jpg";
+                            }}
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium line-clamp-1">
+                              {product.name}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {product.brand}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold">
+                            ₹{product.price}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      No products found for "{searchQuery}"
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Search Results */}
-          {searchQuery && !showSuggestions && (
-            <div className="p-4">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                  <p className="mt-2 text-gray-500">Searching...</p>
-                </div>
-              ) : searchResults.length > 0 ? (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600 mb-3">
-                    Products ({searchResults.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {searchResults.map((product) => (
-                      <motion.div
-                        key={product._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onClick={() => handleResultClick(product)}
-                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+          {/* Recent and Popular Searches - Only show when not searching */}
+          {!searchQuery && (
+            <>
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                      <IoTimeOutline className="text-lg" />
+                      Recent Searches
+                    </h3>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-xs text-purple-600 hover:underline"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recentSearches.map((search, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuickSearch(search)}
+                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-colors"
                       >
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium line-clamp-1">
-                            {product.name}
-                          </h4>
-                          <p className="text-xs text-gray-500">
-                            {product.brand}
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold">
-                          ₹{product.price}
-                        </p>
-                      </motion.div>
+                        {search}
+                      </button>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    No products found for "{searchQuery}"
-                  </p>
-                </div>
               )}
-            </div>
-          )}
 
-          {/* Recent Searches */}
-          {!searchQuery && recentSearches.length > 0 && (
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-600 flex items-center gap-2">
-                  <IoTimeOutline className="text-lg" />
-                  Recent Searches
+              {/* Popular Searches */}
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
+                  <IoTrendingUpOutline className="text-lg" />
+                  Popular Searches
                 </h3>
-                <button
-                  onClick={clearRecentSearches}
-                  className="text-xs text-purple-600 hover:underline"
-                >
-                  Clear all
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {popularSearches.map((search, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickSearch(search)}
+                      className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-full text-sm transition-colors"
+                    >
+                      {search}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {recentSearches.map((search, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleQuickSearch(search)}
-                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-colors"
-                  >
-                    {search}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Popular Searches */}
-          {!searchQuery && (
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-                <IoTrendingUpOutline className="text-lg" />
-                Popular Searches
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {popularSearches.map((search, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleQuickSearch(search)}
-                    className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-full text-sm transition-colors"
-                  >
-                    {search}
-                  </button>
-                ))}
-              </div>
-            </div>
+            </>
           )}
         </div>
       </motion.div>

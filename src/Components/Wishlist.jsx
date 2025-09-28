@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Context } from "../main";
 import AccountDetailsSection from "./AccountDetailsSection";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { MdDeleteOutline } from "react-icons/md";
 import { FaStar, FaRegStar, FaRegHeart } from "react-icons/fa";
 import { BsCart4 } from "react-icons/bs";
@@ -19,7 +19,6 @@ const Wishlist = () => {
   const [visibleCount, setVisibleCount] = useState(10);
   const [addingToCart, setAddingToCart] = useState(new Set()); // Track which items are being added
 
-  const navigate = useNavigate();
   const location = useLocation();
 
   const loadMore = () => setVisibleCount((prev) => prev + 10);
@@ -170,9 +169,11 @@ const Wishlist = () => {
   // Show login prompt for unauthenticated users
   if (!isAuthenticated) {
     return (
-      <div>
-        <div className="flex gap-10 ml-10 mt-2 max-w-[1190px] mx-auto mb-8">
-          <div className="flex-1 flex w-[80%] flex-col border-2 shadow mt-5 rounded-xl bg-white p-6">
+      <div className="flex justify-center px-4 mt-6 mb-8">
+        <div className="w-full max-w-[1190px] flex flex-col md:flex-row gap-6">
+          {/* Main Card */}
+          <div className="flex-1 flex flex-col border-2 shadow rounded-xl bg-white p-6">
+            {/* Header */}
             <div className="mb-6">
               <p className="text-2xl font-semibold mb-1">My Wishlist</p>
               <p className="text-gray-700">
@@ -180,29 +181,32 @@ const Wishlist = () => {
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center flex-grow border-2 border-dashed border-gray-300 rounded-xl p-10 bg-gray-50 min-h-[400px]">
-              <FaRegHeart size={80} className="text-gray-400 mb-6" />
-              <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+            {/* Center content */}
+            <div className="flex flex-col items-center justify-center flex-grow border-2 border-dashed border-gray-300 rounded-xl p-6 md:p-10 bg-gray-50 min-h-[300px]">
+              <FaRegHeart size={60} className="text-gray-400 mb-4 md:mb-6" />
+              <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4 text-gray-700 text-center">
                 Login Required
               </h2>
-              <p className="text-gray-600 text-center mb-6 text-lg max-w-md">
+              <p className="text-gray-600 text-center mb-4 md:mb-6 text-base md:text-lg max-w-md">
                 You need to be logged in to view and manage your wishlist items
               </p>
-              <div className="flex gap-4">
+
+              {/* Login Button */}
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/login"
                   state={{ from: location }}
-                  className="bg-red-500 text-white px-8 py-3 rounded-lg hover:bg-red-600 transition-colors duration-300 font-semibold"
+                  className="bg-red-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-red-600 transition-colors duration-300 font-semibold text-center"
                 >
                   LOGIN NOW
                 </Link>
+                <Link
+                  to="/"
+                  className="text-blue-500 hover:text-blue-600 underline text-center"
+                >
+                  Continue Shopping
+                </Link>
               </div>
-              <Link
-                to="/"
-                className="mt-4 text-blue-500 hover:text-blue-600 underline"
-              >
-                Continue Shopping
-              </Link>
             </div>
           </div>
         </div>

@@ -134,6 +134,10 @@ const router = createBrowserRouter([
         path: "account/profile",
         element: <MyProfile />,
       },
+      {
+        path: "search",
+        element: <GridProductCategory />,
+      },
     ],
   },
   {
@@ -181,7 +185,7 @@ function App() {
             borderRadius: "15px",
             background: "#333",
             color: "#fff",
-            marginBottom: "60px", 
+            marginBottom: "60px",
           },
         }}
       />

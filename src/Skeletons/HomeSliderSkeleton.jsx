@@ -8,24 +8,25 @@ export function HomeSliderSkeleton() {
       {/* Slider Skeleton */}
       <div className="w-full">
         <div className="w-full h-[140px] sm:h-[280px] md:h-[360px] relative overflow-hidden">
-          {/* Grey skeleton with custom animation */}
+          {/* Light grey skeleton with custom animation */}
           <Skeleton
             variant="rectangular"
             width="100%"
             height="100%"
             animation="wave"
             sx={{
-              bgcolor: '#5F6677', // Your dark grey
-              '&::after': {
-                background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)', // Lighter version
+              bgcolor: "#C7CCD8", // lighter background
+              "&::after": {
+                background:
+                  "linear-gradient(90deg, transparent, #DEE2EB, transparent)", // very light shimmer
               },
-              borderRadius: 0
+              borderRadius: 0,
             }}
           />
-          
+
           {/* Centered image icon */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <BsImage className="text-[#8B92A3] w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 animate-pulse" />
+            <BsImage className="text-[#A1A7B5] w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 animate-pulse" />
           </div>
         </div>
       </div>
@@ -40,10 +41,11 @@ export function HomeSliderSkeleton() {
               height={20}
               animation="wave"
               sx={{
-                bgcolor: '#5F6677',
-                '&::after': {
-                  background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
-                }
+                bgcolor: "#C7CCD8",
+                "&::after": {
+                  background:
+                    "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                },
               }}
               className="sm:w-5 sm:h-5"
             />
@@ -53,10 +55,11 @@ export function HomeSliderSkeleton() {
               height={16}
               animation="wave"
               sx={{
-                bgcolor: '#5F6677',
-                '&::after': {
-                  background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
-                }
+                bgcolor: "#C7CCD8",
+                "&::after": {
+                  background:
+                    "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                },
               }}
               className="sm:w-[100px] sm:h-[20px]"
             />

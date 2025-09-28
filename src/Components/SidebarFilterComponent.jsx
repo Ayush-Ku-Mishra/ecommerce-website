@@ -3,6 +3,7 @@ import Slider from "@mui/material/Slider";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 const SidebarFilterComponent = ({
   categoryData,
@@ -32,6 +33,13 @@ const SidebarFilterComponent = ({
   const [colorExpanded, setColorExpanded] = useState(false);
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [expandedThirdLevel, setExpandedThirdLevel] = useState(null);
+  const isDesktop = useMediaQuery("(min-width:768px)");
+
+  useEffect(() => {
+    if (selectedBrands && !Array.isArray(selectedBrands)) {
+      onBrandChange([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (categoryData?.sub?.length) {
@@ -54,7 +62,11 @@ const SidebarFilterComponent = ({
   };
 
   const handleSliderCommit = (_, newValue) => {
-    onPriceChange && onPriceChange({ min: newValue[0], max: newValue[1] });
+    setPriceRange(newValue);
+
+    if (isDesktop && onPriceChange) {
+      onPriceChange({ min: newValue[0], max: newValue[1] });
+    }
   };
 
   const handleInputChange = (e, index) => {
@@ -404,7 +416,7 @@ const SidebarFilterComponent = ({
                       const updated = selectedBrands?.includes(brand)
                         ? selectedBrands.filter((b) => b !== brand)
                         : [...(selectedBrands || []), brand];
-                      onBrandChange && onBrandChange(updated);
+                      onBrandChange(updated);
                     }}
                     className="w-4 h-4"
                   />
@@ -438,7 +450,11 @@ const SidebarFilterComponent = ({
         {onApplyFilters && (
           <button
             className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-3 px-4 rounded font-medium"
-            onClick={onApplyFilters}
+            onClick={() => {
+              onPriceChange &&
+                onPriceChange({ min: priceRange[0], max: priceRange[1] });
+              onApplyFilters();
+            }}
           >
             Apply Filters
           </button>

@@ -23,15 +23,16 @@ export function HomeCatSliderSkeleton() {
                   height="100%"
                   animation="wave"
                   sx={{
-                    bgcolor: '#5F6677',
-                    '&::after': {
-                      background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    bgcolor: "#C7CCD8", // very light background
+                    "&::after": {
+                      background:
+                        "linear-gradient(90deg, transparent, #DEE2EB, transparent)", // soft shimmer
                     },
-                    borderRadius: 8
+                    borderRadius: 8,
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <BsImage className="text-[#8B92A3] w-6 h-6 lg:w-8 lg:h-8 animate-pulse" />
+                  <BsImage className="text-[#A1A7B5] w-6 h-6 lg:w-8 lg:h-8 animate-pulse" />
                 </div>
               </div>
 
@@ -43,12 +44,13 @@ export function HomeCatSliderSkeleton() {
                   height={20}
                   animation="wave"
                   sx={{
-                    bgcolor: '#5F6677',
-                    '&::after': {
-                      background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
-                    }
+                    bgcolor: "#C7CCD8",
+                    "&::after": {
+                      background:
+                        "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                    },
                   }}
-                  style={{ margin: '0 auto' }}
+                  style={{ margin: "0 auto" }}
                 />
               </div>
             </div>

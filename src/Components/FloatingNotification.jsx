@@ -1,12 +1,15 @@
-// Components/FloatingNotification.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { IoNotifications, IoClose, IoTrashOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
+import Skeleton from "@mui/material/Skeleton";
 import { useNotifications } from "../hooks/useNotifications";
 
 const FloatingNotification = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const panelRef = useRef(null); // Notification panel
+  const buttonRef = useRef(null); // Floating button
+
   const {
     notifications,
     unreadCount,
@@ -18,19 +21,40 @@ const FloatingNotification = () => {
 
   // Handle notification click
   const handleNotificationClick = (notification) => {
-    if (!notification.isRead) {
-      markAsRead(notification._id);
-    }
+    if (!notification.isRead) markAsRead(notification._id);
     if (notification.link) {
       setIsOpen(false);
       window.location.href = notification.link;
     }
   };
 
+  // Close panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
   return (
     <>
-      {/* Floating Button - Only visible on desktop */}
+      {/* Floating Button */}
       <motion.button
+        ref={buttonRef}
         className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors hidden md:flex"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
@@ -50,6 +74,7 @@ const FloatingNotification = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -62,28 +87,61 @@ const FloatingNotification = () => {
               <h3 className="text-lg font-semibold">Notifications</h3>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm hover:underline"
-                  >
+                  <button onClick={markAllAsRead} className="text-sm hover:underline">
                     Mark all as read
                   </button>
                 )}
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="hover:bg-blue-700 p-1 rounded"
-                >
+                <button onClick={() => setIsOpen(false)} className="hover:bg-blue-700 p-1 rounded">
                   <IoClose className="text-xl" />
                 </button>
               </div>
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto px-2 py-2">
               {loading ? (
-                <div className="p-8 text-center text-gray-500">
-                  Loading notifications...
-                </div>
+                [...Array(5)].map((_, idx) => (
+                  <div key={idx} className="p-4 border-b border-gray-100 last:border-0">
+                    <Skeleton
+                      variant="text"
+                      width="60%"
+                      height={20}
+                      animation="wave"
+                      sx={{
+                        bgcolor: "#C7CCD8",
+                        "&::after": {
+                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                        },
+                      }}
+                    />
+                    <Skeleton
+                      variant="text"
+                      width="90%"
+                      height={14}
+                      animation="wave"
+                      sx={{
+                        bgcolor: "#C7CCD8",
+                        mt: 1,
+                        "&::after": {
+                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                        },
+                      }}
+                    />
+                    <Skeleton
+                      variant="text"
+                      width="40%"
+                      height={12}
+                      animation="wave"
+                      sx={{
+                        bgcolor: "#C7CCD8",
+                        mt: 1,
+                        "&::after": {
+                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                        },
+                      }}
+                    />
+                  </div>
+                ))
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <IoNotifications className="text-4xl mx-auto mb-2 opacity-50" />
@@ -103,19 +161,12 @@ const FloatingNotification = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">
-                            {notification.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {notification.message}
-                          </p>
+                          <h4 className="font-semibold text-gray-900">{notification.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                           <p className="text-xs text-gray-400 mt-2">
-                            {formatDistanceToNow(
-                              new Date(notification.createdAt),
-                              {
-                                addSuffix: true,
-                              }
-                            )}
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                            })}
                           </p>
                         </div>
                         <button

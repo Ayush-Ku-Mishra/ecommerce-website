@@ -19,14 +19,14 @@ export function ProductSliderSkeleton() {
                 height="100%"
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <BsImage className="text-[#8B92A3] w-12 h-12 animate-pulse" />
+                <BsImage className="text-[#A1A7B5] w-12 h-12 animate-pulse" />
               </div>
             </div>
 
@@ -39,10 +39,10 @@ export function ProductSliderSkeleton() {
                 height={18}
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   marginTop: 1,
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />
@@ -54,10 +54,10 @@ export function ProductSliderSkeleton() {
                 height={40}
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   marginTop: 1,
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />
@@ -69,12 +69,12 @@ export function ProductSliderSkeleton() {
                 height={20}
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   marginTop: 1,
                   marginBottom: 1,
                   borderRadius: 0.5,
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />
@@ -87,9 +87,9 @@ export function ProductSliderSkeleton() {
                   height={24}
                   animation="wave"
                   sx={{
-                    bgcolor: '#5F6677',
+                    bgcolor: '#C7CCD8',
                     '&::after': {
-                      background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                      background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                     }
                   }}
                 />
@@ -99,9 +99,9 @@ export function ProductSliderSkeleton() {
                   height={24}
                   animation="wave"
                   sx={{
-                    bgcolor: '#5F6677',
+                    bgcolor: '#C7CCD8',
                     '&::after': {
-                      background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                      background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                     }
                   }}
                 />
@@ -114,10 +114,10 @@ export function ProductSliderSkeleton() {
                 height={20}
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   marginTop: 1,
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />
@@ -129,11 +129,11 @@ export function ProductSliderSkeleton() {
                 height={36}
                 animation="wave"
                 sx={{
-                  bgcolor: '#5F6677',
+                  bgcolor: '#C7CCD8',
                   margin: '1.5rem auto 0.5rem auto',
                   borderRadius: 1,
                   '&::after': {
-                    background: 'linear-gradient(90deg, transparent, #8B92A3, transparent)',
+                    background: 'linear-gradient(90deg, transparent, #DEE2EB, transparent)',
                   }
                 }}
               />

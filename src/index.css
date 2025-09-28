@@ -169,15 +169,6 @@ body {
   cursor: url('/SearchIcon.png'), auto;
 }
 
-/* Hide scrollbar but keep scroll functionality */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
-}
-
 /* Always show scrollbar space to prevent layout shift */
 html {
   overflow-y: scroll;
