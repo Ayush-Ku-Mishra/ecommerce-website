@@ -59,6 +59,52 @@ const GridProductCategory = ({
   const brandFromUrl = searchParams.get("brand");
   const filterFromUrl = searchParams.get("filter");
 
+  const transformProduct = (product) => ({
+    id: product._id,
+    name: product.name,
+    brand: product.brand || "Unknown Brand",
+    category: [product.categoryName || "Uncategorized"],
+    subcategory: [
+      product.subCatName,
+      product.thirdSubCatName,
+      product.fourthSubCatName,
+    ].filter(Boolean),
+    rating: product.rating || 0,
+    discount: Number(product.discount || 0),
+    description: product.productDetails?.description || "",
+    images: product.images || [],
+    originalPrice: Math.round(Number(product.oldPrice || product.price || 0)),
+    discountedPrice: Math.round(Number(product.price || 0)),
+    defaultVariant: {
+      id: `${product._id}_default`,
+      color: product.color || "Default",
+      images: product.images || [],
+      originalPrice: Math.round(Number(product.oldPrice || product.price || 0)),
+      discountedPrice: Math.round(Number(product.price || 0)),
+      sizes: getSizesFromProduct(product),
+    },
+    variants: product.colorVariants
+      ? product.colorVariants.map((variant, index) => ({
+          id: `${product._id}_variant_${index}`,
+          color: variant.colorName || variant.color || "Default",
+          images: variant.images || product.images || [],
+          originalPrice: Math.round(
+            Number(
+              variant.oldPrice ||
+                variant.price ||
+                product.oldPrice ||
+                product.price ||
+                0
+            )
+          ),
+          discountedPrice: Math.round(
+            Number(variant.price || product.price || 0)
+          ),
+          sizes: getSizesFromProduct(variant),
+        }))
+      : [],
+  });
+
   // Fetch categories from backend
   const fetchBackendCategories = async () => {
     setCategoriesLoading(true);
@@ -170,10 +216,8 @@ const GridProductCategory = ({
   };
 
   // API function to fetch products
-  const fetchProducts = async (categoryName, searchTerm = null) => {
+  const fetchProducts = async () => {
     setLoading(true);
-    setError(null);
-
     try {
       let endpoint = `${
         import.meta.env.VITE_BACKEND_URL
@@ -183,101 +227,36 @@ const GridProductCategory = ({
       params.append("page", "1");
       params.append("perPage", "1000");
 
-      // Check if we have a search term from URL or parameter
-      const currentSearchQuery = searchTerm || searchQuery;
-
-      if (currentSearchQuery) {
-        // Use search parameter
-        params.append("search", currentSearchQuery);
-
-        // Add other filters if present
+      if (searchQuery) {
+        params.append("search", searchQuery);
         if (minPriceFromUrl) params.append("minPrice", minPriceFromUrl);
         if (maxPriceFromUrl) params.append("maxPrice", maxPriceFromUrl);
         if (brandFromUrl) params.append("brand", brandFromUrl);
         if (filterFromUrl) params.append("filter", filterFromUrl);
-      } else if (categoryName) {
+      } else if (category) {
         endpoint = `${
           import.meta.env.VITE_BACKEND_URL
         }/api/v1/product/getAllProductsByCatName`;
-        params.append("categoryName", categoryName);
+        params.append("categoryName", category);
       }
 
-      console.log("Fetching products from:", `${endpoint}?${params}`);
-
-      const response = await axios.get(`${endpoint}?${params}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.get(`${endpoint}?${params}`);
 
       if (response.data.success) {
-        const transformedProducts = response.data.products.map((product) => ({
-          id: product._id,
-          name: product.name,
-          brand: product.brand || "Unknown Brand",
-          category: [product.categoryName || "Uncategorized"],
-          subcategory: [
-            product.subCatName,
-            product.thirdSubCatName,
-            product.fourthSubCatName,
-          ].filter(Boolean),
-          rating: product.rating || 0,
-          discount: Number(product.discount || 0),
-          description: product.productDetails?.description || "",
-          images: product.images || [],
-          originalPrice: Math.round(
-            Number(product.oldPrice || product.price || 0)
-          ),
-          discountedPrice: Math.round(Number(product.price || 0)),
-          defaultVariant: {
-            id: `${product._id}_default`,
-            color: product.color || "Default",
-            images: product.images || [],
-            originalPrice: Math.round(
-              Number(product.oldPrice || product.price || 0)
-            ),
-            discountedPrice: Math.round(Number(product.price || 0)),
-            sizes: getSizesFromProduct(product),
-          },
-          variants: product.colorVariants
-            ? product.colorVariants.map((variant, index) => ({
-                id: `${product._id}_variant_${index}`,
-                color: variant.colorName || variant.color || "Default",
-                images: variant.images || product.images || [],
-                originalPrice: Math.round(
-                  Number(
-                    variant.oldPrice ||
-                      variant.price ||
-                      product.oldPrice ||
-                      product.price ||
-                      0
-                  )
-                ),
-                discountedPrice: Math.round(
-                  Number(variant.price || product.price || 0)
-                ),
-                sizes: getSizesFromProduct(variant),
-              }))
-            : [],
-        }));
+        const transformedProducts =
+          response.data.products.map(transformProduct);
 
-        if (currentSearchQuery) {
-          // If this is a search query, update search results
+        if (searchQuery) {
           setSearchResults(transformedProducts);
-          setTotalProducts(transformedProducts.length);
         } else {
-          // Otherwise update all products
           setProducts(transformedProducts);
-          setTotalProducts(response.data.count || transformedProducts.length);
         }
-      } else {
-        throw new Error(response.data.message || "Failed to fetch products");
+
+        setTotalProducts(transformedProducts.length);
       }
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to fetch products"
-      );
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Failed to fetch products");
     } finally {
       setLoading(false);
     }
@@ -324,27 +303,6 @@ const GridProductCategory = ({
       ),
     ].sort();
   }, [filteredProducts]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      // Refetch products when window regains focus
-      if (document.hasFocus()) {
-        if (searchQuery) {
-          fetchProducts(null, searchQuery);
-        } else if (category) {
-          fetchProducts(category);
-        } else {
-          fetchProducts();
-        }
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [searchQuery, category]);
 
   // Update category data when backend categories are loaded or category changes
   useEffect(() => {
@@ -484,9 +442,7 @@ const GridProductCategory = ({
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/wishlist/getWishlist`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (response.data.success) {
@@ -494,14 +450,28 @@ const GridProductCategory = ({
           response.data.data.map((item) => item.productId)
         );
         setWishlistItems(wishlistProductIds);
-      } else {
-        toast.error("Failed to fetch wishlist status");
       }
     } catch (error) {
       console.error("Error fetching wishlist status:", error);
-      toast.error("Error fetching wishlist status");
     }
   };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [category, searchQuery]);
+
+  useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      fetchProducts();
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, []);
 
   useEffect(() => {
     setIsSearching(!!searchQuery);

@@ -368,7 +368,10 @@ const ProductSlider = () => {
 
             return (
               <SwiperSlide key={product.id}>
-                <div className="w-full shadow-md min-w-0 flex-shrink-0">
+                <div className="w-full shadow-md min-w-0 flex-shrink-0 h-[450px] flex flex-col">
+                  {" "}
+                  {/* Added fixed height and flex column */}
+                  {/* Image section - fixed height */}
                   <div className="w-full h-48 overflow-hidden rounded-md relative group">
                     <Link to={`/product/${variant.id.split("_")[0]}`}>
                       <div>
@@ -419,8 +422,10 @@ const ProductSlider = () => {
                       </div>
                     </Link>
                   </div>
-                  <div className="p-2 shadow-md">
-                    <h6 className="text-[13px] mt-2 min-h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
+                  {/* Content section - flex-grow to take remaining space */}
+                  <div className="p-2 shadow-md flex-grow flex flex-col">
+                    {/* Brand name - fixed height */}
+                    <h6 className="text-[13px] mt-2 h-[18px] whitespace-nowrap overflow-hidden text-ellipsis text-gray-700 hover:text-red-500">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
                         className="block w-full"
@@ -428,7 +433,9 @@ const ProductSlider = () => {
                         {product.brand}
                       </Link>
                     </h6>
-                    <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] min-h-[40px] line-clamp-2 hover:text-red-500">
+
+                    {/* Product name - fixed height with ellipsis */}
+                    <h3 className="text-[14px] leading-[20px] mt-1 font-[500] mb-1 text-[rgba(0,0,0,0.9)] h-[40px] line-clamp-2 hover:text-red-500">
                       <Link
                         to={`/product/${variant.id.split("_")[0]}`}
                         className="block w-full"
@@ -437,7 +444,8 @@ const ProductSlider = () => {
                       </Link>
                     </h3>
 
-                    <div className="mb-2">
+                    {/* Rating - fixed height */}
+                    <div className="h-[24px]">
                       <Rating
                         name="size-small"
                         defaultValue={product.rating}
@@ -446,7 +454,8 @@ const ProductSlider = () => {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    {/* Price section - fixed height */}
+                    <div className="h-[24px] flex items-center justify-between">
                       <span className="line-through text-gray-500 font-[16px]">
                         ₹
                         {Math.round(
@@ -460,20 +469,30 @@ const ProductSlider = () => {
                         )}
                       </span>
                     </div>
-                    {product.discount > 0 && (
-                      <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
-                        {product.discount}% off
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => handleAddToCart(product, variant, e)}
-                      className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-6 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
-                    >
-                      <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
-                      <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
-                        ADD TO CART
-                      </span>
-                    </button>
+
+                    {/* Discount - fixed height */}
+                    <div className="h-[24px]">
+                      {product.discount > 0 && (
+                        <div className="text-green-500 font-semibold text-sm mt-1 ml-1">
+                          {product.discount}% off
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Button section - at the bottom */}
+                    <div className="mt-auto">
+                      {" "}
+                      {/* This pushes the button to the bottom */}
+                      <button
+                        onClick={(e) => handleAddToCart(product, variant, e)}
+                        className="group flex items-center w-full max-w-[97%] mx-auto gap-2 mt-2 mb-2 border border-red-500 pl-4 pr-4 pt-2 pb-2 rounded-md hover:bg-black transition"
+                      >
+                        <BsCart4 className="text-[15px] text-red-500 group-hover:text-white transition" />
+                        <span className="text-[12px] text-red-500 font-[500] group-hover:text-white transition">
+                          ADD TO CART
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </SwiperSlide>
