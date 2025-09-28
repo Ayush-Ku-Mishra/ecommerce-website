@@ -325,6 +325,27 @@ const GridProductCategory = ({
     ].sort();
   }, [filteredProducts]);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refetch products when window regains focus
+      if (document.hasFocus()) {
+        if (searchQuery) {
+          fetchProducts(null, searchQuery);
+        } else if (category) {
+          fetchProducts(category);
+        } else {
+          fetchProducts();
+        }
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [searchQuery, category]);
+
   // Update category data when backend categories are loaded or category changes
   useEffect(() => {
     if (backendCategories.length > 0 && category) {
