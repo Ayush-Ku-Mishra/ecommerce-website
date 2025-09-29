@@ -473,6 +473,11 @@ const Login = () => {
                 setCurrentView={setCurrentView}
                 setIsLogin={setIsLogin}
                 clearAllStates={clearAllStates}
+                isForgotPassword={false}
+                onBack={() => {
+                  setCurrentView("register");
+                  setIsLogin(false);
+                }}
               />
             )}
             {currentView === "forgotPassword" && (

@@ -36,6 +36,7 @@ import DesktopSearchDropdown from "./DesktopSearchDropdown";
 import { debounce } from "lodash";
 import Skeleton from "@mui/material/Skeleton";
 import { CategorySidebarSkeleton } from "../Skeletons/CategorySidebarSkeleton.jsx";
+import ReactDOM from "react-dom";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -1217,41 +1218,50 @@ const Navbar = ({ onFilterClick }) => {
                     </MenuItem>
                   </Menu>
 
-                  {showLogoutConfirm && (
-                    <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-40">
-                      <div className="bg-white p-6 rounded-lg shadow-lg w-[320px] text-center">
-                        <h3 className="text-lg font-semibold mb-4">
-                          Confirm Logout
-                        </h3>
-                        <p className="mb-6 text-gray-600">
-                          Are you sure you want to logout?
-                        </p>
-                        <div className="flex gap-4 justify-center">
-                          <button
-                            onClick={() => setShowLogoutConfirm(false)}
-                            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
-                            disabled={loading}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-2"
-                            disabled={loading}
-                          >
-                            {loading ? (
-                              <>
-                                <CircularProgress size={16} color="inherit" />
-                                <span>Logging out...</span>
-                              </>
-                            ) : (
-                              <span>Logout</span>
-                            )}
-                          </button>
+                  {showLogoutConfirm &&
+                    ReactDOM.createPortal(
+                      <div className="fixed inset-0 flex items-center justify-center z-[9999]">
+                        {/* Overlay */}
+                        <div
+                          className="fixed inset-0 bg-black bg-opacity-40"
+                          onClick={() => setShowLogoutConfirm(false)}
+                        />
+
+                        {/* Modal */}
+                        <div className="bg-white p-6 rounded-lg shadow-lg w-[320px] text-center relative z-[99999]">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Confirm Logout
+                          </h3>
+                          <p className="mb-6 text-gray-600">
+                            Are you sure you want to logout?
+                          </p>
+                          <div className="flex gap-4 justify-center">
+                            <button
+                              onClick={() => setShowLogoutConfirm(false)}
+                              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                              disabled={loading}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleLogout}
+                              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-2"
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <>
+                                  <CircularProgress size={16} color="inherit" />
+                                  <span>Logging out...</span>
+                                </>
+                              ) : (
+                                <span>Logout</span>
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
+                      </div>,
+                      document.body
+                    )}
 
                   {/* Help always */}
                   <NavLink
