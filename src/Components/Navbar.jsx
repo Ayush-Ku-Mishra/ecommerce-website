@@ -54,6 +54,7 @@ const Navbar = ({ onFilterClick }) => {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const { cartCount } = useContext(Context);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -167,13 +168,15 @@ const Navbar = ({ onFilterClick }) => {
       setIsAuthenticated(false);
       setUser(null);
       localStorage.removeItem("user-info");
+      localStorage.removeItem("client_token");
+      localStorage.removeItem("client_user");
       toast.success("Logged out successfully.");
       navigate("/");
     } catch {
       toast.error("Logout failed. Please try again.");
     } finally {
       setLoading(false);
-      setShowConfirm(false);
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -838,15 +841,19 @@ const Navbar = ({ onFilterClick }) => {
           </div>
 
           {/* Horizontal Scrollable Navigation - Removed Home */}
-          <div className="overflow-x-auto scrollbar-hide">
-            <div
-              className="flex items-center gap-6 px-3 py-2 whitespace-nowrap"
-              style={{ WebkitOverflowScrolling: "touch" }}
-            >
+          <div
+            className="overflow-x-auto scrollbar-hide w-full"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+            }}
+          >
+            <div className="flex items-center gap-5 px-4 py-2 whitespace-nowrap min-w-max">
               <NavLink
                 to="/fashion?category=fashion"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -855,10 +862,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Fashion
               </NavLink>
+
               <NavLink
                 to="/electronics?category=electronics"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -867,10 +875,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Electronics
               </NavLink>
+
               <NavLink
                 to="/bags?category=bags"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -879,10 +888,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Bags
               </NavLink>
+
               <NavLink
                 to="/footwear?category=footwear"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -891,10 +901,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Footwear
               </NavLink>
+
               <NavLink
                 to="/groceries?category=groceries"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -903,10 +914,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Groceries
               </NavLink>
+
               <NavLink
                 to="/beauty?category=beauty"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -915,10 +927,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Beauty & Health
               </NavLink>
+
               <NavLink
                 to="/service"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -927,10 +940,11 @@ const Navbar = ({ onFilterClick }) => {
               >
                 Service
               </NavLink>
+
               <NavLink
                 to="/contact"
                 className={({ isActive }) =>
-                  `text-sm font-medium pb-1 border-b-2 transition ${
+                  `text-sm font-medium pb-1 border-b-2 transition flex-shrink-0 ${
                     isActive
                       ? "text-pink-600 border-pink-600"
                       : "text-gray-700 border-transparent hover:text-pink-600"
@@ -940,9 +954,9 @@ const Navbar = ({ onFilterClick }) => {
                 Contact Us
               </NavLink>
 
-              <div className="flex items-center gap-2 text-gray-700 text-sm font-medium pb-1 transition hover:text-pink-600">
+              <div className="flex items-center gap-2 text-gray-700 text-sm font-medium pb-1 transition hover:text-pink-600 flex-shrink-0">
                 <IoRocketOutline className="text-base" />
-                <span className="">Free International Delivery</span>
+                <span>Free International Delivery</span>
               </div>
             </div>
           </div>
@@ -1194,14 +1208,50 @@ const Navbar = ({ onFilterClick }) => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        handleClose(); // closes the menu
-                        setShowConfirm(true); // opens the confirmation modal
+                        handleClose(); // Close the menu
+                        setShowLogoutConfirm(true); // Show logout confirmation
                       }}
                       className="flex items-center gap-2 text-[15px] cursor-pointer"
                     >
                       <IoPowerSharp /> Logout
                     </MenuItem>
                   </Menu>
+
+                  {showLogoutConfirm && (
+                    <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-40">
+                      <div className="bg-white p-6 rounded-lg shadow-lg w-[320px] text-center">
+                        <h3 className="text-lg font-semibold mb-4">
+                          Confirm Logout
+                        </h3>
+                        <p className="mb-6 text-gray-600">
+                          Are you sure you want to logout?
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                          <button
+                            onClick={() => setShowLogoutConfirm(false)}
+                            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                            disabled={loading}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-2"
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <>
+                                <CircularProgress size={16} color="inherit" />
+                                <span>Logging out...</span>
+                              </>
+                            ) : (
+                              <span>Logout</span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Help always */}
                   <NavLink
@@ -1264,29 +1314,27 @@ const Navbar = ({ onFilterClick }) => {
             </div>
           </header>
 
-          <div
-            className="navbarLinks flex items-center gap-6 pt-2 overflow-x-auto scrollbar-hide md:overflow-visible md:scrollbar-default"
-            style={{ WebkitOverflowScrolling: "touch" }}
-          >
-            {/* Categories Bar */}
-            <div className="border-t border-b w-full">
-              <div className="py-1 px-4 flex max-w-7xl items-center justify-between gap-6 text-sm font-medium text-gray-700">
-                {/* Sidebar Toggle */}
+          <div className="w-full min-w-[1200px] border-t border-b bg-white">
+            <div className="max-w-[1200px] mx-auto px-4">
+              <div className="flex items-center justify-between h-[50px]">
+                {/* Categories Button */}
                 <div
                   onClick={() => setSidebarOpen(true)}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-[#EFF6FF] rounded-md p-2 transition duration-200"
+                  className="flex items-center gap-2 cursor-pointer hover:bg-[#EFF6FF] rounded-md p-2 transition duration-200 min-w-[200px]"
                 >
                   <RiMenu2Fill className="text-md" />
-                  <button>SHOP BY CATEGORIES</button>
+                  <button className="text-sm font-medium">
+                    SHOP BY CATEGORIES
+                  </button>
                   <FaChevronDown className="text-xs" />
                 </div>
 
-                {/* Links */}
-                <div className="navbarLinks flex items-center gap-6 pt-2">
+                {/* Navigation Links */}
+                <div className="flex items-center gap-6 min-w-[700px]">
                   <NavLink
                     to="/"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1298,7 +1346,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/fashion?category=fashion"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1310,7 +1358,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/electronics?category=electronics"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1322,7 +1370,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/bags?category=bags"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1334,7 +1382,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/footwear?category=footwear"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1346,7 +1394,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/groceries?category=groceries"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1358,7 +1406,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/beauty?category=beauty"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1370,7 +1418,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/service"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1382,7 +1430,7 @@ const Navbar = ({ onFilterClick }) => {
                   <NavLink
                     to="/contact"
                     className={({ isActive }) =>
-                      `hover:text-pink-600 pb-2 border-b-2 transition ${
+                      `hover:text-pink-600 pb-2 border-b-2 transition text-sm font-medium ${
                         isActive
                           ? "text-pink-600 border-pink-600"
                           : "text-gray-700 border-transparent"
@@ -1393,10 +1441,12 @@ const Navbar = ({ onFilterClick }) => {
                   </NavLink>
                 </div>
 
-                {/* Delivery */}
-                <div className="flex items-center gap-2 text-gray-700 text-sm">
+                {/* Delivery Info */}
+                <div className="flex items-center gap-2 text-gray-700 min-w-[200px] justify-end">
                   <IoRocketOutline className="text-base" />
-                  <span>Free International Delivery</span>
+                  <span className="text-sm font-medium">
+                    Free International Delivery
+                  </span>
                 </div>
               </div>
             </div>

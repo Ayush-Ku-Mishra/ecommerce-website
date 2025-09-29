@@ -12,7 +12,8 @@ const LoginComponent = ({
   setCurrentView,
   handleGoogleSignIn,
   toggleLoginRegister,
-  loginLoading, // loader prop to control spinner & disable
+  loginLoading,
+  isAuthenticating,
 }) => {
   return (
     <>
@@ -63,7 +64,9 @@ const LoginComponent = ({
             )}
           </button>
           {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
@@ -104,10 +107,20 @@ const LoginComponent = ({
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="w-full bg-white border-2 border-blue-400 hover:border-blue-500 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+        disabled={isAuthenticating}
+        className="w-full bg-white border-2 border-blue-400 hover:border-blue-500 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
       >
-        <FcGoogle className="w-5 h-5" />
-        <span className="text-blue-400">Sign In With Google</span>
+        {isAuthenticating ? (
+          <>
+            <CircularProgress size={20} color="inherit" />
+            <span className="text-blue-400 ml-2">Signing In...</span>
+          </>
+        ) : (
+          <>
+            <FcGoogle className="w-5 h-5" />
+            <span className="text-blue-400">Sign In With Google</span>
+          </>
+        )}
       </button>
 
       <div className="text-center mt-6">

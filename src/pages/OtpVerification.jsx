@@ -1,23 +1,29 @@
-// src/pages/OtpVerification.jsx
-import React, { useState, useRef, useEffect, useContext } from "react";
-import { MdArrowBack, MdSms, MdEmail } from "react-icons/md";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  MdEmail,
+  MdArrowBack,
+  MdSms,
+} from "react-icons/md";
 import axios from "axios";
-import { toast } from "react-toastify";
-import { Context } from "../main";
+import toast from "react-hot-toast";
 
 const OtpVerification = ({
   email,
   phone,
-  verificationMethod,
+  verificationMethod = "email",
   setCurrentView,
   setIsLogin,
   clearAllStates,
+  onComplete,
+  countdown,
+  setCountdown,
+  onResend,
+  isForgotPassword = false,
+  onBack,
+  isLoading,
 }) => {
   const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(15);
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef()];
-
-  const { setIsAuthenticated, setUser } = useContext(Context);
 
   // countdown effect
   useEffect(() => {
@@ -54,42 +60,20 @@ const OtpVerification = ({
 
   const handleOTPVerify = async () => {
     const otpCode = otp.join("");
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/otp-verification`,
-        {
-          email,
-          phone,
-          otp: otpCode,
-        },
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
 
-      toast.success(response.data.message);
-      setIsAuthenticated(true);
-      setUser(response.data.user); // make sure backend returns this
-
-      setCurrentView("login");
-      setIsLogin(true);
-      clearAllStates();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "OTP verification failed");
-      // Optionally reset OTP inputs or let user try again
+    if (!otpCode || otpCode.length !== 5) {
+      toast.error("Please enter a valid 5-digit OTP");
+      return;
     }
-  };
 
-  const handleResendOTP = async () => {
-    if (countdown === 0) {
-      try {
+    try {
+      if (isForgotPassword) {
+        // For forgot password flow - verify OTP
         const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/resend-otp`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/password/verify-otp`,
           {
             email,
-            phone,
-            verificationMethod, // <-- pass the real value
+            otp: otpCode,
           },
           {
             withCredentials: true,
@@ -97,19 +81,79 @@ const OtpVerification = ({
           }
         );
 
-        toast.success("New OTP sent!");
-        setOtp(["", "", "", "", ""]);
-        setCountdown(30);
-        otpRefs[0].current.focus();
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to resend OTP");
+        if (response.data.success) {
+          toast.success("OTP verified successfully!");
+          if (onComplete) onComplete(otpCode); // Pass the OTP to parent
+        }
+      } else {
+        // For registration flow
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/otp-verification`,
+          {
+            email,
+            phone,
+            otp: otpCode,
+          },
+          {
+            withCredentials: true,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        toast.success(response.data.message);
+        setCurrentView("login");
+        setIsLogin(true);
+        if (clearAllStates) clearAllStates();
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Invalid OTP. Please try again."
+      );
+      // Clear OTP fields on error
+      setOtp(["", "", "", "", ""]);
+      otpRefs[0].current.focus();
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (countdown === 0) {
+      // If onResend prop is provided (for forgot password flow), use it
+      if (onResend) {
+        onResend();
+      } else {
+        // Otherwise, handle the regular OTP resend
+        try {
+          const response = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/resend-otp`,
+            {
+              email,
+              phone,
+              verificationMethod,
+            },
+            {
+              withCredentials: true,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          toast.success("New OTP sent!");
+          setOtp(["", "", "", "", ""]);
+          setCountdown(30);
+          otpRefs[0].current.focus();
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to resend OTP");
+        }
       }
     }
   };
 
   const handleBackNavigation = () => {
-    setCurrentView("register");
-    setIsLogin(false);
+    if (isForgotPassword && onBack) {
+      onBack();
+    } else if (!isForgotPassword) {
+      setCurrentView("register");
+      setIsLogin(false);
+    }
     setOtp(["", "", "", "", ""]);
     setCountdown(0);
   };
@@ -122,7 +166,9 @@ const OtpVerification = ({
         className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
       >
         <MdArrowBack className="w-5 h-5 mr-2" />
-        <span className="text-sm font-medium">Back to Registration</span>
+        <span className="text-sm font-medium">
+          {isForgotPassword ? "Back to Email" : "Back to Registration"}
+        </span>
       </button>
 
       {/* Heading */}

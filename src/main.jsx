@@ -95,7 +95,7 @@ const AppWrapper = () => {
         setUser(null);
         setIsAuthenticated(false);
         if (error.response?.status === 401) {
-          toast.info("Your session has expired. Please login again.");
+          toast.error("Your session has expired. Please login again.");
         }
       } finally {
         setAuthLoading(false);
@@ -127,8 +127,8 @@ const AppWrapper = () => {
         updateCartCount,
         wishlistCount,
         updateWishlistCount,
-        loadingAddresses,       // NEW
-        setLoadingAddresses,    // NEW
+        loadingAddresses, // NEW
+        setLoadingAddresses, // NEW
       }}
     >
       <App />

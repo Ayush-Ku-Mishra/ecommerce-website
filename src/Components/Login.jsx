@@ -14,8 +14,37 @@ import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { firebaseApp } from "../firebase";
+
 const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
+
+const AuthLoadingOverlay = ({ isVisible, message }) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+        <div className="flex flex-col items-center">
+          <div className="mb-4">
+            <CircularProgress size={40} />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Please wait...
+          </h3>
+          <p className="text-gray-600 text-center text-sm">
+            {message || "Verifying your account..."}
+          </p>
+          <div className="mt-4 w-full bg-gray-200 rounded-full h-1">
+            <div
+              className="bg-blue-600 h-1 rounded-full animate-pulse"
+              style={{ width: "100%" }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Login = () => {
   const { isAuthenticated, setIsAuthenticated, setUser, user } =
@@ -25,6 +54,8 @@ const Login = () => {
 
   // Add login/register toggle state
   const [isLogin, setIsLogin] = useState(true);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authProgress, setAuthProgress] = useState("");
 
   // Views: otp, forgotPassword, resetPassword
   const [currentView, setCurrentView] = useState("login");
@@ -68,11 +99,18 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     if (currentView === "register") {
-      setRegisterLoading(true); // show loader
-      data.phone = data.phone.startsWith("+91")
-        ? data.phone
-        : `+91${data.phone}`;
+      setRegisterLoading(true);
       try {
+        // Format phone number
+        data.phone = data.phone.startsWith("+91")
+          ? data.phone
+          : `+91${data.phone}`;
+
+        console.log("Submitting registration data:", {
+          ...data,
+          password: "[HIDDEN]",
+        });
+
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
           data,
@@ -82,17 +120,31 @@ const Login = () => {
           }
         );
 
-        toast.success(response.data.message);
-        setRegisterData({
-          email: data.email,
-          phone: data.phone,
-          verificationMethod: data.verificationMethod, // user’s actual choice
-        });
-        setCurrentView("otp");
+        if (response.data.success) {
+          toast.success(response.data.message);
+          setRegisterData({
+            email: data.email,
+            phone: data.phone,
+            verificationMethod: data.verificationMethod,
+          });
+          setCurrentView("otp");
+        }
       } catch (error) {
-        toast.error(error.response?.data?.message || "Registration failed");
+        console.error("Registration error:", error.response?.data || error);
+
+        // More specific error messages
+        if (error.response?.data?.message?.includes("email configuration")) {
+          toast.error(
+            "Registration system temporarily unavailable. Please try again later."
+          );
+        } else {
+          toast.error(
+            error.response?.data?.message ||
+              "Registration failed. Please try again."
+          );
+        }
       } finally {
-        setRegisterLoading(false); // hide loader after request
+        setRegisterLoading(false);
       }
       return;
     }
@@ -130,6 +182,8 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setRegisterLoading(true);
+    setIsAuthenticating(true);
+    setAuthProgress("Initializing Google Sign-In...");
 
     try {
       // Configure popup to avoid CORS issues
@@ -137,12 +191,14 @@ const Login = () => {
       provider.addScope("email");
       provider.addScope("profile");
 
-      console.log("🚀 Starting Google Sign-In...");
+      setAuthProgress("Opening Google login...");
 
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
       console.log("Google Sign-In Result:", user);
+
+      setAuthProgress("Google login successful, verifying account...");
 
       // Prepare user data for backend
       const userData = {
@@ -154,6 +210,7 @@ const Login = () => {
       };
 
       console.log("Sending user data to backend:", userData);
+      setAuthProgress("Connecting to server...");
 
       // Send data to backend - always use authWithGoogle endpoint
       const response = await axios.post(
@@ -169,6 +226,7 @@ const Login = () => {
       );
 
       console.log("Backend response:", response.data);
+      setAuthProgress("Finalizing your login...");
 
       // Handle successful authentication
       if (response.data.success) {
@@ -242,6 +300,8 @@ const Login = () => {
       }
     } finally {
       setRegisterLoading(false);
+      setIsAuthenticating(false);
+      setAuthProgress("");
     }
   };
 
@@ -325,72 +385,138 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen flex items-center justify-center lg:p-4 p-0"
       style={{
-        backgroundImage:
-          "url('https://img.freepik.com/premium-photo/white-minimal-geometry-background_231311-1693.jpg')",
+        backgroundImage: `url('https://images.pexels.com/photos/5632386/pexels-photo-5632386.jpeg')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
-      <div className="w-full max-w-sm bg-transparent rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-10">
-          {renderHeader()}
-          {/* Loader only for register form */}
-          {currentView === "register" && (
-            <Backdrop
-              sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-              open={registerLoading}
-            >
-              <CircularProgress color="inherit" />
-            </Backdrop>
-          )}
-          {currentView === "otp" && (
-            <OtpVerification
-              email={registerData.email}
-              phone={registerData.phone}
-              verificationMethod={registerData.verificationMethod}
-              setCurrentView={setCurrentView}
-              setIsLogin={setIsLogin}
-              clearAllStates={clearAllStates}
-            />
-          )}
-          {currentView === "forgotPassword" && (
-            <ForgotPassword
-              onBack={handleForgotPasswordBack}
-              onResetPassword={handleResetPasswordRequest}
-            />
-          )}
-          {currentView === "resetPassword" && (
-            <ResetPassword
-              email={resetEmail}
-              onBack={handleResetPasswordBack}
-              onSuccess={handleResetPasswordSuccess}
-            />
-          )}
-          {["login", "register"].includes(currentView) &&
-            (isLogin ? (
-              <LoginComponent
-                register={register}
-                handleSubmit={handleSubmit(onSubmit)}
-                errors={errors}
-                showPassword={showPassword}
-                setShowPassword={setShowPassword}
+      <div className="w-full h-screen lg:h-auto lg:flex">
+        {/* Left side content - Only visible on desktop */}
+        <div className="hidden lg:flex lg:w-[70%] relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-violet-800/80 to-indigo-900/90" />
+          <div className="relative w-full flex flex-col justify-between p-16 text-white">
+            {/* Content same as before */}
+            <div>
+              <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-pink-100">
+                Pickora
+              </h1>
+            </div>
+
+            <div className="flex flex-col items-start space-y-6">
+              <h2 className="text-6xl font-bold leading-tight">
+                Discover the Art <br />
+                of Shopping
+              </h2>
+              <p className="text-xl text-gray-200 max-w-xl">
+                Join millions of shoppers who have discovered the convenience of
+                online shopping with Pickora. Your perfect shopping experience
+                awaits.
+              </p>
+              <div className="flex items-center space-x-4 text-sm text-gray-300">
+                <div className="flex items-center">
+                  <span className="mr-2">✓</span>
+                  Premium Quality
+                </div>
+                <div className="flex items-center">
+                  <span className="mr-2">✓</span>
+                  24/7 Support
+                </div>
+                <div className="flex items-center">
+                  <span className="mr-2">✓</span>
+                  Secure Shopping
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-8">
+              <div className="flex -space-x-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <img
+                    key={i}
+                    src={`https://randomuser.me/api/portraits/men/${i}.jpg`}
+                    alt={`User ${i}`}
+                    className="w-10 h-10 rounded-full border-2 border-white"
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-gray-300">
+                Join <span className="font-semibold text-white">2,000+</span>{" "}
+                happy shoppers today
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Form container */}
+        <div className="w-full lg:w-[30%] min-h-screen lg:min-h-0 flex items-center justify-center bg-white/95 backdrop-blur-sm lg:backdrop-blur-none lg:bg-white">
+          <div className="w-full max-w-sm p-8 lg:p-12">
+            {renderHeader()}
+            {/* Loader only for register form */}
+            {currentView === "register" && (
+              <Backdrop
+                sx={{
+                  color: "#fff",
+                  zIndex: (theme) => theme.zIndex.drawer + 1,
+                }}
+                open={registerLoading}
+              >
+                <CircularProgress color="inherit" />
+              </Backdrop>
+            )}
+            {currentView === "otp" && (
+              <OtpVerification
+                email={registerData.email}
+                phone={registerData.phone}
+                verificationMethod={registerData.verificationMethod}
                 setCurrentView={setCurrentView}
-                handleGoogleSignIn={handleGoogleSignIn}
-                toggleLoginRegister={toggleLoginRegister}
+                setIsLogin={setIsLogin}
+                clearAllStates={clearAllStates}
               />
-            ) : (
-              <RegisterComponent
-                register={register}
-                handleSubmit={handleSubmit(onSubmit)}
-                errors={errors}
-                showPassword={showPassword}
-                setShowPassword={setShowPassword}
-                handleGoogleSignIn={handleGoogleSignIn}
-                toggleLoginRegister={toggleLoginRegister}
+            )}
+            {currentView === "forgotPassword" && (
+              <ForgotPassword
+                onBack={handleForgotPasswordBack}
+                onResetPassword={handleResetPasswordRequest}
               />
-            ))}
+            )}
+            {currentView === "resetPassword" && (
+              <ResetPassword
+                email={resetEmail}
+                onBack={handleResetPasswordBack}
+                onSuccess={handleResetPasswordSuccess}
+              />
+            )}
+            {["login", "register"].includes(currentView) &&
+              (isLogin ? (
+                <LoginComponent
+                  register={register}
+                  handleSubmit={handleSubmit(onSubmit)}
+                  errors={errors}
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                  setCurrentView={setCurrentView}
+                  handleGoogleSignIn={handleGoogleSignIn}
+                  toggleLoginRegister={toggleLoginRegister}
+                  isAuthenticating={isAuthenticating}
+                />
+              ) : (
+                <RegisterComponent
+                  register={register}
+                  handleSubmit={handleSubmit(onSubmit)}
+                  errors={errors}
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                  handleGoogleSignIn={handleGoogleSignIn}
+                  toggleLoginRegister={toggleLoginRegister}
+                  isAuthenticating={isAuthenticating}
+                />
+              ))}
+          </div>
         </div>
       </div>
+      <AuthLoadingOverlay isVisible={isAuthenticating} message={authProgress} />
     </div>
   );
 };

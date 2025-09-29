@@ -8,6 +8,7 @@ import {
   MdVisibilityOff,
 } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const RegisterComponent = ({
   register,
@@ -17,6 +18,7 @@ const RegisterComponent = ({
   setShowPassword,
   handleGoogleSignIn,
   toggleLoginRegister,
+  isAuthenticating,
 }) => {
   return (
     <>
@@ -199,10 +201,20 @@ const RegisterComponent = ({
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="w-full bg-white border-2 border-blue-400 hover:border-blue-500 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+        disabled={isAuthenticating}
+        className="w-full bg-white border-2 border-blue-400 hover:border-blue-500 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <FcGoogle className="w-5 h-5" />
-        <span className="text-blue-400">Sign Up With Google</span>
+        {isAuthenticating ? (
+          <>
+            <CircularProgress size={20} color="inherit" />
+            <span className="text-blue-400 ml-2">Signing Up...</span>
+          </>
+        ) : (
+          <>
+            <FcGoogle className="w-5 h-5" />
+            <span className="text-blue-400">Sign Up With Google</span>
+          </>
+        )}
       </button>
 
       {/* Toggle Login */}

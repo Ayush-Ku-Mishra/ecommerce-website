@@ -7,8 +7,8 @@ import { useNotifications } from "../hooks/useNotifications";
 
 const FloatingNotification = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const panelRef = useRef(null); // Notification panel
-  const buttonRef = useRef(null); // Floating button
+  const panelRef = useRef(null);
+  const buttonRef = useRef(null);
 
   const {
     notifications,
@@ -18,6 +18,8 @@ const FloatingNotification = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
+
+  const isLoginPage = window.location.pathname === "/login";
 
   // Handle notification click
   const handleNotificationClick = (notification) => {
@@ -49,6 +51,8 @@ const FloatingNotification = () => {
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
+
+  if (isLoginPage) return null;
 
   return (
     <>
@@ -87,11 +91,17 @@ const FloatingNotification = () => {
               <h3 className="text-lg font-semibold">Notifications</h3>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-sm hover:underline">
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-sm hover:underline"
+                  >
                     Mark all as read
                   </button>
                 )}
-                <button onClick={() => setIsOpen(false)} className="hover:bg-blue-700 p-1 rounded">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="hover:bg-blue-700 p-1 rounded"
+                >
                   <IoClose className="text-xl" />
                 </button>
               </div>
@@ -101,7 +111,10 @@ const FloatingNotification = () => {
             <div className="max-h-[500px] overflow-y-auto px-2 py-2">
               {loading ? (
                 [...Array(5)].map((_, idx) => (
-                  <div key={idx} className="p-4 border-b border-gray-100 last:border-0">
+                  <div
+                    key={idx}
+                    className="p-4 border-b border-gray-100 last:border-0"
+                  >
                     <Skeleton
                       variant="text"
                       width="60%"
@@ -110,7 +123,8 @@ const FloatingNotification = () => {
                       sx={{
                         bgcolor: "#C7CCD8",
                         "&::after": {
-                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          background:
+                            "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
                         },
                       }}
                     />
@@ -123,7 +137,8 @@ const FloatingNotification = () => {
                         bgcolor: "#C7CCD8",
                         mt: 1,
                         "&::after": {
-                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          background:
+                            "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
                         },
                       }}
                     />
@@ -136,7 +151,8 @@ const FloatingNotification = () => {
                         bgcolor: "#C7CCD8",
                         mt: 1,
                         "&::after": {
-                          background: "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
+                          background:
+                            "linear-gradient(90deg, transparent, #DEE2EB, transparent)",
                         },
                       }}
                     />
@@ -161,12 +177,19 @@ const FloatingNotification = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{notification.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          <h4 className="font-semibold text-gray-900">
+                            {notification.title}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {notification.message}
+                          </p>
                           <p className="text-xs text-gray-400 mt-2">
-                            {formatDistanceToNow(new Date(notification.createdAt), {
-                              addSuffix: true,
-                            })}
+                            {formatDistanceToNow(
+                              new Date(notification.createdAt),
+                              {
+                                addSuffix: true,
+                              }
+                            )}
                           </p>
                         </div>
                         <button
