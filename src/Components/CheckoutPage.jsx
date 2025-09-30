@@ -229,17 +229,6 @@ const CheckoutPage = () => {
         )
       );
       updateCartCount();
-
-      // Optional: Store maxStock in cart item for UI (e.g., disabling + button)
-      if (response.data.maxStock !== undefined) {
-        setCart((prev) =>
-          prev.map((item) =>
-            item._id === cartItemId
-              ? { ...item, maxStock: response.data.maxStock }
-              : item
-          )
-        );
-      }
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -545,7 +534,6 @@ const CheckoutPage = () => {
     }
 
     setProcessingPayment(true);
-    setStep("payment"); // Set step to payment
 
     try {
       const orderData = {
@@ -1046,9 +1034,14 @@ const CheckoutPage = () => {
                         disabled={processingPayment}
                         className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md transition text-base lg:text-lg disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                       >
-                        {processingPayment
-                          ? "Placing Order..."
-                          : "Place COD Order"}
+                        {processingPayment ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                            Placing Order...
+                          </div>
+                        ) : (
+                          "Place COD Order"
+                        )}
                       </button>
                     )}
                   </div>

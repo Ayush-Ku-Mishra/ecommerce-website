@@ -5,8 +5,7 @@ import { MdDeleteOutline } from "react-icons/md";
 import { FiShoppingCart } from "react-icons/fi";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { Context } from "../main"; // Adjust path to your main.jsx
-import ContactUsPart from "./ContactUsPart";
+import { Context } from "../main";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -62,7 +61,27 @@ const Cart = () => {
     if (quantity < 1) return;
 
     try {
-      await axios.put(
+      // First, check stock availability
+      const item = cart.find((p) => p._id === cartItemId);
+      if (!item) return;
+
+      const productId = item.id.split("_")[0];
+      const stockRes = await axios.get(
+        `${API_BASE_URL}/api/v1/product/${productId}/stock`,
+        {
+          params: {
+            size: item.selectedSize || undefined,
+          },
+        }
+      );
+
+      if (quantity > stockRes.data.stock) {
+        toast.error(`Only ${stockRes.data.stock} available in stock!`);
+        return;
+      }
+
+      // If stock check passes, update the quantity
+      const response = await axios.put(
         `${API_BASE_URL}/api/v1/cart/updateQuantity`,
         {
           cartItemId,
@@ -78,10 +97,14 @@ const Cart = () => {
           item._id === cartItemId ? { ...item, quantity } : item
         )
       );
-      updateCartCount(); // Update cart badge
+      updateCartCount();
     } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to update quantity");
+      }
       console.error("Error updating quantity:", error);
-      toast.error("Failed to update quantity");
     }
   };
 
