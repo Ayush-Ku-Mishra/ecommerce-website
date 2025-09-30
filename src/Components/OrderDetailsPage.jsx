@@ -331,6 +331,19 @@ const OrderDetailPage = () => {
                       })}
                     </p>
                   )}
+
+                  {(isCompleted || isCurrent) && step.key === "delivered" && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(order.updatedAt).toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
             );

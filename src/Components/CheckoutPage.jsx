@@ -179,8 +179,30 @@ const CheckoutPage = () => {
   const updateQuantity = async (cartItemId, quantity) => {
     if (quantity < 1) return;
 
-    // Handle Buy Now mode locally
     if (isBuyNowMode) {
+      try {
+        const item = cart.find((p) => p._id === cartItemId);
+        if (!item) return;
+
+        const productId = item.id.split("_")[0];
+        const stockRes = await axios.get(
+          `${API_BASE_URL}/api/v1/product/${productId}/stock`,
+          {
+            params: {
+              size: item.selectedSize || undefined,
+            },
+          }
+        );
+
+        if (quantity > stockRes.data.stock) {
+          toast.error(`Only ${stockRes.data.stock} available in stock!`);
+          return;
+        }
+      } catch (error) {
+        console.warn("Could not validate stock in buy now mode");
+        // Optional: Let it proceed — backend will block on /updateQuantity
+      }
+
       setCart((prev) =>
         prev.map((item) =>
           item._id === cartItemId ? { ...item, quantity } : item
@@ -190,7 +212,7 @@ const CheckoutPage = () => {
     }
 
     try {
-      await axios.put(
+      const response = await axios.put(
         `${API_BASE_URL}/api/v1/cart/updateQuantity`,
         {
           cartItemId,
@@ -207,9 +229,24 @@ const CheckoutPage = () => {
         )
       );
       updateCartCount();
+
+      // Optional: Store maxStock in cart item for UI (e.g., disabling + button)
+      if (response.data.maxStock !== undefined) {
+        setCart((prev) =>
+          prev.map((item) =>
+            item._id === cartItemId
+              ? { ...item, maxStock: response.data.maxStock }
+              : item
+          )
+        );
+      }
     } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to update quantity");
+      }
       console.error("Error updating quantity:", error);
-      toast.error("Failed to update quantity");
     }
   };
 
