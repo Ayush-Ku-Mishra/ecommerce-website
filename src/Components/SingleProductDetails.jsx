@@ -400,61 +400,29 @@ const SingleProductDetails = () => {
     );
   }
 
-  const optimizeCloudinaryUrl = (url) => {
-    if (!url || !url.includes("cloudinary.com")) return url;
-
-    // Parse the URL to extract components
-    const urlParts = url.split("/upload/");
-    if (urlParts.length !== 2) return url;
-
-    // Insert transformation parameters for optimal social sharing
-    // Using f_jpg to ensure JPEG format which is better supported than WebP
-    return `${
-      urlParts[0]
-    }/upload/c_fill,w_1200,h_630,f_jpg,q_80/${urlParts[1].replace(
-      ".webp",
-      ""
-    )}`;
-  };
-
   return (
     <>
       <Helmet>
+        <title>
+          {product.name} - {product.brand}
+        </title>
         <meta
           property="og:title"
-          content={`${product.name} - ${selectedVariant.color}`}
+          content={`${product.name} - ${product.brand}`}
         />
         <meta
           property="og:description"
-          content={`${product.brand} - ₹${Math.round(
-            selectedVariant?.discountedPrice || 0
-          )} - Check out this amazing product!`}
+          content={
+            product.description || `Check out this ${product.brand} product!`
+          }
         />
-        {/* Fix 1: Add protocol if missing and optimize for social sharing */}
         <meta
           property="og:image"
-          content={optimizeCloudinaryUrl(
-            selectedVariant?.images?.[0] || product?.images?.[0]
-          )}
+          content={selectedVariant?.images?.[0] || product.images?.[0]}
         />
-        {/* Fix 2: Add additional meta tags to help social platforms */}
-        <meta
-          property="og:image:secure_url"
-          content={optimizeCloudinaryUrl(
-            selectedVariant?.images?.[0] || product?.images?.[0]
-          )}
-        />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content={product.name} />
-        {/* Fix 3: Make sure location is properly defined */}
-        <meta
-          property="og:url"
-          content={`https://pickora.netlify.app${window.location.pathname}`}
-        />
+        <meta property="og:url" content={window.location.href} />
         <meta property="og:type" content="product" />
-        <meta property="og:site_name" content="Pickora" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
       <div className={`${isMobile ? "lg:pb-20" : ""}`}>
         <div
