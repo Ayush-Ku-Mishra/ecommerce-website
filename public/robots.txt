@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Allow Facebook crawler
+User-agent: facebookexternalhit
+Allow: /
+
+# Allow Twitter crawler
+User-agent: Twitterbot
+Allow: /
+
+# Allow LinkedIn crawler
+User-agent: LinkedInBot
+Allow: /
+
+# Allow WhatsApp crawler (uses Facebook's)
+User-agent: WhatsApp
+Allow: /
