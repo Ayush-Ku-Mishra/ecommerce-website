@@ -1,45 +1,29 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Pickora Product</title>
-    <!-- Open Graph meta tags -->
-    <meta property="og:title" content="Pickora Product" />
-    <meta
-      property="og:description"
-      content="Check out this amazing product on Pickora!"
-    />
-    <meta
-      property="og:image"
-      content="https://res.cloudinary.com/dlea0lq8f/image/upload/c_fill,w_1200,h_630,f_jpg,q_90/v1758143493/o5fgmezsv863gprvakut.jpg"
-    />
-    <meta property="og:url" content="https://pickora.netlify.app" />
-    <meta property="og:type" content="product" />
-    <meta property="og:site_name" content="Pickora" />
-    <!-- Twitter Card tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pickora Product" />
-    <meta
-      name="twitter:description"
-      content="Check out this amazing product on Pickora!"
-    />
-    <meta
-      name="twitter:image"
-      content="https://res.cloudinary.com/dlea0lq8f/image/upload/c_fill,w_1200,h_630,f_jpg,q_90/v1758143493/o5fgmezsv863gprvakut.jpg"
-    />
-    <!-- Redirect to the actual product page -->
-    <meta http-equiv="refresh" content="0;url=https://pickora.netlify.app" />
-    <script>
-      // Get the redirect URL from query parameter or use the default
-      window.onload = function () {
-        const params = new URLSearchParams(window.location.search);
-        const redirect =
-          params.get("redirect") || "https://pickora.netlify.app";
-        window.location.replace(redirect);
-      };
-    </script>
-  </head>
-  <body>
-    <p>Redirecting to Pickora...</p>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <title>Pickora Product</title>
+  <meta property="og:title" content="Pickora Product">
+  <meta property="og:description" content="Check out this amazing product on Pickora!">
+  <meta property="og:image" content="https://res.cloudinary.com/dlea0lq8f/image/upload/c_fill,w_1200,h_630,f_jpg,q_90/v1758143493/o5fgmezsv863gprvakut.jpg">
+  <meta property="og:url" content="https://pickora.netlify.app">
+  <meta property="og:type" content="product">
+  <meta property="og:site_name" content="Pickora">
+  <script type="text/javascript">
+    setTimeout(function() {
+      var params = new URLSearchParams(window.location.search);
+      var redirect = params.get('redirect') || 'https://pickora.netlify.app';
+      window.location.href = redirect;
+    }, 1500);
+  </script>
+</head>
+<body style="text-align: center; font-family: Arial, sans-serif; padding: 20px;">
+  <h1>Pickora Product</h1>
+  <p>Redirecting you to the product page...</p>
+  <p>If you're not redirected automatically, <a id="redirect-link" href="https://pickora.netlify.app">click here</a>.</p>
+  
+  <script>
+    document.getElementById('redirect-link').href = new URLSearchParams(window.location.search).get('redirect') || 'https://pickora.netlify.app';
+  </script>
+</body>
 </html>
