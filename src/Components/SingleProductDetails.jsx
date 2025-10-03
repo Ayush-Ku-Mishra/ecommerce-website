@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Dialog, Backdrop, CircularProgress } from "@mui/material";
 import {
   IoClose,
-  IoChevronBack,
-  IoChevronForward,
   IoLocationOutline,
   IoHome,
   IoBusiness,
@@ -12,13 +10,18 @@ import {
 } from "react-icons/io5";
 import { IoMdArrowDropdown } from "react-icons/io";
 import ProductImageGallery from "./ProductImageGallery";
-import SizeChartModal from "./SizeChartModal";
 import PincodeChecker from "./PincodeChecker";
-import RatingReviewSection from "./RatingReviewSection";
 import RelatedProductsSlider from "./RelatedProductsSlider";
-import ContactUsPart from "./ContactUsPart";
 import axios from "axios";
 import { Context } from "../main";
+import ProductReviews from "./ProductReviews";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Zoom } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/zoom";
+import { Helmet } from "react-helmet";
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -54,16 +57,13 @@ const SingleProductDetails = () => {
     translateX: 0,
     translateY: 0,
   });
-  const [lastTap, setLastTap] = useState(0);
-  const imageRef = useRef(null);
-  const handleTouchStart = useRef({ x: 0, y: 0 });
-
   const [selectedSize, setSelectedSize] = useState(null);
   const [showAllColors, setShowAllColors] = useState(false);
   const [isDeliverable, setIsDeliverable] = useState(null);
   const [pincode, setPincode] = useState("");
   const [deliveryChecked, setDeliveryChecked] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const swiperRef = useRef(null);
 
   const addressRef = useRef();
 
@@ -74,67 +74,6 @@ const SingleProductDetails = () => {
       translateX: 0,
       translateY: 0,
     });
-  };
-
-  // Handle double tap zoom for mobile
-  const handleDoubleTap = (e) => {
-    if (!isMobile) return;
-
-    const now = Date.now();
-    const timeBetween = now - lastTap;
-
-    if (timeBetween < 300 && timeBetween > 0) {
-      e.preventDefault();
-
-      if (zoomState.scale === 1) {
-        // Get tap position relative to image
-        const rect = imageRef.current.getBoundingClientRect();
-        const x = e.clientX || (e.touches && e.touches[0].clientX);
-        const y = e.clientY || (e.touches && e.touches[0].clientY);
-
-        // Calculate zoom center
-        const centerX = (x - rect.left - rect.width / 2) / 2;
-        const centerY = (y - rect.top - rect.height / 2) / 2;
-
-        setZoomState({
-          scale: 2.5,
-          translateX: -centerX,
-          translateY: -centerY,
-        });
-      } else {
-        resetZoom();
-      }
-    }
-
-    setLastTap(now);
-  };
-
-  // Handle pan when zoomed (mobile only)
-  const handleTouchMove = (e) => {
-    if (!isMobile || zoomState.scale === 1) return;
-
-    e.preventDefault();
-    const touch = e.touches[0];
-
-    if (handleTouchStart.current.x === 0 && handleTouchStart.current.y === 0) {
-      handleTouchStart.current = { x: touch.clientX, y: touch.clientY };
-      return;
-    }
-
-    const deltaX = touch.clientX - handleTouchStart.current.x;
-    const deltaY = touch.clientY - handleTouchStart.current.y;
-
-    setZoomState((prev) => ({
-      ...prev,
-      translateX: prev.translateX + deltaX / prev.scale,
-      translateY: prev.translateY + deltaY / prev.scale,
-    }));
-
-    handleTouchStart.current = { x: touch.clientX, y: touch.clientY };
-  };
-
-  const handleTouchEnd = () => {
-    handleTouchStart.current = { x: 0, y: 0 };
   };
 
   // Check if mobile screen
@@ -369,11 +308,13 @@ const SingleProductDetails = () => {
   };
 
   const goToImage = (index) => {
+    if (swiperRef.current) {
+      swiperRef.current.slideTo(index);
+    }
     setImageModal((prev) => ({
       ...prev,
       currentIndex: index,
     }));
-    resetZoom(); // Reset zoom when changing images
   };
 
   // Handle keyboard navigation in gallery
@@ -460,90 +401,123 @@ const SingleProductDetails = () => {
   }
 
   return (
-    <div className={`${isMobile ? "lg:pb-20" : ""}`}>
-      <div
-        className={`max-w-7xl mx-auto lg:px-4 px-3 lg:py-4 py-2 ${
-          isMobile ? "flex-col" : "flex gap-8"
-        }`}
-      >
-        {/* Image Gallery Section */}
+    <>
+      <Helmet>
+        <meta
+          property="og:title"
+          content={`${product.name} - ${selectedVariant.color}`}
+        />
+        <meta
+          property="og:description"
+          content={`${product.brand} - ₹${Math.round(
+            selectedVariant?.discountedPrice || 0
+          )} - Check out this amazing product!`}
+        />
+        <meta
+          property="og:image"
+          content={selectedVariant?.images?.[0] || product?.images?.[0]}
+        />
+        <meta
+          property="og:url"
+          content={`https://pickora.netlify.app${location.pathname}`}
+        />
+        <meta property="og:type" content="product" />
+        <meta property="og:site_name" content="Pickora" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </Helmet>
+      <div className={`${isMobile ? "lg:pb-20" : ""}`}>
         <div
-          className={`${isMobile ? "w-full mb-6" : "sticky top-32 self-start"}`}
-        >
-          <ProductImageGallery
-            product={product}
-            selectedVariant={selectedVariant}
-            setSelectedVariant={setSelectedVariant}
-            selectedSize={selectedSize}
-            isDeliverable={isDeliverable}
-            onOpenGallery={openImageGallery}
-          />
-        </div>
-
-        {/* Product Details Section */}
-        <div
-          className={`${
-            isMobile ? "w-full" : "mt-3 overflow-y-auto pr-4 scrollbar-hide"
+          className={`max-w-7xl mx-auto lg:px-4 px-3 lg:py-4 py-2 ${
+            isMobile ? "flex-col" : "flex gap-0"
           }`}
         >
-          <p className="text-[#878787] text-[16px] font-[500]">
-            {product.brand}
-          </p>
-          <h2
-            className={`text-lg font-[400] mb-1 font-custom2 ${
-              isMobile ? "max-w-full" : "max-w-[700px]"
+          {/* Image Gallery Section - FIXED WIDTH */}
+          <div
+            className={`${
+              isMobile
+                ? "w-full mb-6"
+                : "w-[40%] flex-shrink-0 sticky top-32 self-start"
             }`}
           >
-            {product.name}
-          </h2>
-
-          {/* Pricing Section */}
-          <div className="flex items-center gap-3 mb-4">
-            <p
-              className={`${
-                isMobile ? "text-[24px]" : "text-[28px]"
-              } font-[500] text-[#212121]`}
-            >
-              ₹{selectedVariant?.discountedPrice}
-            </p>
-            <p
-              className={`line-through text-[#878787] ${
-                isMobile ? "text-[14px]" : "text-[16px]"
-              } align-middle`}
-            >
-              ₹{selectedVariant?.originalPrice}
-            </p>
-            <p
-              className={`text-[#388e3c] font-[500] ${
-                isMobile ? "text-[14px]" : "text-[16px]"
-              }`}
-            >
-              {selectedVariant?.discount}% off
-            </p>
+            <ProductImageGallery
+              product={product}
+              selectedVariant={selectedVariant}
+              setSelectedVariant={setSelectedVariant}
+              selectedSize={selectedSize}
+              isDeliverable={isDeliverable}
+              onOpenGallery={openImageGallery}
+            />
           </div>
 
-          {/* Size Options */}
-          {selectedVariant?.sizes && selectedVariant.sizes.length > 0 && (
-            <div
-              className={`mb-4 ${
-                isMobile ? "flex flex-col gap-3" : "flex gap-10"
+          {/* Product Details Section - FIXED WIDTH */}
+          <div
+            className={`${
+              isMobile
+                ? "w-full"
+                : "w-[60%] flex-shrink-0 mt-3 overflow-y-auto pr-4 scrollbar-hide"
+            }`}
+          >
+            <p className="text-[#878787] text-[16px] font-[500]">
+              {product.brand}
+            </p>
+            <h2
+              className={`text-lg font-[400] mb-1 font-custom2 ${
+                isMobile ? "max-w-full" : "max-w-[700px]"
               }`}
             >
-              <p className="text-[14px] font-[500] text-[#878787] mb-2">Size</p>
+              {product.name}
+            </h2>
 
-              <div className="flex flex-col flex-wrap gap-2">
-                <div
-                  className={`flex gap-2 flex-wrap items-center ${
-                    isMobile ? "justify-start" : ""
-                  }`}
-                >
-                  {selectedVariant.sizes.map((sizeObj, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSizeClick(sizeObj)}
-                      className={`${
-                        isMobile ? "px-3 py-2 text-sm" : "px-4 py-2 text-md"
-                      } rounded border-2 font-semibold transition duration-200
+            {/* Pricing Section */}
+            <div className="flex items-center gap-3 mb-4">
+              <p
+                className={`${
+                  isMobile ? "text-[24px]" : "text-[28px]"
+                } font-[500] text-[#212121]`}
+              >
+                ₹{selectedVariant?.discountedPrice}
+              </p>
+              <p
+                className={`line-through text-[#878787] ${
+                  isMobile ? "text-[14px]" : "text-[16px]"
+                } align-middle`}
+              >
+                ₹{selectedVariant?.originalPrice}
+              </p>
+              <p
+                className={`text-[#388e3c] font-[500] ${
+                  isMobile ? "text-[14px]" : "text-[16px]"
+                }`}
+              >
+                {selectedVariant?.discount}% off
+              </p>
+            </div>
+
+            {/* Size Options */}
+            {selectedVariant?.sizes && selectedVariant.sizes.length > 0 && (
+              <div
+                className={`mb-4 ${
+                  isMobile ? "flex flex-col gap-3" : "flex gap-10"
+                }`}
+              >
+                <p className="text-[14px] font-[500] text-[#878787] mb-2">
+                  Size
+                </p>
+
+                <div className="flex flex-col flex-wrap gap-2">
+                  <div
+                    className={`flex gap-2 flex-wrap items-center ${
+                      isMobile ? "justify-start" : ""
+                    }`}
+                  >
+                    {selectedVariant.sizes.map((sizeObj, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSizeClick(sizeObj)}
+                        className={`${
+                          isMobile ? "px-3 py-2 text-sm" : "px-4 py-2 text-md"
+                        } rounded border-2 font-semibold transition duration-200
             ${
               selectedSize?.size === sizeObj.size
                 ? "border-yellow-700 text-yellow-700"
@@ -555,404 +529,367 @@ const SingleProductDetails = () => {
                 : "bg-white text-black hover:border-gray-500"
             }
           `}
-                    >
-                      {sizeObj.size}
-                    </button>
-                  ))}
-                </div>
-
-                {selectedSize && (
-                  <p
-                    className={`mt-2 ${
-                      isMobile ? "text-sm" : "text-md"
-                    } font-medium ${
-                      selectedSize.inStock && selectedSize.stockQuantity > 0
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {selectedSize.inStock && selectedSize.stockQuantity > 0
-                      ? `In Stock (${selectedSize.stockQuantity})`
-                      : "Out of Stock"}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Pincode Checker */}
-          <PincodeChecker
-            pincode={pincode}
-            setPincode={setPincode}
-            deliveryDays={product.deliveryDays}
-            isDeliverable={isDeliverable}
-            setIsDeliverable={setIsDeliverable}
-            deliveryChecked={deliveryChecked}
-            setDeliveryChecked={setDeliveryChecked}
-            inStock={selectedSize?.inStock === true}
-          />
-
-          {/* Modern Delivery Address Selection */}
-          <div
-            className={`mt-6 w-full ${isMobile ? "max-w-full" : "max-w-2xl"}`}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <IoLocationOutline className="text-blue-600" size={20} />
-              <label className="text-sm font-semibold text-gray-800">
-                Deliver to:
-              </label>
-            </div>
-
-            <div className="relative" ref={addressRef}>
-              {addressLoading ? (
-                <div className="flex items-center justify-center p-4 border border-gray-200 rounded-xl bg-gray-50">
-                  <CircularProgress size={20} style={{ color: "#ef4444" }} />
-                  <span className="ml-2 text-sm text-gray-600">
-                    Loading addresses...
-                  </span>
-                </div>
-              ) : (
-                <div
-                  className="w-full p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
-                  onClick={() => setShowAddressDropdown(!showAddressDropdown)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      {selectedAddress ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {getAddressTypeIcon(selectedAddress.type)}
-                            <span
-                              className={`font-semibold text-gray-800 ${
-                                isMobile ? "text-sm" : ""
-                              }`}
-                            >
-                              {selectedAddress.name}
-                            </span>
-                            {(selectedAddress.default ||
-                              selectedAddress.isDefault) && (
-                              <span
-                                className={`bg-green-100 text-green-700 ${
-                                  isMobile ? "text-xs" : "text-xs"
-                                } px-2 py-1 rounded-full font-medium`}
-                              >
-                                Default
-                              </span>
-                            )}
-                          </div>
-                          <p
-                            className={`${
-                              isMobile ? "text-xs" : "text-sm"
-                            } text-gray-600 leading-relaxed`}
-                          >
-                            {formatAddress(selectedAddress)}
-                          </p>
-                          <p
-                            className={`${
-                              isMobile ? "text-xs" : "text-xs"
-                            } text-gray-500`}
-                          >
-                            📞 {selectedAddress.phone}
-                          </p>
-                        </div>
-                      ) : (
-                        <div
-                          className={`text-gray-500 ${
-                            isMobile ? "text-sm" : "text-sm"
-                          }`}
-                        >
-                          {addresses.length === 0
-                            ? "No saved addresses"
-                            : "Select delivery address"}
-                        </div>
-                      )}
-                    </div>
-                    <IoMdArrowDropdown
-                      className={`text-xl text-gray-400 transition-transform duration-200 ${
-                        showAddressDropdown ? "transform rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {showAddressDropdown && addresses.length > 0 && (
-                <div
-                  className={`absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-xl mt-2 ${
-                    isMobile ? "max-h-60" : "max-h-80"
-                  } overflow-y-auto`}
-                >
-                  <div className="p-2">
-                    <div
-                      className={`${
-                        isMobile ? "text-xs" : "text-xs"
-                      } font-semibold text-gray-500 uppercase tracking-wider px-3 py-2`}
-                    >
-                      Saved Addresses ({addresses.length})
-                    </div>
-
-                    {addresses.map((addr) => (
-                      <div
-                        key={addr._id}
-                        onClick={() => {
-                          setSelectedAddress(addr);
-                          setShowAddressDropdown(false);
-                        }}
-                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 mb-1 hover:bg-blue-50 ${
-                          selectedAddress?._id === addr._id
-                            ? "bg-blue-50 border border-blue-200"
-                            : "hover:shadow-sm"
-                        }`}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 space-y-1">
+                        {sizeObj.size}
+                      </button>
+                    ))}
+                  </div>
+
+                  {selectedSize && (
+                    <p
+                      className={`mt-2 ${
+                        isMobile ? "text-sm" : "text-md"
+                      } font-medium ${
+                        selectedSize.inStock && selectedSize.stockQuantity > 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {selectedSize.inStock && selectedSize.stockQuantity > 0
+                        ? `In Stock (${selectedSize.stockQuantity})`
+                        : "Out of Stock"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pincode Checker */}
+            <PincodeChecker
+              pincode={pincode}
+              setPincode={setPincode}
+              deliveryDays={product.deliveryDays}
+              isDeliverable={isDeliverable}
+              setIsDeliverable={setIsDeliverable}
+              deliveryChecked={deliveryChecked}
+              setDeliveryChecked={setDeliveryChecked}
+              inStock={selectedSize?.inStock === true}
+            />
+
+            {/* Modern Delivery Address Selection */}
+            <div
+              className={`mt-6 w-full ${isMobile ? "max-w-full" : "max-w-2xl"}`}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <IoLocationOutline className="text-blue-600" size={20} />
+                <label className="text-sm font-semibold text-gray-800">
+                  Deliver to:
+                </label>
+              </div>
+
+              <div className="relative" ref={addressRef}>
+                {addressLoading ? (
+                  <div className="flex items-center justify-center p-4 border border-gray-200 rounded-xl bg-gray-50">
+                    <CircularProgress size={20} style={{ color: "#ef4444" }} />
+                    <span className="ml-2 text-sm text-gray-600">
+                      Loading addresses...
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="w-full p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
+                    onClick={() => setShowAddressDropdown(!showAddressDropdown)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        {selectedAddress ? (
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              {getAddressTypeIcon(addr.type)}
+                              {getAddressTypeIcon(selectedAddress.type)}
                               <span
-                                className={`font-medium text-gray-800 ${
-                                  isMobile ? "text-sm" : "text-sm"
+                                className={`font-semibold text-gray-800 ${
+                                  isMobile ? "text-sm" : ""
                                 }`}
                               >
-                                {addr.name}
+                                {selectedAddress.name}
                               </span>
-                              {(addr.default || addr.isDefault) && (
-                                <IoCheckmarkCircle
-                                  className="text-green-600"
-                                  size={16}
-                                />
+                              {(selectedAddress.default ||
+                                selectedAddress.isDefault) && (
+                                <span
+                                  className={`bg-green-100 text-green-700 ${
+                                    isMobile ? "text-xs" : "text-xs"
+                                  } px-2 py-1 rounded-full font-medium`}
+                                >
+                                  Default
+                                </span>
                               )}
                             </div>
                             <p
                               className={`${
-                                isMobile ? "text-xs" : "text-xs"
+                                isMobile ? "text-xs" : "text-sm"
                               } text-gray-600 leading-relaxed`}
                             >
-                              {formatAddress(addr)}
+                              {formatAddress(selectedAddress)}
                             </p>
                             <p
                               className={`${
                                 isMobile ? "text-xs" : "text-xs"
-                              } text-gray-400`}
+                              } text-gray-500`}
                             >
-                              📞 {addr.phone}
+                              📞 {selectedAddress.phone}
                             </p>
                           </div>
-
-                          {selectedAddress?._id === addr._id && (
-                            <div className="ml-2">
-                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                            </div>
-                          )}
-                        </div>
+                        ) : (
+                          <div
+                            className={`text-gray-500 ${
+                              isMobile ? "text-sm" : "text-sm"
+                            }`}
+                          >
+                            {addresses.length === 0
+                              ? "No saved addresses"
+                              : "Select delivery address"}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                      <IoMdArrowDropdown
+                        className={`text-xl text-gray-400 transition-transform duration-200 ${
+                          showAddressDropdown ? "transform rotate-180" : ""
+                        }`}
+                      />
+                    </div>
                   </div>
+                )}
+
+                {showAddressDropdown && addresses.length > 0 && (
+                  <div
+                    className={`absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-xl mt-2 ${
+                      isMobile ? "max-h-60" : "max-h-80"
+                    } overflow-y-auto`}
+                  >
+                    <div className="p-2">
+                      <div
+                        className={`${
+                          isMobile ? "text-xs" : "text-xs"
+                        } font-semibold text-gray-500 uppercase tracking-wider px-3 py-2`}
+                      >
+                        Saved Addresses ({addresses.length})
+                      </div>
+
+                      {addresses.map((addr) => (
+                        <div
+                          key={addr._id}
+                          onClick={() => {
+                            setSelectedAddress(addr);
+                            setShowAddressDropdown(false);
+                          }}
+                          className={`p-3 rounded-lg cursor-pointer transition-all duration-200 mb-1 hover:bg-blue-50 ${
+                            selectedAddress?._id === addr._id
+                              ? "bg-blue-50 border border-blue-200"
+                              : "hover:shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                {getAddressTypeIcon(addr.type)}
+                                <span
+                                  className={`font-medium text-gray-800 ${
+                                    isMobile ? "text-sm" : "text-sm"
+                                  }`}
+                                >
+                                  {addr.name}
+                                </span>
+                                {(addr.default || addr.isDefault) && (
+                                  <IoCheckmarkCircle
+                                    className="text-green-600"
+                                    size={16}
+                                  />
+                                )}
+                              </div>
+                              <p
+                                className={`${
+                                  isMobile ? "text-xs" : "text-xs"
+                                } text-gray-600 leading-relaxed`}
+                              >
+                                {formatAddress(addr)}
+                              </p>
+                              <p
+                                className={`${
+                                  isMobile ? "text-xs" : "text-xs"
+                                } text-gray-400`}
+                              >
+                                📞 {addr.phone}
+                              </p>
+                            </div>
+
+                            {selectedAddress?._id === addr._id && (
+                              <div className="ml-2">
+                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Product Details Section */}
+            <div
+              className={`mt-6 w-full border-t-2 border-b-2 pt-4 cursor-pointer ${
+                isMobile ? "pb-4" : ""
+              }`}
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3
+                  className={`${
+                    isMobile ? "text-[20px]" : "text-[25px]"
+                  } font-semibold`}
+                >
+                  Product Details
+                </h3>
+                <p
+                  className={`${
+                    isMobile ? "text-[20px]" : "text-[25px]"
+                  } font-semibold`}
+                >
+                  {showDetails ? "−" : "+"}
+                </p>
+              </div>
+
+              {showDetails && (
+                <div className="flex flex-col gap-y-3 pr-2">
+                  {product.productDetails?.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        isMobile
+                          ? "flex-row gap-x-2 items-center"
+                          : "flex-row gap-x-2 items-center"
+                      } ${isMobile ? "text-[13px]" : "text-[14px]"}`}
+                    >
+                      <span
+                        className={`font-medium text-gray-700 ${
+                          isMobile ? "min-w-[120px]" : "min-w-[120px]"
+                        }`}
+                      >
+                        {item.label}:
+                      </span>
+                      <span
+                        className={`text-gray-900 ${isMobile ? "" : "ml-1"}`}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Product Details Section */}
-          <div
-            className={`mt-6 w-full border-t-2 border-b-2 pt-4 cursor-pointer ${
-              isMobile ? "pb-4" : ""
-            }`}
-            onClick={() => setShowDetails(!showDetails)}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3
-                className={`${
-                  isMobile ? "text-[20px]" : "text-[25px]"
-                } font-semibold`}
-              >
-                Product Details
-              </h3>
-              <p
-                className={`${
-                  isMobile ? "text-[20px]" : "text-[25px]"
-                } font-semibold`}
-              >
-                {showDetails ? "−" : "+"}
-              </p>
+            <div className={`mt-5 ${isMobile ? "mb-8" : ""}`}>
+              <ProductReviews productId={product.id} />
             </div>
+          </div>
+        </div>
 
-            {showDetails && (
-              <div className="flex flex-col gap-y-3 pr-2">
-                {product.productDetails?.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      isMobile
-                        ? "flex-row gap-x-2 items-center"
-                        : "flex-row gap-x-2 items-center"
-                    } ${isMobile ? "text-[13px]" : "text-[14px]"}`}
-                  >
-                    <span
-                      className={`font-medium text-gray-700 ${
-                        isMobile ? "min-w-[120px]" : "min-w-[120px]"
-                      }`}
+        {/* Image Gallery Modal */}
+        <Dialog
+          open={imageModal.open}
+          onClose={closeImageGallery}
+          maxWidth={false}
+          fullScreen
+          PaperProps={{
+            style: {
+              backgroundColor: "rgba(255, 255, 255, 0.95)", // white instead of black
+              margin: 0,
+              maxHeight: "100vh",
+              maxWidth: "100vw",
+            },
+          }}
+        >
+          <div className="relative w-full h-full bg-white flex items-center justify-center overflow-hidden">
+            {/* Close Button */}
+            <button
+              onClick={closeImageGallery}
+              className="absolute top-4 right-4 z-50 p-3 bg-gray-200 text-black rounded-full hover:bg-gray-300 transition-all backdrop-blur-sm"
+            >
+              <IoClose size={isMobile ? 24 : 28} />
+            </button>
+
+            {/* Loading State */}
+            {imageModal.images.length === 0 && (
+              <div className="flex items-center justify-center">
+                <CircularProgress style={{ color: "#000000" }} />{" "}
+                {/* black spinner */}
+              </div>
+            )}
+
+            {/* Main Image */}
+            {imageModal.images.length > 0 && (
+              <div className="flex-1 flex items-center justify-center overflow-hidden">
+                <Swiper
+                  modules={[Navigation, Pagination, Zoom]}
+                  navigation={false}
+                  pagination={false}
+                  zoom={{ maxRatio: 3, toggle: true }}
+                  initialSlide={imageModal.currentIndex}
+                  onSwiper={(swiper) => {
+                    swiperRef.current = swiper;
+                  }}
+                  onSlideChange={(swiper) => {
+                    setImageModal((prev) => ({
+                      ...prev,
+                      currentIndex: swiper.activeIndex,
+                    }));
+                  }}
+                  className="w-full h-full"
+                  style={{ maxHeight: "calc(100vh - 120px)" }}
+                >
+                  {imageModal.images.map((image, index) => (
+                    <SwiperSlide
+                      key={index}
+                      className="flex items-center justify-center"
                     >
-                      {item.label}:
-                    </span>
-                    <span className={`text-gray-900 ${isMobile ? "" : "ml-1"}`}>
-                      {item.value}
-                    </span>
-                  </div>
+                      <div className="swiper-zoom-container flex items-center justify-center w-full h-full">
+                        <img
+                          src={image}
+                          alt={`Product ${index + 1}`}
+                          className="max-w-full max-h-full object-contain"
+                          style={{ maxHeight: "calc(100vh - 120px)" }}
+                        />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
+            )}
+
+            {/* Thumbnail Navigation */}
+            {imageModal.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 bg-gray-200 p-3 rounded-lg max-w-[90vw] overflow-x-auto backdrop-blur-sm z-50">
+                {imageModal.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    className={`${
+                      isMobile ? "w-12 h-12" : "w-16 h-16"
+                    } object-cover rounded cursor-pointer border-2 transition-all flex-shrink-0 ${
+                      index === imageModal.currentIndex
+                        ? "border-black opacity-100"
+                        : "border-transparent opacity-60 hover:opacity-80"
+                    }`}
+                    onClick={() => goToImage(index)}
+                  />
                 ))}
               </div>
             )}
           </div>
+        </Dialog>
 
-          <div className={`mt-5 ${isMobile ? "mb-8" : ""}`}>
-            <RatingReviewSection productId={product.id} />
-          </div>
+        <div
+          className={`${isMobile ? "lg:px-4 lg:mb-0 mb-20" : "lg:ml-11 ml-0"}`}
+        >
+          <RelatedProductsSlider
+            currentProduct={product}
+            currentCategory={product?.category?.[0]}
+          />
         </div>
       </div>
-
-      {/* Image Gallery Modal */}
-      <Dialog
-        open={imageModal.open}
-        onClose={closeImageGallery}
-        maxWidth={false}
-        fullScreen
-        PaperProps={{
-          style: {
-            backgroundColor: "rgba(255, 255, 255, 0.95)", // white instead of black
-            margin: 0,
-            maxHeight: "100vh",
-            maxWidth: "100vw",
-          },
-        }}
-      >
-        <div className="relative w-full h-full bg-white flex items-center justify-center overflow-hidden">
-          {/* Close Button */}
-          <button
-            onClick={closeImageGallery}
-            className="absolute top-4 right-4 z-50 p-3 bg-gray-200 text-black rounded-full hover:bg-gray-300 transition-all backdrop-blur-sm"
-          >
-            <IoClose size={isMobile ? 24 : 28} />
-          </button>
-
-          {/* Loading State */}
-          {imageModal.images.length === 0 && (
-            <div className="flex items-center justify-center">
-              <CircularProgress style={{ color: "#000000" }} />{" "}
-              {/* black spinner */}
-            </div>
-          )}
-
-          {/* Main Image */}
-          {imageModal.images.length > 0 && (
-            <div className="flex items-center justify-center w-full h-full relative">
-              <div
-                className="relative w-full h-full flex items-center justify-center"
-                onTouchStart={isMobile ? (e) => e.preventDefault() : undefined}
-                onTouchMove={isMobile ? handleTouchMove : undefined}
-                onTouchEnd={isMobile ? handleTouchEnd : undefined}
-              >
-                <img
-                  ref={imageRef}
-                  src={imageModal.images[imageModal.currentIndex]}
-                  alt={`Product ${imageModal.currentIndex + 1}`}
-                  className="max-w-full max-h-full object-contain transition-transform duration-300 cursor-pointer select-none"
-                  style={{
-                    transform: `scale(${zoomState.scale}) translate(${zoomState.translateX}px, ${zoomState.translateY}px)`,
-                    transformOrigin: "center center",
-                  }}
-                  onClick={handleDoubleTap}
-                  onTouchEnd={handleDoubleTap}
-                  draggable={false}
-                />
-
-                {/* Zoom Instructions */}
-                {isMobile && zoomState.scale === 1 && (
-                  <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 bg-gray-200 text-black px-4 py-2 rounded-full text-sm backdrop-blur-sm">
-                    Double tap to zoom
-                  </div>
-                )}
-
-                {/* Reset Zoom Button */}
-                {isMobile && zoomState.scale > 1 && (
-                  <button
-                    onClick={resetZoom}
-                    className="absolute top-20 left-4 p-2 bg-gray-200 text-black rounded-full backdrop-blur-sm z-40"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Arrows */}
-          {imageModal.images.length > 1 && (
-            <>
-              <button
-                onClick={goToPrevImage}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-4 bg-gray-200 text-black rounded-full hover:bg-gray-300 transition-all backdrop-blur-sm z-40"
-                disabled={zoomState.scale > 1 && isMobile}
-              >
-                <IoChevronBack size={isMobile ? 24 : 28} />
-              </button>
-              <button
-                onClick={goToNextImage}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-4 bg-gray-200 text-black rounded-full hover:bg-gray-300 transition-all backdrop-blur-sm z-40"
-                disabled={zoomState.scale > 1 && isMobile}
-              >
-                <IoChevronForward size={isMobile ? 24 : 28} />
-              </button>
-            </>
-          )}
-
-          {/* Thumbnail Navigation */}
-          {imageModal.images.length > 1 && zoomState.scale === 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 bg-gray-200 p-3 rounded-lg max-w-[90vw] overflow-x-auto backdrop-blur-sm">
-              {imageModal.images.map((image, index) => (
-                <img
-                  key={index}
-                  src={image}
-                  alt={`Thumbnail ${index + 1}`}
-                  className={`${
-                    isMobile ? "w-12 h-12" : "w-16 h-16"
-                  } object-cover rounded cursor-pointer border-2 transition-all flex-shrink-0 ${
-                    index === imageModal.currentIndex
-                      ? "border-black opacity-100"
-                      : "border-transparent opacity-60 hover:opacity-80"
-                  }`}
-                  onClick={() => goToImage(index)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Swipe/Pan Instructions */}
-          {isMobile && zoomState.scale > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-200 text-black px-4 py-2 rounded-full text-sm backdrop-blur-sm">
-              Pan to move • Tap reset to zoom out
-            </div>
-          )}
-        </div>
-      </Dialog>
-
-      <div className={`${isMobile ? "lg:px-4 lg:mb-0 mb-20" : "lg:ml-11 ml-0"}`}>
-        <RelatedProductsSlider
-          currentProduct={product}
-          currentCategory={product?.category?.[0]}
-        />
-      </div>
-    </div>
+    </>
   );
 };
 

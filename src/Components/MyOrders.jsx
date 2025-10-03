@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import AccountDetailsSection from "./AccountDetailsSection";
-import ContactUsPart from "./ContactUsPart";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaSearch,
@@ -8,10 +7,6 @@ import {
   FaTimes,
   FaCalendar,
   FaTag,
-  FaPhone,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaCreditCard,
   FaEye,
 } from "react-icons/fa";
 import axios from "axios";
@@ -36,7 +31,56 @@ const MyOrders = () => {
         );
 
         if (response.data.success) {
-          setOrders(response.data.data);
+          const ordersData = response.data.data;
+
+          // Now fetch return details for delivered orders
+          const deliveredOrderIds = ordersData
+            .filter((order) => order.status === "delivered")
+            .map((order) => order.orderId);
+
+          if (deliveredOrderIds.length > 0) {
+            try {
+              // Check for returns one by one (since we don't have a batch endpoint)
+              const ordersWithReturns = [...ordersData];
+
+              for (const orderId of deliveredOrderIds) {
+                try {
+                  const returnResponse = await axios.get(
+                    `${
+                      import.meta.env.VITE_BACKEND_URL
+                    }/api/v1/returns/check/${orderId}`,
+                    { withCredentials: true }
+                  );
+
+                  if (returnResponse.data.success && returnResponse.data.data) {
+                    // Find the order and add return details
+                    const orderIndex = ordersWithReturns.findIndex(
+                      (o) => o.orderId === orderId
+                    );
+                    if (orderIndex !== -1) {
+                      ordersWithReturns[orderIndex].returnDetails =
+                        returnResponse.data.data;
+                    }
+                  }
+                } catch (error) {
+                  // Ignore 404 errors (no return found)
+                  if (error.response?.status !== 404) {
+                    console.error(
+                      `Error checking return for order ${orderId}:`,
+                      error
+                    );
+                  }
+                }
+              }
+
+              setOrders(ordersWithReturns);
+            } catch (error) {
+              console.error("Error processing returns:", error);
+              setOrders(ordersData);
+            }
+          } else {
+            setOrders(ordersData);
+          }
         } else {
           setOrders([]);
         }
@@ -50,6 +94,10 @@ const MyOrders = () => {
 
     fetchOrders();
   }, []);
+
+  const hasActiveReturn = (order) => {
+    return order.returnDetails && order.returnDetails.status !== "cancelled";
+  };
 
   // Filter and search orders
   const filteredOrders = useMemo(() => {
@@ -95,7 +143,13 @@ const MyOrders = () => {
 
     // Status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter((order) => order.status === statusFilter);
+      if (statusFilter === "returned") {
+        // Show only orders with active returns
+        filtered = filtered.filter((order) => hasActiveReturn(order));
+      } else {
+        // Regular status filtering
+        filtered = filtered.filter((order) => order.status === statusFilter);
+      }
     }
 
     // Date filter
@@ -199,6 +253,7 @@ const MyOrders = () => {
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
     { value: "cancelled", label: "Cancelled" },
+    { value: "returned", label: "Returned" },
   ];
 
   const dateOptions = [
@@ -475,7 +530,11 @@ const MyOrders = () => {
                                   onClick={() =>
                                     navigate(`/account/orders/${order.orderId}`)
                                   }
-                                  className="border-b border-gray-200 transition hover:bg-blue-50 cursor-pointer"
+                                  className={`border-b border-gray-200 transition hover:bg-blue-50 cursor-pointer ${
+                                    hasActiveReturn(order)
+                                      ? "border-l-4 border-l-purple-500"
+                                      : ""
+                                  }`}
                                 >
                                   {/* Product Preview Column */}
                                   <td className="px-2 md:px-6 py-3">
@@ -553,13 +612,49 @@ const MyOrders = () => {
 
                                   {/* Status Badge */}
                                   <td className="px-2 md:px-6 py-3 whitespace-nowrap">
-                                    <span
-                                      className={`inline-block px-3 md:px-4 py-1 rounded-full text-[10px] md:text-xs font-semibold capitalize ${getStatusBadgeClass(
-                                        order.status
-                                      )}`}
-                                    >
-                                      {order.status || "pending"}
-                                    </span>
+                                    <div className="flex flex-col gap-1">
+                                      <span
+                                        className={`inline-block px-3 md:px-4 py-1 rounded-full text-[10px] md:text-xs font-semibold capitalize ${getStatusBadgeClass(
+                                          order.status
+                                        )}`}
+                                      >
+                                        {order.status || "pending"}
+                                      </span>
+
+                                      {/* Return indicator */}
+                                      {hasActiveReturn(order) && (
+                                        <div className="flex items-center gap-1">
+                                          <span
+                                            className={`inline-block px-2 py-1 rounded-full text-[9px] md:text-[10px] font-medium ${
+                                              order.returnDetails.status ===
+                                              "completed"
+                                                ? "bg-purple-100 text-purple-800"
+                                                : "bg-amber-100 text-amber-800"
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-1">
+                                              <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-3 w-3"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                              >
+                                                <path
+                                                  fillRule="evenodd"
+                                                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                                  clipRule="evenodd"
+                                                />
+                                              </svg>
+                                              {order.returnDetails
+                                                .returnType === "refund"
+                                                ? "Refund"
+                                                : "Exchange"}{" "}
+                                              {order.returnDetails.status}
+                                            </div>
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </td>
 
                                   {/* Payment Mode */}
@@ -597,7 +692,11 @@ const MyOrders = () => {
                     {filteredOrders.map((order, index) => (
                       <div
                         key={order.orderId + index}
-                        className="bg-white divide-y border-t-2 border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                        className={`bg-white divide-y rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                          hasActiveReturn(order)
+                            ? "border-l-4 border-l-purple-500"
+                            : "border-t-2 border-gray-200"
+                        }`}
                       >
                         <div className="p-4">
                           <div className="flex gap-4">
@@ -644,7 +743,7 @@ const MyOrders = () => {
                                     ₹{Number(order.TotalAmount).toFixed(2)}
                                   </p>
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-1 items-end">
                                   <span
                                     className={`inline-block px-2 py-1 rounded-full text-xs font-semibold capitalize ${getStatusBadgeClass(
                                       order.status
@@ -652,6 +751,37 @@ const MyOrders = () => {
                                   >
                                     {order.status || "pending"}
                                   </span>
+
+                                  {/* Return indicator for mobile */}
+                                  {hasActiveReturn(order) && (
+                                    <span
+                                      className={`inline-block px-2 py-1 rounded-full text-[9px] font-medium ${
+                                        order.returnDetails.status ===
+                                        "completed"
+                                          ? "bg-purple-100 text-purple-800"
+                                          : "bg-amber-100 text-amber-800"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-2.5 w-2.5"
+                                          viewBox="0 0 20 20"
+                                          fill="currentColor"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                        {order.returnDetails.returnType ===
+                                        "refund"
+                                          ? "Refund"
+                                          : "Exchange"}
+                                      </div>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 

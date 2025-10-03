@@ -96,7 +96,7 @@ const ProductSlider = () => {
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/getAllProducts?page=1&perPage=100`
+        }/api/v1/product/getAllProductsForClient?page=1&perPage=100`
       );
 
       if (response.data.success) {

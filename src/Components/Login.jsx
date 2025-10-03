@@ -132,15 +132,54 @@ const Login = () => {
       } catch (error) {
         console.error("Registration error:", error.response?.data || error);
 
-        // More specific error messages
-        if (error.response?.data?.message?.includes("email configuration")) {
+        // Handle based on status code and message content
+        const errorMessage = error.response?.data?.message || "";
+        const statusCode = error.response?.status;
+
+        if (statusCode === 403 && errorMessage.includes("suspended")) {
+          // Account suspended error
           toast.error(
-            "Registration system temporarily unavailable. Please try again later."
+            "This account has been suspended. Please contact our support team for assistance.",
+            { duration: 5000 }
+          );
+        } else if (
+          statusCode === 400 &&
+          errorMessage.includes("already registered")
+        ) {
+          // Account already exists
+          toast.error(
+            "This email or phone is already registered. Please log in instead.",
+            { duration: 3000 }
+          );
+        } else if (statusCode === 429) {
+          // Rate limiting
+          toast.error(
+            "Too many attempts. Please wait a few minutes before trying again.",
+            { duration: 3000 }
+          );
+        } else if (
+          errorMessage.includes("email") &&
+          errorMessage.includes("configuration")
+        ) {
+          // Email service issues
+          toast.error(
+            "We're having trouble sending verification emails. Please try phone verification instead.",
+            { duration: 4000 }
+          );
+        } else if (
+          errorMessage.includes("SMS") ||
+          errorMessage.includes("phone")
+        ) {
+          // SMS service issues
+          toast.error(
+            "We're having trouble sending SMS. Please try email verification instead.",
+            { duration: 4000 }
           );
         } else {
+          // Generic error
           toast.error(
-            error.response?.data?.message ||
-              "Registration failed. Please try again."
+            "We couldn't complete your registration. Please try again or contact support.",
+            { duration: 3000 }
           );
         }
       } finally {
@@ -175,7 +214,43 @@ const Login = () => {
         setUser(response.data.user);
         navigate(redirectTo, { replace: true }); // <--- Redirect to wishlist or home
       } catch (error) {
-        toast.error(error.response?.data?.message || "Login failed");
+        console.error("Login error:", error.response?.data || error);
+
+        // Handle based on status code and message content
+        const errorMessage = error.response?.data?.message || "";
+        const statusCode = error.response?.status;
+
+        if (statusCode === 403 && errorMessage.includes("suspended")) {
+          // Account suspended
+          toast.error(
+            "Your account has been suspended. Please contact our support team for assistance.",
+            { duration: 5000 }
+          );
+        } else if (statusCode === 401 || errorMessage.includes("Invalid")) {
+          // Authentication failure
+          toast.error(
+            "The email or password you entered is incorrect. Please try again.",
+            { duration: 3000 }
+          );
+        } else if (statusCode === 404 || errorMessage.includes("not found")) {
+          // User not found
+          toast.error(
+            "We couldn't find an account with this email. Please check your email or create an account.",
+            { duration: 4000 }
+          );
+        } else if (errorMessage.includes("verify")) {
+          // Unverified account
+          toast.error(
+            "Please verify your account first. Check your email or phone for the verification code.",
+            { duration: 4000 }
+          );
+        } else {
+          // Generic error
+          toast.error(
+            "We couldn't sign you in. Please try again later or contact support.",
+            { duration: 3000 }
+          );
+        }
       }
     }
   };
@@ -249,13 +324,49 @@ const Login = () => {
     } catch (error) {
       console.error("Google Sign-In Error:", error);
 
+      // First check for axios errors with response
+      if (error.response) {
+        // Check specifically for suspended account messages
+        if (error.response.status === 403) {
+          if (error.response.data && error.response.data.message) {
+            if (error.response.data.message.includes("suspended")) {
+              toast.error(
+                "Your account has been suspended. Please contact customer support for assistance.",
+                { duration: 6000 }
+              );
+            } else {
+              toast.error(error.response.data.message);
+            }
+          } else {
+            toast.error(
+              "Access denied. Please contact customer support if you need help."
+            );
+          }
+        } else if (error.response.status === 500) {
+          toast.error(
+            "We're experiencing technical difficulties. Please try again later."
+          );
+        } else if (error.response.status === 400) {
+          toast.error(
+            error.response.data.message ||
+              "Something went wrong with your request."
+          );
+        } else if (error.response.status === 404) {
+          toast.error("Service unavailable. Please try again later.");
+        } else {
+          // Show the actual error message from the server if available
+          toast.error(
+            error.response.data.message || "Sign-in failed. Please try again."
+          );
+        }
+      }
       // Handle specific Firebase errors
-      if (error.code) {
+      else if (error.code && error.code.startsWith("auth/")) {
         const firebaseErrors = {
           "auth/popup-closed-by-user":
             "Sign-in was cancelled. Please try again.",
           "auth/popup-blocked":
-            "Popup was blocked. Please allow popups for this site.",
+            "Pop-up was blocked. Please allow pop-ups for this site.",
           "auth/network-request-failed":
             "Network error. Please check your connection.",
           "auth/too-many-requests":
@@ -267,36 +378,22 @@ const Login = () => {
         };
 
         toast.error(
-          firebaseErrors[error.code] || `Firebase error: ${error.message}`
+          firebaseErrors[error.code] || "Sign-in failed. Please try again."
         );
-      }
-      // Handle backend/network errors
-      else if (error.response) {
-        if (error.response.status === 500) {
-          toast.error("Server error. Please try again in a moment.");
-          console.error("Server Error Details:", error.response.data);
-        } else if (error.response.status === 400) {
-          toast.error(
-            error.response.data.message || "Invalid request. Please try again."
-          );
-        } else if (error.response.status === 404) {
-          toast.error("Service not found. Please contact support.");
-        } else {
-          toast.error(error.response.data.message || "Authentication failed.");
-        }
       }
       // Handle network/timeout errors
       else if (error.code === "ECONNABORTED") {
         toast.error(
-          "Request timed out. Please check your connection and try again."
+          "Connection timed out. Please check your internet and try again."
         );
-      } else if (error.message === "Network Error") {
-        toast.error("Network error. Please check your connection.");
+      } else if (error.message && error.message.includes("Network Error")) {
+        toast.error(
+          "Unable to connect. Please check your internet connection."
+        );
       }
       // Generic error
       else {
-        toast.error("Google authentication failed. Please try again.");
-        console.error("Unexpected error:", error);
+        toast.error("Unable to sign in at this time. Please try again later.");
       }
     } finally {
       setRegisterLoading(false);

@@ -35,6 +35,9 @@ import { Toaster } from "react-hot-toast";
 import logo from "./assets/PickoraFavicon.png";
 import OrderSuccessPage from "./Components/OrderSuccessPage";
 import FloatingNotification from "./Components/FloatingNotification";
+import ReturnReason from "./Components/ReturnReason";
+import { setupAxiosInterceptors } from "./utils/setupAxios";
+import NetworkStatus from "./Components/NetworkStatus";
 
 const router = createBrowserRouter([
   {
@@ -138,6 +141,11 @@ const router = createBrowserRouter([
         path: "search",
         element: <GridProductCategory />,
       },
+
+      {
+        path: "/account/orders/:orderId/return",
+        element: <ReturnReason />,
+      },
     ],
   },
   {
@@ -153,6 +161,8 @@ const router = createBrowserRouter([
     element: <NotFoundPage />,
   },
 ]);
+
+setupAxiosInterceptors();
 
 function App() {
   const [showIntro, setShowIntro] = useState(false);
@@ -203,6 +213,7 @@ function App() {
         <>
           <RouterProvider router={router} />
           <FloatingNotification />
+          <NetworkStatus /> 
         </>
       )}
     </div>
