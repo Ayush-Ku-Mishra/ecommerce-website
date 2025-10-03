@@ -422,35 +422,33 @@ const ProductImageGallery = ({
     try {
       // Special case for WhatsApp and Telegram to ensure image preview works
       if (platform === "whatsapp" || platform === "telegram") {
-        // Use our special sharing page that has hardcoded meta tags
-        const shareUrl = `https://pickora.netlify.app/social-share.html?redirect=${encodeURIComponent(
-          productUrl
-        )}`;
+        // Create a more informative share text
+        const imageUrl = selectedVariant.images?.[0] || product.images?.[0];
+        const shareText = `${productTitle} - ${productPrice}\n\n${productDescription}\n\n📷 See product image: ${imageUrl}\n\n🛍️ Shop now: ${productUrl}`;
 
         if (platform === "whatsapp") {
           window.open(
             `https://api.whatsapp.com/send?text=${encodeURIComponent(
-              `${productTitle} - ${productPrice}\n${productDescription}\n${shareUrl}`
+              shareText
             )}`,
             "_blank"
           );
         } else {
           window.open(
             `https://t.me/share/url?url=${encodeURIComponent(
-              shareUrl
+              productUrl
             )}&text=${encodeURIComponent(
-              `${productTitle} - ${productPrice}\n${productDescription}`
+              `${productTitle} - ${productPrice}\n\n${productDescription}\n\n📷 See product image: ${imageUrl}`
             )}`,
             "_blank"
           );
         }
 
-        // Close modal after sharing
         setTimeout(() => {
           handleCloseShareModal();
         }, 300);
 
-        return; // Important: return early to skip the switch statement below
+        return;
       }
 
       // Original switch statement for other platforms
