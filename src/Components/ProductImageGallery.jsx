@@ -420,30 +420,42 @@ const ProductImageGallery = ({
     )}`;
 
     try {
-      switch (platform) {
-        case "whatsapp":
-          // Simple text with URL - WhatsApp will fetch preview from meta tags
-          const whatsappText = `${productTitle}\n${productPrice}\n\n${productUrl}`;
+      // Special handling for WhatsApp and Telegram
+      if (platform === "whatsapp" || platform === "telegram") {
+        // Create a detailed share text with the image link
+        const shareText = `🎒 *${productTitle}*\n💰 *${productPrice}*\n\n${productDescription}\n\n*View Product Image:*\n${productImage}\n\n*Shop Now:*\n${productUrl}`;
+
+        if (platform === "whatsapp") {
           window.open(
             `https://api.whatsapp.com/send?text=${encodeURIComponent(
-              whatsappText
+              shareText
             )}`,
             "_blank"
           );
-          break;
-
-        case "telegram":
-          // Telegram will also fetch preview from meta tags
+        } else {
           window.open(
             `https://t.me/share/url?url=${encodeURIComponent(
               productUrl
-            )}&text=${encodeURIComponent(`${productTitle}\n${productPrice}`)}`,
+            )}&text=${encodeURIComponent(
+              `🎒 ${productTitle}\n💰 ${productPrice}\n\n${productDescription}\n\n*View Product Image:*\n${productImage}`
+            )}`,
             "_blank"
           );
-          break;
+        }
 
+        setTimeout(() => {
+          handleCloseShareModal();
+        }, 300);
+
+        return;
+      }
+
+      // Handle other platforms with the original switch statement
+      switch (platform) {
+        case "copy":
+          copyToClipboard();
+          break;
         case "facebook":
-          // Facebook fetches from Open Graph meta tags
           window.open(
             `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
               productUrl
@@ -451,43 +463,34 @@ const ProductImageGallery = ({
             "_blank"
           );
           break;
-
         case "twitter":
-          // Twitter will fetch preview card from meta tags
           window.open(
             `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              `${productTitle} - ${productPrice}`
-            )}&url=${encodeURIComponent(productUrl)}`,
-            "_blank"
-          );
-          break;
-
-        case "linkedin":
-          // LinkedIn fetches preview from meta tags
-          window.open(
-            `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-              productUrl
+              `Check out ${productTitle} - ${productPrice}\n\n${productUrl}`
             )}`,
             "_blank"
           );
           break;
-
+        case "linkedin":
+          window.open(
+            `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(
+              productUrl
+            )}&title=${encodeURIComponent(
+              productTitle
+            )}&summary=${encodeURIComponent(productDescription)}`,
+            "_blank"
+          );
+          break;
         case "email":
-          // Email needs full details since no preview
           window.open(
             `mailto:?subject=${encodeURIComponent(
-              `Check out: ${productTitle}`
+              `Check out this product: ${productTitle}`
             )}&body=${encodeURIComponent(
-              `${productTitle}\nPrice: ${productPrice}\n\n${productDescription}\n\nView Product:\n${productUrl}\n\nProduct Image:\n${productImage}`
+              `${productDescription}\n\nPrice: ${productPrice}\n\nProduct Image: ${productImage}\n\nShop Now: ${productUrl}`
             )}`,
             "_blank"
           );
           break;
-
-        case "copy":
-          copyToClipboard();
-          break;
-
         case "native":
           if (navigator.share) {
             await navigator.share({
@@ -500,7 +503,6 @@ const ProductImageGallery = ({
             toast.error("Web Share API not supported on this browser");
           }
           break;
-
         default:
           break;
       }
