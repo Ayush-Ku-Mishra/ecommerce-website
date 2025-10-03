@@ -17,6 +17,36 @@ import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useLocation } from "react-router-dom";
 
+const isPincodeInOdisha = (pincode) => {
+  if (!pincode || pincode.length !== 6) return false;
+
+  // Odisha pincode prefixes
+  const odishaPrefixes = [
+    "751",
+    "752",
+    "753",
+    "754",
+    "755",
+    "756",
+    "757",
+    "758",
+    "759",
+    "760",
+    "761",
+    "762",
+    "764",
+    "765",
+    "766",
+    "767",
+    "768",
+    "769",
+    "770",
+  ];
+
+  // Check if pincode starts with any Odisha prefix
+  return odishaPrefixes.some((prefix) => pincode.startsWith(prefix));
+};
+
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
@@ -61,13 +91,14 @@ const CheckoutPage = () => {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [saving, setSaving] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [totalAmount, setTotalAmount] = useState(0);
+
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [addressPincodeWarning, setAddressPincodeWarning] = useState(false);
 
   // Get buyNowData from location state
   const buyNowData = location.state;
 
-  // All useEffect hooks must be called unconditionally and in the same order
+  
   // Effect for initial setup
   useEffect(() => {
     // Initialize selectedAddressId when addresses change
@@ -75,7 +106,18 @@ const CheckoutPage = () => {
       const defaultAddr = addresses.find(
         (addr) => addr.isDefault || addr.default
       );
-      setSelectedAddressId(defaultAddr ? defaultAddr._id : addresses[0]._id);
+      const addressToSelect = defaultAddr ? defaultAddr : addresses[0];
+      setSelectedAddressId(addressToSelect._id);
+
+      // Check if the address pincode is valid
+      if (
+        addressToSelect.pincode &&
+        !isPincodeInOdisha(addressToSelect.pincode)
+      ) {
+        setAddressPincodeWarning(true);
+      } else {
+        setAddressPincodeWarning(false);
+      }
     }
   }, [addresses, selectedAddressId]);
 
@@ -343,6 +385,14 @@ const CheckoutPage = () => {
       return;
     }
 
+    // Validate pincode is in Odisha
+    if (!isPincodeInOdisha(form.pincode)) {
+      toast.error(
+        "We only deliver to addresses in Odisha. Please enter a valid Odisha pincode."
+      );
+      return;
+    }
+
     setSaving(true);
 
     const formData = {
@@ -397,6 +447,13 @@ const CheckoutPage = () => {
 
     if (cart.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    if (!isPincodeInOdisha(selectedAddress.pincode)) {
+      toast.error(
+        "We only deliver to addresses in Odisha. Please select an address with a valid Odisha pincode."
+      );
       return;
     }
 
@@ -533,6 +590,13 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (!isPincodeInOdisha(selectedAddress.pincode)) {
+      toast.error(
+        "We only deliver to addresses in Odisha. Please select an address with a valid Odisha pincode."
+      );
+      return;
+    }
+
     setProcessingPayment(true);
 
     try {
@@ -648,6 +712,25 @@ const CheckoutPage = () => {
     );
   }
 
+  const handleAddressSelection = (addressId) => {
+    setSelectedAddressId(addressId);
+
+    // Check if the selected address has a valid pincode
+    const selectedAddr = addresses.find((addr) => addr._id === addressId);
+    if (
+      selectedAddr &&
+      selectedAddr.pincode &&
+      !isPincodeInOdisha(selectedAddr.pincode)
+    ) {
+      setAddressPincodeWarning(true);
+      // toast.error(
+      //   "This address has a pincode outside our delivery area (Odisha)"
+      // );
+    } else {
+      setAddressPincodeWarning(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex flex-col items-start justify-between max-w-[1200px] mx-auto mt-4 lg:mt-10 mb-4 lg:mb-10 px-4">
@@ -715,9 +798,13 @@ const CheckoutPage = () => {
                             selectedAddressId === addr._id
                               ? "border-[#22B6FC] bg-[#fff2f2] shadow-lg"
                               : "border-[#e5e7eb] shadow-md"
+                          } ${
+                            !isPincodeInOdisha(addr.pincode)
+                              ? "border-l-4 border-l-amber-400"
+                              : ""
                           } rounded-lg px-4 lg:px-5 py-4 flex items-start gap-3 lg:gap-4 cursor-pointer transition`}
                           style={{ boxShadow: "0 2px 12px 0 #eef6fa" }}
-                          onClick={() => setSelectedAddressId(addr._id)}
+                          onClick={() => handleAddressSelection(addr._id)}
                         >
                           <input
                             type="radio"
@@ -789,6 +876,15 @@ const CheckoutPage = () => {
                             toast.error("Please select an address to proceed");
                             return;
                           }
+
+                          // Add pincode validation
+                          if (addressPincodeWarning) {
+                            toast.error(
+                              "We only deliver to addresses in Odisha. Please select or add an address with an Odisha pincode."
+                            );
+                            return;
+                          }
+
                           setStep("summary");
                         }}
                         className="px-4 py-2 bg-[#22B6FC] text-white rounded hover:bg-blue-700 transition text-sm lg:text-base"
@@ -817,6 +913,11 @@ const CheckoutPage = () => {
                           {selectedAddress.pincode}
                         </span>
                       </p>
+                      {!isPincodeInOdisha(selectedAddress.pincode) && (
+                        <p className="mt-1 text-amber-600 text-sm font-medium">
+                          ⚠️ This address is outside our delivery area (Odisha)
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => setStep("address")}

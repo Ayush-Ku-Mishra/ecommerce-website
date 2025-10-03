@@ -1,7 +1,7 @@
 // SetPasswordForGoogleUser.jsx - Create this as a new component file
 import React, { useState } from 'react';
 import { MdLock, MdVisibility, MdVisibilityOff } from 'react-icons/md';
-import { toast } from 'react-toastify';
+import  toast  from 'react-hot-toast';
 import axios from 'axios';
 
 const SetPasswordForGoogleUser = ({ userEmail, onClose, onSuccess }) => {

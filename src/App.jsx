@@ -182,6 +182,9 @@ function App() {
     <div>
       <Toaster
         position="bottom-center"
+        containerStyle={{
+          zIndex: 9999999, 
+        }}
         toastOptions={{
           duration: 2000,
           icon: (
@@ -213,7 +216,7 @@ function App() {
         <>
           <RouterProvider router={router} />
           <FloatingNotification />
-          <NetworkStatus /> 
+          <NetworkStatus />
         </>
       )}
     </div>

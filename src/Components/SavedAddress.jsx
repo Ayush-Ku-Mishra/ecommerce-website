@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AccountDetailsSection from "./AccountDetailsSection";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import TextField from "@mui/material/TextField";
-import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, CircularProgress as MuiCircularProgress } from "@mui/material";
 import { BiCurrentLocation } from "react-icons/bi";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -34,6 +34,7 @@ const SavedAddress = () => {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingPincode, setLoadingPincode] = useState(false);
 
   // Load addresses from backend on mount
   useEffect(() => {
@@ -98,6 +99,40 @@ const SavedAddress = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
+    
+    // If pincode field is changed and has 6 digits, fetch location data
+    if (name === "pincode" && value.length === 6) {
+      fetchPincodeDetails(value);
+    }
+  };
+
+  // Function to fetch location details based on pincode
+  const fetchPincodeDetails = async (pincode) => {
+    if (!pincode || pincode.length !== 6) return;
+    
+    setLoadingPincode(true);
+    try {
+      const response = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
+      
+      if (response.data && response.data[0]?.Status === "Success" && response.data[0]?.PostOffice?.length > 0) {
+        const postOffice = response.data[0].PostOffice[0];
+        setForm(prev => ({
+          ...prev,
+          city: postOffice.District || prev.city,
+          state: postOffice.State || prev.state,
+          // Also update locality if it's empty
+          locality: prev.locality || postOffice.Name || postOffice.Block || ""
+        }));
+      } else {
+        // Invalid pincode
+        toast.error("Invalid pincode or location not found");
+      }
+    } catch (error) {
+      console.error("Error fetching pincode details:", error);
+      toast.error("Failed to fetch location details from pincode");
+    } finally {
+      setLoadingPincode(false);
+    }
   };
 
   // Use browser geolocation and reverse geocode
@@ -531,24 +566,36 @@ const SavedAddress = () => {
                 />
               </div>
               <div className="flex flex-col md:flex-row gap-3 mb-3">
-                <TextField
-                  name="pincode"
-                  label="Pincode"
-                  variant="outlined"
-                  required
-                  value={form.pincode}
-                  onChange={handleChange}
-                  fullWidth
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "4px",
-                    },
-                    "& .MuiOutlinedInput-input": {
-                      padding: "12px 16px",
-                      fontSize: "1rem",
-                    },
-                  }}
-                />
+                <div className="relative w-full">
+                  <TextField
+                    name="pincode"
+                    label="Pincode"
+                    variant="outlined"
+                    required
+                    value={form.pincode}
+                    onChange={handleChange}
+                    fullWidth
+                    inputProps={{
+                      maxLength: 6,
+                      pattern: "[0-9]{6}",
+                      title: "Enter a valid 6-digit pincode"
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "4px",
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        padding: "12px 16px",
+                        fontSize: "1rem",
+                      },
+                    }}
+                  />
+                  {loadingPincode && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <MuiCircularProgress size={20} />
+                    </div>
+                  )}
+                </div>
                 <TextField
                   name="locality"
                   label="Locality"

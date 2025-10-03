@@ -44,6 +44,7 @@ const ProductImageGallery = ({
   selectedSize,
   isDeliverable,
   onOpenGallery,
+  addressPincodeWarning,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -190,6 +191,14 @@ const ProductImageGallery = ({
       return;
     }
 
+    // Check for address pincode warning
+    if (addressPincodeWarning) {
+      toast.error(
+        "Your delivery address is outside our delivery area (Odisha). Please change your address or verify your pincode."
+      );
+      return;
+    }
+
     try {
       const baseProductId = selectedVariant.id.split("_")[0];
       const standardVariantId = `${baseProductId}_${
@@ -234,6 +243,7 @@ const ProductImageGallery = ({
     }
   };
 
+  // Modified handleBuyNow to check for pincode warning
   const handleBuyNow = () => {
     if (!isAuthenticated) {
       toast.error("Please login to continue");
@@ -263,6 +273,14 @@ const ProductImageGallery = ({
 
     if (!isDeliverable) {
       toast.error("This product is not deliverable to your location.");
+      return;
+    }
+
+    // Check for address pincode warning
+    if (addressPincodeWarning) {
+      toast.error(
+        "Your delivery address is outside our delivery area (Odisha). Please change your address or verify your pincode."
+      );
       return;
     }
 
@@ -423,7 +441,7 @@ const ProductImageGallery = ({
       // Special handling for WhatsApp and Telegram
       if (platform === "whatsapp" || platform === "telegram") {
         // Create a detailed share text with the image link
-        const shareText = `🎒 *${productTitle}*\n💰 *${productPrice}*\n\n${productDescription}\n\n*View Product Image:*\n${productImage}\n\n*Shop Now:*\n${productUrl}`;
+        const shareText = `🚨 *${productTitle}*\n💰 *${productPrice}*\n\n${productDescription}\n\n*View Product Image:*\n${productImage}\n\n*Shop Now:*\n${productUrl}`;
 
         if (platform === "whatsapp") {
           window.open(
@@ -437,7 +455,7 @@ const ProductImageGallery = ({
             `https://t.me/share/url?url=${encodeURIComponent(
               productUrl
             )}&text=${encodeURIComponent(
-              `🎒 ${productTitle}\n💰 ${productPrice}\n\n${productDescription}\n\n*View Product Image:*\n${productImage}`
+              `🚨 ${productTitle}\n💰 ${productPrice}\n\n${productDescription}\n\n*View Product Image:*\n${productImage}`
             )}`,
             "_blank"
           );
@@ -666,6 +684,8 @@ const ProductImageGallery = ({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold text-white transition shadow-sm ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
+                    : addressPincodeWarning
+                    ? "bg-red-400 hover:bg-red-500" // Highlight button to indicate issue
                     : "bg-[#ff9f00] hover:bg-[#e68a00]"
                 }`}
               >
@@ -679,6 +699,8 @@ const ProductImageGallery = ({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold text-white transition shadow-sm ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
+                    : addressPincodeWarning
+                    ? "bg-red-400 hover:bg-red-500" // Highlight button to indicate issue
                     : "bg-[#fb641b] hover:bg-orange-600"
                 }`}
               >
@@ -919,8 +941,15 @@ const ProductImageGallery = ({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px] rounded-md font-semibold text-white transition shadow-sm ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
+                    : addressPincodeWarning
+                    ? "bg-red-400 hover:bg-red-500" // Highlight button to indicate issue
                     : "bg-[#ff9f00] hover:bg-[#e68a00]"
                 }`}
+                title={
+                  addressPincodeWarning
+                    ? "Address pincode is outside delivery area"
+                    : ""
+                }
               >
                 <BsFillCartFill className="text-lg" />
                 <span>ADD TO CART</span>
@@ -932,8 +961,15 @@ const ProductImageGallery = ({
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-semibold text-white transition shadow-sm ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
+                    : addressPincodeWarning
+                    ? "bg-red-400 hover:bg-red-500" // Highlight button to indicate issue
                     : "bg-[#fb641b] hover:bg-orange-600"
                 }`}
+                title={
+                  addressPincodeWarning
+                    ? "Address pincode is outside delivery area"
+                    : ""
+                }
               >
                 <FaBolt className="text-base" />
                 <span>BUY NOW</span>
