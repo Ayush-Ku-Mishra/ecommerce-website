@@ -420,11 +420,10 @@ const ProductImageGallery = ({
     )}`;
 
     try {
-      // Special case for WhatsApp and Telegram to ensure image preview works
+      // Special handling for WhatsApp and Telegram
       if (platform === "whatsapp" || platform === "telegram") {
-        // Create a more informative share text
-        const imageUrl = selectedVariant.images?.[0] || product.images?.[0];
-        const shareText = `${productTitle} - ${productPrice}\n\n${productDescription}\n\n📷 See product image: ${imageUrl}\n\n🛍️ Shop now: ${productUrl}`;
+        // Create a detailed share text with the image link
+        const shareText = `📱 *${productTitle}*\n💰 *${productPrice}*\n\n${productDescription}\n\n*View Product Image:*\n${productImage}\n\n*Shop Now:*\n${productUrl}`;
 
         if (platform === "whatsapp") {
           window.open(
@@ -438,7 +437,7 @@ const ProductImageGallery = ({
             `https://t.me/share/url?url=${encodeURIComponent(
               productUrl
             )}&text=${encodeURIComponent(
-              `${productTitle} - ${productPrice}\n\n${productDescription}\n\n📷 See product image: ${imageUrl}`
+              `📱 ${productTitle}\n💰 ${productPrice}\n\n${productDescription}\n\n*View Product Image:*\n${productImage}`
             )}`,
             "_blank"
           );
@@ -451,7 +450,7 @@ const ProductImageGallery = ({
         return;
       }
 
-      // Original switch statement for other platforms
+      // Handle other platforms with the original switch statement
       switch (platform) {
         case "copy":
           copyToClipboard();
@@ -467,8 +466,8 @@ const ProductImageGallery = ({
         case "twitter":
           window.open(
             `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              `${productTitle} - ${productPrice}\n${productDescription}\n`
-            )}&url=${encodeURIComponent(productUrl)}`,
+              `Check out ${productTitle} - ${productPrice}\n\n${productUrl}`
+            )}`,
             "_blank"
           );
           break;
@@ -485,9 +484,9 @@ const ProductImageGallery = ({
         case "email":
           window.open(
             `mailto:?subject=${encodeURIComponent(
-              productTitle
+              `Check out this product: ${productTitle}`
             )}&body=${encodeURIComponent(
-              `${productDescription}\n\nPrice: ${productPrice}\n\nCheck it out here: ${productUrl}`
+              `${productDescription}\n\nPrice: ${productPrice}\n\nProduct Image: ${productImage}\n\nShop Now: ${productUrl}`
             )}`,
             "_blank"
           );
