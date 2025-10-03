@@ -10,31 +10,31 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
-import { 
-  Modal, 
-  Box, 
-  Typography, 
-  IconButton, 
-  Slide, 
-  Divider, 
+import {
+  Modal,
+  Box,
+  Typography,
+  IconButton,
+  Slide,
+  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   TextField,
   Button,
   Fade,
-  Paper
+  Paper,
 } from "@mui/material";
-import { 
-  Facebook, 
-  Twitter, 
-  WhatsApp, 
-  LinkedIn, 
-  ContentCopy, 
+import {
+  Facebook,
+  Twitter,
+  WhatsApp,
+  LinkedIn,
+  ContentCopy,
   Telegram,
   Close,
   Email,
-  Link as LinkIcon
+  Link as LinkIcon,
 } from "@mui/icons-material";
 
 const ProductImageGallery = ({
@@ -65,7 +65,7 @@ const ProductImageGallery = ({
   const isOutOfStock =
     selectedSize && (!selectedSize.inStock || selectedSize.stockQuantity === 0);
   const images = selectedVariant?.images || [];
-  
+
   // Share modal state
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -89,7 +89,6 @@ const ProductImageGallery = ({
   useEffect(() => {
     setImageKey(Date.now());
   }, [selectedImage]);
-
 
   // Thumbnail click - only changes main image
   const handleImageClick = (img, index) => {
@@ -373,73 +372,129 @@ const ProductImageGallery = ({
       }
     }
   };
-  
+
   // Handle share modal open/close
   const handleOpenShareModal = (e) => {
     e.stopPropagation();
     setShareModalOpen(true);
     setLinkCopied(false);
   };
-  
+
   const handleCloseShareModal = () => {
     setShareModalOpen(false);
     setLinkCopied(false);
   };
-  
+
   // Get product URL
   const getProductUrl = () => {
     return `${window.location.origin}${location.pathname}`;
   };
-  
+
   // Copy link to clipboard
   const copyToClipboard = () => {
     if (linkInputRef.current) {
       linkInputRef.current.select();
-      navigator.clipboard.writeText(getProductUrl())
+      navigator.clipboard
+        .writeText(getProductUrl())
         .then(() => {
           setLinkCopied(true);
           toast.success("Link copied to clipboard!");
           setTimeout(() => setLinkCopied(false), 3000);
         })
-        .catch(err => {
-          console.error('Failed to copy: ', err);
+        .catch((err) => {
+          console.error("Failed to copy: ", err);
           toast.error("Failed to copy link");
         });
     }
   };
-  
+
   // Share functionality
   const handleShare = async (platform) => {
     const productUrl = getProductUrl();
     const productTitle = `${product.name} - ${selectedVariant.color}`;
-    const productDescription = product.description || `Check out this ${product.brand} product!`;
+    const productDescription =
+      product.description || `Check out this ${product.brand} product!`;
     const productImage = selectedVariant.images?.[0] || product.images?.[0];
-    const productPrice = `₹${Math.round(selectedVariant.discountedPrice ?? product.discountedPrice)}`;
-    
+    const productPrice = `₹${Math.round(
+      selectedVariant.discountedPrice ?? product.discountedPrice
+    )}`;
+
     try {
+      // Special case for WhatsApp and Telegram to ensure image preview works
+      if (platform === "whatsapp" || platform === "telegram") {
+        // Use our special sharing page that has hardcoded meta tags
+        const shareUrl = `https://pickora.netlify.app/social-share.html?redirect=${encodeURIComponent(
+          productUrl
+        )}`;
+
+        if (platform === "whatsapp") {
+          window.open(
+            `https://api.whatsapp.com/send?text=${encodeURIComponent(
+              `${productTitle} - ${productPrice}\n${productDescription}\n${shareUrl}`
+            )}`,
+            "_blank"
+          );
+        } else {
+          window.open(
+            `https://t.me/share/url?url=${encodeURIComponent(
+              shareUrl
+            )}&text=${encodeURIComponent(
+              `${productTitle} - ${productPrice}\n${productDescription}`
+            )}`,
+            "_blank"
+          );
+        }
+
+        // Close modal after sharing
+        setTimeout(() => {
+          handleCloseShareModal();
+        }, 300);
+
+        return; // Important: return early to skip the switch statement below
+      }
+
+      // Original switch statement for other platforms
       switch (platform) {
-        case 'copy':
+        case "copy":
           copyToClipboard();
           break;
-        case 'facebook':
-          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`, '_blank');
+        case "facebook":
+          window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              productUrl
+            )}`,
+            "_blank"
+          );
           break;
-        case 'twitter':
-          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${productTitle} - ${productPrice}\n${productDescription}\n`)}&url=${encodeURIComponent(productUrl)}`, '_blank');
+        case "twitter":
+          window.open(
+            `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              `${productTitle} - ${productPrice}\n${productDescription}\n`
+            )}&url=${encodeURIComponent(productUrl)}`,
+            "_blank"
+          );
           break;
-        case 'whatsapp':
-          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${productTitle} - ${productPrice}\n${productDescription}\n${productUrl}`)}`, '_blank');
+        case "linkedin":
+          window.open(
+            `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(
+              productUrl
+            )}&title=${encodeURIComponent(
+              productTitle
+            )}&summary=${encodeURIComponent(productDescription)}`,
+            "_blank"
+          );
           break;
-        case 'linkedin':
-          window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(productUrl)}&title=${encodeURIComponent(productTitle)}&summary=${encodeURIComponent(productDescription)}`, '_blank');
+        case "email":
+          window.open(
+            `mailto:?subject=${encodeURIComponent(
+              productTitle
+            )}&body=${encodeURIComponent(
+              `${productDescription}\n\nPrice: ${productPrice}\n\nCheck it out here: ${productUrl}`
+            )}`,
+            "_blank"
+          );
           break;
-        case 'telegram':
-          window.open(`https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(`${productTitle} - ${productPrice}\n${productDescription}`)}`, '_blank');
-          break;
-        case 'email':
-          window.open(`mailto:?subject=${encodeURIComponent(productTitle)}&body=${encodeURIComponent(`${productDescription}\n\nPrice: ${productPrice}\n\nCheck it out here: ${productUrl}`)}`, '_blank');
-          break;
-        case 'native':
+        case "native":
           if (navigator.share) {
             await navigator.share({
               title: productTitle,
@@ -454,91 +509,90 @@ const ProductImageGallery = ({
         default:
           break;
       }
-      
+
       // Close modal after sharing (except for copy)
-      if (platform !== 'copy') {
+      if (platform !== "copy") {
         setTimeout(() => {
           handleCloseShareModal();
         }, 300);
       }
-      
     } catch (error) {
       console.error("Error sharing content:", error);
       toast.error("Failed to share");
     }
   };
-  
+
   // Share platforms with their brand colors
   const sharePlatforms = [
-    { 
-      name: "Facebook", 
-      icon: <Facebook />, 
-      id: "facebook", 
+    {
+      name: "Facebook",
+      icon: <Facebook />,
+      id: "facebook",
       color: "#1877F2",
-      bgColor: "#E7F0FF"
+      bgColor: "#E7F0FF",
     },
-    { 
-      name: "WhatsApp", 
-      icon: <WhatsApp />, 
-      id: "whatsapp", 
+    {
+      name: "WhatsApp",
+      icon: <WhatsApp />,
+      id: "whatsapp",
       color: "#25D366",
-      bgColor: "#E7FFEF"
+      bgColor: "#E7FFEF",
     },
-    { 
-      name: "Twitter", 
-      icon: <Twitter />, 
-      id: "twitter", 
+    {
+      name: "Twitter",
+      icon: <Twitter />,
+      id: "twitter",
       color: "#1DA1F2",
-      bgColor: "#E6F7FF"
+      bgColor: "#E6F7FF",
     },
-    { 
-      name: "Telegram", 
-      icon: <Telegram />, 
-      id: "telegram", 
+    {
+      name: "Telegram",
+      icon: <Telegram />,
+      id: "telegram",
       color: "#0088CC",
-      bgColor: "#E5F7FF"
+      bgColor: "#E5F7FF",
     },
-    { 
-      name: "LinkedIn", 
-      icon: <LinkedIn />, 
-      id: "linkedin", 
+    {
+      name: "LinkedIn",
+      icon: <LinkedIn />,
+      id: "linkedin",
       color: "#0A66C2",
-      bgColor: "#E6F0FA"
+      bgColor: "#E6F0FA",
     },
-    { 
-      name: "Email", 
-      icon: <Email />, 
-      id: "email", 
+    {
+      name: "Email",
+      icon: <Email />,
+      id: "email",
       color: "#EA4335",
-      bgColor: "#FFEBE8" 
+      bgColor: "#FFEBE8",
     },
   ];
-  
+
   // Modal styles
   const modalStyle = {
     mobile: {
-      position: 'absolute',
+      position: "absolute",
       bottom: 0,
       left: 0,
       right: 0,
-      bgcolor: 'background.paper',
-      borderRadius: '16px 16px 0 0',
+      bgcolor: "background.paper",
+      borderRadius: "16px 16px 0 0",
       boxShadow: 24,
       p: 2,
-      maxHeight: '70vh',
-      overflowY: 'auto'
+      maxHeight: "70vh",
+      overflowY: "auto",
     },
     desktop: {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
       width: 450,
-      bgcolor: 'background.paper',
+      bgcolor: "background.paper",
       borderRadius: 2,
       boxShadow: 24,
       p: 0,
-    }
+    },
   };
 
   return (
@@ -595,7 +649,7 @@ const ProductImageGallery = ({
                 <FaRegHeart className="w-5 h-5 sm:w-6 sm:h-6" />
               )}
             </button>
-            
+
             {/* Share Button */}
             <button
               onClick={handleOpenShareModal}
@@ -636,7 +690,7 @@ const ProductImageGallery = ({
               </button>
             </div>
           </div>
-          
+
           {/* Mobile Share Modal */}
           <Modal
             open={shareModalOpen}
@@ -645,69 +699,117 @@ const ProductImageGallery = ({
           >
             <Slide direction="up" in={shareModalOpen}>
               <Box sx={modalStyle.mobile}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    component="h2"
+                    sx={{ fontWeight: 600 }}
+                  >
                     Share this product
                   </Typography>
                   <IconButton onClick={handleCloseShareModal} size="small">
                     <Close />
                   </IconButton>
                 </Box>
-                
+
                 {/* Product Preview */}
-                <Box sx={{ display: 'flex', mb: 2, p: 1, bgcolor: '#f9f9f9', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    mb: 2,
+                    p: 1,
+                    bgcolor: "#f9f9f9",
+                    borderRadius: 1,
+                  }}
+                >
                   <Box sx={{ width: 60, height: 60, mr: 1.5, flexShrink: 0 }}>
-                    <img 
-                      src={selectedVariant.images?.[0] || product.images?.[0]} 
+                    <img
+                      src={selectedVariant.images?.[0] || product.images?.[0]}
                       alt={product.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "4px",
+                      }}
                     />
                   </Box>
-                  <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                    <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+                  <Box sx={{ flex: 1, overflow: "hidden" }}>
+                    <Typography
+                      variant="subtitle2"
+                      noWrap
+                      sx={{ fontWeight: 600 }}
+                    >
                       {product.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap>
                       {product.brand} - {selectedVariant.color}
                     </Typography>
-                    <Typography variant="subtitle2" sx={{ color: '#388e3c', fontWeight: 600 }}>
-                      ₹{Math.round(selectedVariant.discountedPrice ?? product.discountedPrice)}
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: "#388e3c", fontWeight: 600 }}
+                    >
+                      ₹
+                      {Math.round(
+                        selectedVariant.discountedPrice ??
+                          product.discountedPrice
+                      )}
                       {selectedVariant.discount && (
-                        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, textDecoration: 'line-through' }}>
-                          ₹{Math.round(selectedVariant.originalPrice ?? product.originalPrice)}
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, textDecoration: "line-through" }}
+                        >
+                          ₹
+                          {Math.round(
+                            selectedVariant.originalPrice ??
+                              product.originalPrice
+                          )}
                         </Typography>
                       )}
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Divider sx={{ mb: 2 }} />
-                
+
                 {/* Native share option if available */}
                 {navigator.share && (
                   <>
                     <button
-                      onClick={() => handleShare('native')}
+                      onClick={() => handleShare("native")}
                       className="w-full py-3 px-4 bg-blue-500 text-white rounded-md font-medium mb-3 hover:bg-blue-600 transition"
                     >
                       Share via device
                     </button>
                     <Divider sx={{ mb: 2, mt: 1 }} />
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       Or share via:
                     </Typography>
                   </>
                 )}
-                
+
                 <div className="grid grid-cols-4 gap-4">
                   {sharePlatforms.map((platform) => (
-                    <div 
-                      key={platform.id} 
+                    <div
+                      key={platform.id}
                       className="flex flex-col items-center cursor-pointer transition"
                       onClick={() => handleShare(platform.id)}
                       style={{ color: platform.color }}
                     >
-                      <div 
+                      <div
                         className="w-12 h-12 rounded-full flex items-center justify-center mb-1"
                         style={{ backgroundColor: platform.bgColor }}
                       >
@@ -716,16 +818,16 @@ const ProductImageGallery = ({
                       <Typography variant="caption">{platform.name}</Typography>
                     </div>
                   ))}
-                  
+
                   {/* Copy Link Button */}
-                  <div 
+                  <div
                     className="flex flex-col items-center cursor-pointer transition"
-                    onClick={() => handleShare('copy')}
-                    style={{ color: '#607D8B' }}
+                    onClick={() => handleShare("copy")}
+                    style={{ color: "#607D8B" }}
                   >
-                    <div 
+                    <div
                       className="w-12 h-12 rounded-full flex items-center justify-center mb-1"
-                      style={{ backgroundColor: '#ECEFF1' }}
+                      style={{ backgroundColor: "#ECEFF1" }}
                     >
                       <ContentCopy />
                     </div>
@@ -798,7 +900,7 @@ const ProductImageGallery = ({
                   <FaRegHeart size={22} className="text-gray-400" />
                 )}
               </button>
-              
+
               {/* Share Button - Desktop */}
               <button
                 onClick={(e) => {
@@ -841,7 +943,7 @@ const ProductImageGallery = ({
               </button>
             </div>
           </div>
-          
+
           {/* Desktop Share Modal - Redesigned */}
           <Dialog
             open={shareModalOpen}
@@ -852,58 +954,108 @@ const ProductImageGallery = ({
             PaperProps={{
               sx: {
                 borderRadius: 2,
-                overflow: 'visible',
-              }
+                overflow: "visible",
+              },
             }}
           >
-            <Box sx={{ 
-              background: 'linear-gradient(145deg, #6366F1 0%, #8B5CF6 100%)',
-              color: 'white',
-              p: 2,
-              borderRadius: '8px 8px 0 0',
-            }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Share this product</Typography>
-                <IconButton onClick={handleCloseShareModal} size="small" sx={{ color: 'white' }}>
+            <Box
+              sx={{
+                background: "linear-gradient(145deg, #6366F1 0%, #8B5CF6 100%)",
+                color: "white",
+                p: 2,
+                borderRadius: "8px 8px 0 0",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Share this product
+                </Typography>
+                <IconButton
+                  onClick={handleCloseShareModal}
+                  size="small"
+                  sx={{ color: "white" }}
+                >
                   <Close />
                 </IconButton>
               </Box>
             </Box>
-            
+
             <DialogContent sx={{ p: 3 }}>
               {/* Product Preview */}
-              <Paper elevation={0} sx={{ display: 'flex', mb: 3, p: 1.5, bgcolor: '#f9f9f9', borderRadius: 1.5 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  display: "flex",
+                  mb: 3,
+                  p: 1.5,
+                  bgcolor: "#f9f9f9",
+                  borderRadius: 1.5,
+                }}
+              >
                 <Box sx={{ width: 70, height: 70, mr: 2, flexShrink: 0 }}>
-                  <img 
-                    src={selectedVariant.images?.[0] || product.images?.[0]} 
+                  <img
+                    src={selectedVariant.images?.[0] || product.images?.[0]}
                     alt={product.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "4px",
+                    }}
                   />
                 </Box>
-                <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                  <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
+                <Box sx={{ flex: 1, overflow: "hidden" }}>
+                  <Typography
+                    variant="subtitle1"
+                    noWrap
+                    sx={{ fontWeight: 600 }}
+                  >
                     {product.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" noWrap>
                     {product.brand} - {selectedVariant.color}
                   </Typography>
-                  <Typography variant="subtitle2" sx={{ color: '#388e3c', fontWeight: 600, mt: 0.5 }}>
-                    ₹{Math.round(selectedVariant.discountedPrice ?? product.discountedPrice)}
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: "#388e3c", fontWeight: 600, mt: 0.5 }}
+                  >
+                    ₹
+                    {Math.round(
+                      selectedVariant.discountedPrice ?? product.discountedPrice
+                    )}
                     {selectedVariant.discount && (
-                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, textDecoration: 'line-through' }}>
-                        ₹{Math.round(selectedVariant.originalPrice ?? product.originalPrice)}
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ ml: 1, textDecoration: "line-through" }}
+                      >
+                        ₹
+                        {Math.round(
+                          selectedVariant.originalPrice ?? product.originalPrice
+                        )}
                       </Typography>
                     )}
                   </Typography>
                 </Box>
               </Paper>
-              
+
               {/* Copy Link Section */}
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  sx={{ mb: 1, fontWeight: 500 }}
+                >
                   Copy link
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <TextField
                     inputRef={linkInputRef}
                     variant="outlined"
@@ -912,73 +1064,96 @@ const ProductImageGallery = ({
                     value={getProductUrl()}
                     InputProps={{
                       startAdornment: (
-                        <Box component="span" sx={{ display: 'flex', mr: 1, color: 'action.active' }}>
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "flex",
+                            mr: 1,
+                            color: "action.active",
+                          }}
+                        >
                           <LinkIcon fontSize="small" />
                         </Box>
                       ),
                       readOnly: true,
-                      sx: { 
+                      sx: {
                         borderRadius: 2,
-                        bgcolor: '#f5f5f5'
-                      }
+                        bgcolor: "#f5f5f5",
+                      },
                     }}
                   />
                   <Button
                     variant="contained"
                     onClick={copyToClipboard}
                     sx={{
-                      minWidth: 'unset',
+                      minWidth: "unset",
                       px: 2,
-                      bgcolor: linkCopied ? 'success.main' : 'primary.main',
-                      '&:hover': {
-                        bgcolor: linkCopied ? 'success.dark' : 'primary.dark',
+                      bgcolor: linkCopied ? "success.main" : "primary.main",
+                      "&:hover": {
+                        bgcolor: linkCopied ? "success.dark" : "primary.dark",
                       },
                       borderRadius: 2,
-                      whiteSpace: 'nowrap'
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {linkCopied ? 'Copied!' : 'Copy'}
+                    {linkCopied ? "Copied!" : "Copy"}
                   </Button>
                 </Box>
               </Box>
-              
+
               {/* Share Platforms */}
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 500 }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 1.5, fontWeight: 500 }}
+              >
                 Share via
               </Typography>
-              
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'flex-start' }}>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  justifyContent: "flex-start",
+                }}
+              >
                 {sharePlatforms.map((platform) => (
                   <Paper
                     key={platform.id}
                     elevation={0}
                     sx={{
                       p: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                       bgcolor: platform.bgColor,
                       borderRadius: 2,
                       width: 80,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                      }
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-3px)",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                      },
                     }}
                     onClick={() => handleShare(platform.id)}
                   >
-                    <Box sx={{ 
-                      color: platform.color, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      mb: 0.5
-                    }}>
+                    <Box
+                      sx={{
+                        color: platform.color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 0.5,
+                      }}
+                    >
                       {platform.icon}
                     </Box>
-                    <Typography variant="caption" sx={{ color: platform.color, fontWeight: 500 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: platform.color, fontWeight: 500 }}
+                    >
                       {platform.name}
                     </Typography>
                   </Paper>
