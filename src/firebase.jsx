@@ -1,10 +1,3 @@
-console.log('=== NETLIFY DEBUG ===');
-console.log('Build environment:', import.meta.env.MODE);
-console.log('All available env vars:', Object.keys(import.meta.env));
-console.log('VITE_FIREBASE_APP_API_KEY exists:', 'VITE_FIREBASE_APP_API_KEY' in import.meta.env);
-console.log('VITE_FIREBASE_APP_API_KEY value:', import.meta.env.VITE_FIREBASE_APP_API_KEY);
-console.log('API key length:', import.meta.env.VITE_FIREBASE_APP_API_KEY?.length);
-console.log('===================');
 const VITE_FIREBASE_APP_API_KEY = import.meta.env.VITE_FIREBASE_APP_API_KEY;
 const VITE_FIREBASE_APP_AUTH_DOMAIN = import.meta.env.VITE_FIREBASE_APP_AUTH_DOMAIN;
 const VITE_FIREBASE_APP_PROJECT_ID = import.meta.env.VITE_FIREBASE_APP_PROJECT_ID;

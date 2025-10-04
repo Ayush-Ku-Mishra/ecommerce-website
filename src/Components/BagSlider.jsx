@@ -98,8 +98,6 @@ const BagSlider = () => {
       );
 
       if (response.data.success) {
-        console.log("All Fashion products:", response.data.products);
-
         // Log all subcategories to debug
         const allSubcategories = response.data.products.map((p) => ({
           name: p.name,
@@ -107,7 +105,6 @@ const BagSlider = () => {
           subCatName: p.subCatName,
           thirdSubCatName: p.thirdSubCatName,
         }));
-        console.log("All subcategories:", allSubcategories);
 
         // Filter for Bags subcategory with more flexible matching
         const bagsData = response.data.products.filter(
@@ -118,8 +115,6 @@ const BagSlider = () => {
               product.thirdSubCatName?.toLowerCase().includes("bag") ||
               product.name?.toLowerCase().includes("bag"))
         );
-
-        console.log("Filtered bags data:", bagsData);
 
         const transformedProducts = bagsData.map(transformProduct);
         setBags(transformedProducts);

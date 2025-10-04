@@ -100,14 +100,10 @@ const ProductSlider = () => {
       );
 
       if (response.data.success) {
-        console.log("All products:", response.data.products);
-
         // Filter for featured products
         const featuredData = response.data.products.filter(
           (product) => product.isFeatured === true
         );
-
-        console.log("Featured products found:", featuredData);
 
         const transformedProducts = featuredData.map(transformProduct);
         setFeaturedProducts(transformedProducts);

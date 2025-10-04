@@ -88,11 +88,6 @@ const Login = () => {
   // Determine where to redirect after login (Wishlist page or home)
   const redirectTo = location.state?.from?.pathname || "/";
 
-  console.log("Login component - isAuthenticated:", isAuthenticated);
-  console.log("Login component - user:", user);
-  console.log("localStorage token:", localStorage.getItem("token"));
-  console.log("localStorage user-info:", localStorage.getItem("user-info"));
-
   if (isAuthenticated) {
     return <Navigate to={redirectTo} replace />;
   }

@@ -35,7 +35,6 @@ const GridProductCategory = ({
 
   // Use category from URL search params or prop
   const category = searchParams.get("category") || categoryName;
-  console.log("Selected category:", category);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubs, setSelectedSubs] = useState([]);
@@ -115,7 +114,6 @@ const GridProductCategory = ({
 
       if (response.data.success) {
         setBackendCategories(response.data.data);
-        console.log("Backend categories fetched:", response.data.data);
       } else {
         throw new Error(response.data.message || "Failed to fetch categories");
       }
@@ -256,7 +254,14 @@ const GridProductCategory = ({
       }
     } catch (error) {
       console.error("Error fetching products:", error);
-      setError("Failed to fetch products");
+      if (error.response?.status === 404 && category) {
+        setError(`No products available in ${category} category yet.`);
+        toast.success(
+          `We don't have any ${category} products yet. Check back soon!`
+        );
+      } else {
+        setError("Failed to fetch products");
+      }
     } finally {
       setLoading(false);
     }
@@ -461,17 +466,17 @@ const GridProductCategory = ({
   }, [category, searchQuery]);
 
   useEffect(() => {
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'visible') {
-      fetchProducts();
-    }
-  };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchProducts();
+      }
+    };
 
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  };
-}, []);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     setIsSearching(!!searchQuery);
@@ -870,14 +875,12 @@ const GridProductCategory = ({
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => fetchProducts(category)}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          >
-            Retry
-          </button>
+        <div className="text-center p-6 bg-gray-50 rounded-lg">
+          <p className="text-gray-700 text-lg">
+            {error.includes("No products available")
+              ? `No products available in this category yet. Check back soon!`
+              : "Unable to load products at this time."}
+          </p>
         </div>
       </div>
     );

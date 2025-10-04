@@ -103,11 +103,6 @@ const OtpVerification = ({
 
     setIsVerifying(true);
     try {
-      console.log("Sending OTP verification:", { email, otpCode });
-
-      // Try with token in authorization header instead of cookies
-      const token = localStorage.getItem("client_token");
-
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/password/verify-otp`,
         {
@@ -115,49 +110,19 @@ const OtpVerification = ({
           otp: otpCode,
         },
         {
-          // Try without withCredentials first
-          // withCredentials: true,
-          timeout: 15000, // 15-second timeout
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
         }
       );
-
-      console.log("OTP verification response:", response.data);
 
       if (response.data.success) {
         toast.success("OTP verified successfully!");
         if (onComplete) onComplete(otpCode);
       }
     } catch (error) {
-      console.error("OTP verification error:", error);
-
-      // More detailed error logging
-      if (error.response) {
-        console.error("Error response:", {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers,
-        });
-      } else if (error.request) {
-        console.error("No response received:", error.request);
-      } else {
-        console.error("Error setting up request:", error.message);
-      }
-
-      // Handle specific error types
-      if (error.code === "ECONNABORTED") {
-        toast.error(
-          "Request timed out. Server might be busy, please try again."
-        );
-      } else {
-        toast.error(
-          error.response?.data?.message || "Invalid OTP. Please try again."
-        );
-      }
-
+      toast.error(
+        error.response?.data?.message || "Invalid OTP. Please try again."
+      );
       setOtp(["", "", "", "", ""]);
       otpRefs[0].current.focus();
     } finally {
