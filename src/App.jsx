@@ -38,6 +38,7 @@ import FloatingNotification from "./Components/FloatingNotification";
 import ReturnReason from "./Components/ReturnReason";
 import { setupAxiosInterceptors } from "./utils/setupAxios";
 import NetworkStatus from "./Components/NetworkStatus";
+import Offers from "./Components/Offers";
 
 const router = createBrowserRouter([
   {
@@ -145,6 +146,11 @@ const router = createBrowserRouter([
       {
         path: "/account/orders/:orderId/return",
         element: <ReturnReason />,
+      },
+
+      {
+        path: "/offers",
+        element: <Offers />,
       },
     ],
   },
