@@ -396,6 +396,11 @@ const ForgotPassword = ({ onBack }) => {
               "Send Verification Code"
             )}
           </button>
+          {/* Add this line below */}
+          <p className="text-xs text-center text-gray-500 mt-2">
+            ⚠️ Verification codes may be delivered to your spam/junk folder.
+            Please check there if you don't see the email in your inbox.
+          </p>
         </form>
       )}
 
