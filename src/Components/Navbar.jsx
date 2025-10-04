@@ -37,6 +37,7 @@ import { debounce } from "lodash";
 import Skeleton from "@mui/material/Skeleton";
 import { CategorySidebarSkeleton } from "../Skeletons/CategorySidebarSkeleton.jsx";
 import ReactDOM from "react-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   FaShoppingBag,
   FaExchangeAlt,
@@ -58,7 +59,6 @@ const Navbar = ({ onFilterClick }) => {
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [expandedThirdLevel, setExpandedThirdLevel] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
-  const [showConfirm, setShowConfirm] = React.useState(false);
   const [loading, setLoading] = useState(false);
   const [currentLogo, setCurrentLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
@@ -67,6 +67,13 @@ const Navbar = ({ onFilterClick }) => {
   const { cartCount } = useContext(Context);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [searchParams] = useSearchParams();
+  const currentSearchQuery = searchParams.get("search") || "";
+
+  useEffect(() => {
+    const searchFromUrl = searchParams.get("search") || "";
+    setDesktopSearchQuery(searchFromUrl);
+  }, [searchParams]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -377,7 +384,7 @@ const Navbar = ({ onFilterClick }) => {
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/getAllProducts?search=${query}&page=1&perPage=10`
+        }/api/v1/product/getAllProductsForClient?search=${query}&page=1&perPage=10`
       );
 
       if (response.data.success) {

@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Slider from "@mui/material/Slider";
 import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { debounce } from "lodash";
 
 const SidebarFilterComponent = ({
   categoryData,
@@ -22,24 +23,71 @@ const SidebarFilterComponent = ({
   selectedColors = [],
   onColorChange,
   onResetFilters,
-  onApplyFilters, // Added this prop for mobile apply functionality
+  onApplyFilters,
 }) => {
-  const [priceRange, setPriceRange] = useState([
+  const isDesktop = useMediaQuery("(min-width:768px)");
+
+  // Create local state for mobile filters
+  const [localPriceRange, setLocalPriceRange] = useState([
     selectedPrice.min,
-    selectedPrice.max,
+    selectedPrice.max === Infinity ? 10000 : selectedPrice.max,
   ]);
+  const [localBrands, setLocalBrands] = useState(selectedBrands || []);
+  const [localSubs, setLocalSubs] = useState(selectedSubs || []);
+  const [localRatings, setLocalRatings] = useState(selectedRating || []);
+  const [localDiscounts, setLocalDiscounts] = useState(selectedDiscount || []);
+  const [localColors, setLocalColors] = useState(selectedColors || []);
+
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [brandExpanded, setBrandExpanded] = useState(false);
   const [colorExpanded, setColorExpanded] = useState(false);
   const [expandedSubcategory, setExpandedSubcategory] = useState(null);
   const [expandedThirdLevel, setExpandedThirdLevel] = useState(null);
-  const isDesktop = useMediaQuery("(min-width:768px)");
+
+  // Define debounced functions for desktop mode
+  const debouncedBrandChange = useCallback(
+    debounce((brands) => {
+      onBrandChange(brands);
+    }, 300),
+    [onBrandChange]
+  );
+
+  const debouncedPriceChange = useCallback(
+    debounce((newValue) => {
+      const min = newValue[0];
+      const max = newValue[1] === 10000 ? Infinity : newValue[1];
+      onPriceChange({ min, max });
+    }, 300),
+    [onPriceChange]
+  );
+
+  // Sync props with local state when they change
+  useEffect(() => {
+    setLocalPriceRange([
+      selectedPrice.min,
+      selectedPrice.max === Infinity ? 10000 : selectedPrice.max,
+    ]);
+  }, [selectedPrice]);
 
   useEffect(() => {
-    if (selectedBrands && !Array.isArray(selectedBrands)) {
-      onBrandChange([]);
-    }
-  }, []);
+    setLocalBrands(selectedBrands || []);
+  }, [selectedBrands]);
+
+  useEffect(() => {
+    setLocalSubs(selectedSubs || []);
+  }, [selectedSubs]);
+
+  useEffect(() => {
+    setLocalRatings(selectedRating || []);
+  }, [selectedRating]);
+
+  useEffect(() => {
+    setLocalDiscounts(selectedDiscount || []);
+  }, [selectedDiscount]);
+
+  useEffect(() => {
+    setLocalColors(selectedColors || []);
+  }, [selectedColors]);
 
   useEffect(() => {
     if (categoryData?.sub?.length) {
@@ -53,56 +101,98 @@ const SidebarFilterComponent = ({
     }
   }, [categoryData]);
 
-  useEffect(() => {
-    setPriceRange([selectedPrice.min, selectedPrice.max]);
-  }, [selectedPrice]);
-
-  const handleSliderChange = (_, newValue) => {
-    setPriceRange(newValue);
+  // Apply function for mobile
+  const applyAllFilters = () => {
+    // Convert 10000 to Infinity for max price
+    const max = localPriceRange[1] === 10000 ? Infinity : localPriceRange[1];
+    onPriceChange({ min: localPriceRange[0], max: max });
+    onBrandChange(localBrands);
+    onSubChange(localSubs);
+    onRatingChange(localRatings);
+    onDiscountChange(localDiscounts);
+    onColorChange(localColors);
+    onApplyFilters && onApplyFilters();
   };
 
-  const handleSliderCommit = (_, newValue) => {
-    setPriceRange(newValue);
+  // Handle slider change - just update local state during dragging
+  const handleSliderChange = (_, newValue) => {
+    setLocalPriceRange(newValue);
+  };
 
+  // Apply changes when slider is released
+  const handleSliderCommit = (_, newValue) => {
+    setLocalPriceRange(newValue);
+
+    // Only apply on desktop when slider is released
     if (isDesktop && onPriceChange) {
-      onPriceChange({ min: newValue[0], max: newValue[1] });
+      const min = newValue[0];
+      const max = newValue[1] === 10000 ? Infinity : newValue[1];
+      onPriceChange({ min, max });
     }
   };
 
+  // Input change handler
   const handleInputChange = (e, index) => {
     const inputValue = e.target.value;
 
     if (inputValue === "") {
-      const newRange = [...priceRange];
-      newRange[index] = "";
-      setPriceRange(newRange);
+      const newRange = [...localPriceRange];
+      newRange[index] = index === 0 ? 0 : 10000;
+      setLocalPriceRange(newRange);
       return;
     }
 
     const value = Number(inputValue);
     if (!isNaN(value) && value >= 0) {
-      const newRange = [...priceRange];
+      const newRange = [...localPriceRange];
       newRange[index] = value;
-      setPriceRange(newRange);
+      setLocalPriceRange(newRange);
 
-      if (typeof newRange[0] === "number" && typeof newRange[1] === "number") {
+      // Apply on desktop after a short delay to prevent rapid firing
+      if (
+        isDesktop &&
         onPriceChange &&
-          onPriceChange({
-            min: newRange[0],
-            max: newRange[1],
-          });
+        typeof newRange[0] === "number" &&
+        typeof newRange[1] === "number"
+      ) {
+        // Use a simple timeout instead of debounce for direct input
+        clearTimeout(window.priceInputTimeout);
+        window.priceInputTimeout = setTimeout(() => {
+          const min = newRange[0];
+          const max = newRange[1] === 10000 ? Infinity : newRange[1];
+          onPriceChange({ min, max });
+        }, 500);
       }
     }
   };
 
   const valuetext = (value) => `₹${value}`;
 
-  // Helper function to handle subcategory checkbox changes
+  // Handle subcategory change
   const handleSubChange = (itemName) => {
-    const updated = selectedSubs?.includes(itemName)
-      ? selectedSubs.filter((s) => s !== itemName)
-      : [...(selectedSubs || []), itemName];
-    onSubChange && onSubChange(updated);
+    const updated = localSubs.includes(itemName)
+      ? localSubs.filter((s) => s !== itemName)
+      : [...localSubs, itemName];
+
+    setLocalSubs(updated);
+
+    // Apply immediately only on desktop
+    if (isDesktop && onSubChange) {
+      onSubChange(updated);
+    }
+  };
+
+  // Handle local reset
+  const handleResetFilters = () => {
+    setLocalPriceRange([0, 10000]);
+    setLocalBrands([]);
+    setLocalSubs([]);
+    setLocalRatings([]);
+    setLocalDiscounts([]);
+    setLocalColors([]);
+
+    // Always apply reset immediately
+    onResetFilters();
   };
 
   // Helper function to render subcategory items safely with 4-level support
@@ -123,7 +213,7 @@ const SidebarFilterComponent = ({
             >
               <input
                 type="checkbox"
-                checked={selectedSubs?.includes(item)}
+                checked={localSubs.includes(item)}
                 onChange={() => handleSubChange(item)}
                 className="w-4 h-4"
               />
@@ -156,7 +246,7 @@ const SidebarFilterComponent = ({
                 <label className="flex items-center gap-2 text-[14px] text-gray-700 cursor-pointer flex-1">
                   <input
                     type="checkbox"
-                    checked={selectedSubs?.includes(item.name)}
+                    checked={localSubs.includes(item.name)}
                     onChange={() => handleSubChange(item.name)}
                     className="w-4 h-4"
                   />
@@ -239,7 +329,7 @@ const SidebarFilterComponent = ({
           <Box sx={{ width: "100%", maxWidth: 220, pl: 1 }}>
             <Slider
               getAriaLabel={() => "Price range"}
-              value={priceRange}
+              value={localPriceRange}
               onChange={handleSliderChange}
               onChangeCommitted={handleSliderCommit}
               valueLabelDisplay="auto"
@@ -255,7 +345,7 @@ const SidebarFilterComponent = ({
                 </label>
                 <input
                   type="number"
-                  value={priceRange[0]}
+                  value={localPriceRange[0]}
                   onChange={(e) => handleInputChange(e, 0)}
                   className="w-20 border px-2 py-1 text-sm rounded"
                 />
@@ -266,7 +356,9 @@ const SidebarFilterComponent = ({
                 </label>
                 <input
                   type="number"
-                  value={priceRange[1] === Infinity ? "" : priceRange[1]}
+                  value={
+                    localPriceRange[1] === Infinity ? "" : localPriceRange[1]
+                  }
                   onChange={(e) => handleInputChange(e, 1)}
                   className="w-20 border px-2 py-1 text-sm rounded"
                 />
@@ -301,12 +393,18 @@ const SidebarFilterComponent = ({
                 >
                   <input
                     type="checkbox"
-                    checked={selectedColors?.includes(color)}
+                    checked={localColors.includes(color)}
                     onChange={() => {
-                      const updated = selectedColors?.includes(color)
-                        ? selectedColors.filter((c) => c !== color)
-                        : [...(selectedColors || []), color];
-                      onColorChange && onColorChange(updated);
+                      const updated = localColors.includes(color)
+                        ? localColors.filter((c) => c !== color)
+                        : [...localColors, color];
+
+                      setLocalColors(updated);
+
+                      // Apply immediately only on desktop
+                      if (isDesktop && onColorChange) {
+                        onColorChange(updated);
+                      }
                     }}
                     className="w-4 h-4"
                   />
@@ -339,12 +437,18 @@ const SidebarFilterComponent = ({
               >
                 <input
                   type="checkbox"
-                  checked={selectedRating?.includes(rating)}
+                  checked={localRatings.includes(rating)}
                   onChange={() => {
-                    const updated = selectedRating?.includes(rating)
-                      ? selectedRating.filter((r) => r !== rating)
-                      : [...(selectedRating || []), rating];
-                    onRatingChange && onRatingChange(updated);
+                    const updated = localRatings.includes(rating)
+                      ? localRatings.filter((r) => r !== rating)
+                      : [...localRatings, rating];
+
+                    setLocalRatings(updated);
+
+                    // Apply immediately only on desktop
+                    if (isDesktop && onRatingChange) {
+                      onRatingChange(updated);
+                    }
                   }}
                   className="w-4 h-4"
                 />
@@ -370,12 +474,18 @@ const SidebarFilterComponent = ({
               >
                 <input
                   type="checkbox"
-                  checked={selectedDiscount?.includes(discount)}
+                  checked={localDiscounts.includes(discount)}
                   onChange={() => {
-                    const updated = selectedDiscount?.includes(discount)
-                      ? selectedDiscount.filter((d) => d !== discount)
-                      : [...(selectedDiscount || []), discount];
-                    onDiscountChange && onDiscountChange(updated);
+                    const updated = localDiscounts.includes(discount)
+                      ? localDiscounts.filter((d) => d !== discount)
+                      : [...localDiscounts, discount];
+
+                    setLocalDiscounts(updated);
+
+                    // Apply immediately only on desktop
+                    if (isDesktop && onDiscountChange) {
+                      onDiscountChange(updated);
+                    }
                   }}
                   className="w-4 h-4"
                 />
@@ -411,12 +521,18 @@ const SidebarFilterComponent = ({
                 >
                   <input
                     type="checkbox"
-                    checked={selectedBrands?.includes(brand)}
+                    checked={localBrands.includes(brand)}
                     onChange={() => {
-                      const updated = selectedBrands?.includes(brand)
-                        ? selectedBrands.filter((b) => b !== brand)
-                        : [...(selectedBrands || []), brand];
-                      onBrandChange(updated);
+                      const updated = localBrands.includes(brand)
+                        ? localBrands.filter((b) => b !== brand)
+                        : [...localBrands, brand];
+
+                      setLocalBrands(updated);
+
+                      // Apply immediately only on desktop
+                      if (isDesktop && onBrandChange) {
+                        debouncedBrandChange(updated);
+                      }
                     }}
                     className="w-4 h-4"
                   />
@@ -433,7 +549,7 @@ const SidebarFilterComponent = ({
         {/* Desktop Reset Button */}
         <button
           className="hidden md:block bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-4 rounded"
-          onClick={onResetFilters}
+          onClick={handleResetFilters}
         >
           Reset Filters
         </button>
@@ -443,18 +559,14 @@ const SidebarFilterComponent = ({
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 flex gap-3 z-50">
         <button
           className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-3 px-4 rounded font-medium"
-          onClick={onResetFilters}
+          onClick={handleResetFilters}
         >
           Reset Filters
         </button>
         {onApplyFilters && (
           <button
             className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-3 px-4 rounded font-medium"
-            onClick={() => {
-              onPriceChange &&
-                onPriceChange({ min: priceRange[0], max: priceRange[1] });
-              onApplyFilters();
-            }}
+            onClick={applyAllFilters}
           >
             Apply Filters
           </button>

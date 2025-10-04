@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BsFillCartFill } from "react-icons/bs";
-import { FaBolt, FaHeart, FaRegHeart, FaShareAlt } from "react-icons/fa";
+import {
+  FaBolt,
+  FaHeart,
+  FaRegHeart,
+  FaShareAlt,
+  FaStar,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useContext } from "react";
@@ -45,6 +51,7 @@ const ProductImageGallery = ({
   isDeliverable,
   onOpenGallery,
   addressPincodeWarning,
+  reviewStats,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -639,6 +646,20 @@ const ProductImageGallery = ({
                       e.target.src = "/placeholder-image.jpg";
                     }}
                   />
+
+                  {/* Add rating badge - only on first slide */}
+                  {idx === 0 && reviewStats.totalReviews > 0 && (
+                    <div className="absolute bottom-2 left-2 flex items-center bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg">
+                      <FaStar className="text-yellow-400 mr-1" size={12} />
+                      <span className="text-white text-xs font-medium">
+                        {reviewStats.rating}
+                      </span>
+                      <span className="mx-1 text-gray-300">|</span>
+                      <span className="text-white text-xs">
+                        {reviewStats.totalReviews} reviews
+                      </span>
+                    </div>
+                  )}
                 </SwiperSlide>
               ))}
             </Swiper>
@@ -931,6 +952,20 @@ const ProductImageGallery = ({
               >
                 <FaShareAlt size={22} className="text-gray-400" />
               </button>
+
+              {/* Add rating badge */}
+              {reviewStats.totalReviews > 0 && (
+                <div className="absolute bottom-3 left-3 flex items-center bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg z-10">
+                  <FaStar className="text-yellow-400 mr-1" size={14} />
+                  <span className="text-white text-sm font-medium">
+                    {reviewStats.rating}
+                  </span>
+                  <span className="mx-1 text-gray-300">|</span>
+                  <span className="text-white text-sm">
+                    {reviewStats.totalReviews} reviews
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Cart and Buy buttons */}

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaStar, FaThumbsUp, FaThumbsDown, FaImage } from "react-icons/fa";
+import {
+  FaStar,
+  FaThumbsUp,
+  FaThumbsDown,
+  FaImage,
+  FaCheck,
+} from "react-icons/fa";
 import { Dialog } from "@mui/material";
 import toast from "react-hot-toast";
 import { FaUser, FaTimes } from "react-icons/fa";
@@ -9,11 +15,18 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/zoom";
+import { Context } from "../main";
+import { useContext } from "react";
+import { MdVerified } from "react-icons/md";
 
-const ProductReviews = ({ productId }) => {
+const ProductReviews = ({ productId, onStatsUpdate }) => {
+  const [userLikes, setUserLikes] = useState(new Set());
+  const [userDislikes, setUserDislikes] = useState(new Set());
+  const { isAuthenticated } = useContext(Context);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModalInfo, setShowModalInfo] = useState(true);
+  const [userId, setUserId] = useState(null);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalReviews: 0,
@@ -56,6 +69,15 @@ const ProductReviews = ({ productId }) => {
     return "just now";
   };
 
+  useEffect(() => {
+    if (onStatsUpdate && stats) {
+      onStatsUpdate({
+        rating: stats.averageRating.toFixed(1),
+        totalReviews: stats.totalReviews,
+      });
+    }
+  }, [stats, onStatsUpdate]);
+
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -65,7 +87,43 @@ const ProductReviews = ({ productId }) => {
     } else {
       setLoading(false);
     }
+
+    const getCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/user/me`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success) {
+          setUserId(data.user._id);
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
+    getCurrentUser();
   }, [productId]);
+
+  useEffect(() => {
+    if (reviews.length > 0) {
+      const newLikes = new Set();
+      const newDislikes = new Set();
+
+      reviews.forEach((review) => {
+        // Check userInteraction property from backend
+        if (review.userInteraction?.isLiked) {
+          newLikes.add(review._id);
+        }
+        if (review.userInteraction?.isDisliked) {
+          newDislikes.add(review._id);
+        }
+      });
+
+      setUserLikes(newLikes);
+      setUserDislikes(newDislikes);
+    }
+  }, [reviews]);
 
   const fetchReviews = async () => {
     try {
@@ -162,6 +220,7 @@ const ProductReviews = ({ productId }) => {
 
   const handleLikeDislike = async (reviewId, action) => {
     try {
+      // Make the API request first
       const response = await fetch(
         `${API_BASE_URL}/api/v1/reviews/${reviewId}/${action}`,
         {
@@ -170,8 +229,61 @@ const ProductReviews = ({ productId }) => {
         }
       );
       const data = await response.json();
+
       if (data.success) {
-        fetchReviews();
+        // Update local state based on API response
+        if (action === "like") {
+          if (data.isLiked) {
+            // User has liked the review
+            setUserLikes((prev) => new Set([...prev, reviewId]));
+            setUserDislikes((prev) => {
+              const updated = new Set(prev);
+              updated.delete(reviewId);
+              return updated;
+            });
+          } else {
+            // User has unliked the review
+            setUserLikes((prev) => {
+              const updated = new Set(prev);
+              updated.delete(reviewId);
+              return updated;
+            });
+          }
+        } else if (action === "dislike") {
+          if (data.isDisliked) {
+            // User has disliked the review
+            setUserDislikes((prev) => new Set([...prev, reviewId]));
+            setUserLikes((prev) => {
+              const updated = new Set(prev);
+              updated.delete(reviewId);
+              return updated;
+            });
+          } else {
+            // User has undisliked the review
+            setUserDislikes((prev) => {
+              const updated = new Set(prev);
+              updated.delete(reviewId);
+              return updated;
+            });
+          }
+        }
+
+        // Update review data to reflect the new counts without fetching all reviews
+        const updatedReviews = reviews.map((review) => {
+          if (review._id === reviewId) {
+            return {
+              ...review,
+              likes: { length: data.likesCount },
+              dislikes: { length: data.dislikesCount },
+              userInteraction: {
+                isLiked: data.isLiked,
+                isDisliked: data.isDisliked,
+              },
+            };
+          }
+          return review;
+        });
+        setReviews(updatedReviews);
       }
     } catch (error) {
       toast.error("Please login to rate reviews");
@@ -424,10 +536,38 @@ const ProductReviews = ({ productId }) => {
                   </div>
                 )}
 
+                {/* Pickora Response Section */}
+                {review.response && (
+                  <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-blue-700 flex items-center">
+                        <MdVerified className="text-blue-600 mr-1" size={12} />
+                        Pickora
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(
+                          review.response.respondedAt
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      {review.response.text}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4 md:gap-6 mt-4">
                   <button
                     onClick={() => handleLikeDislike(review._id, "like")}
-                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                    className={`flex items-center gap-2 ${
+                      userLikes.has(review._id)
+                        ? "text-blue-600"
+                        : "text-gray-600 hover:text-blue-600"
+                    } transition-colors font-medium`}
                   >
                     <FaThumbsUp size={16} className="md:text-lg" />
                     <span className="text-sm md:text-base">
@@ -436,7 +576,11 @@ const ProductReviews = ({ productId }) => {
                   </button>
                   <button
                     onClick={() => handleLikeDislike(review._id, "dislike")}
-                    className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors font-medium"
+                    className={`flex items-center gap-2 ${
+                      userDislikes.has(review._id)
+                        ? "text-red-600"
+                        : "text-gray-600 hover:text-red-600"
+                    } transition-colors font-medium`}
                   >
                     <FaThumbsDown size={16} className="md:text-lg" />
                     <span className="text-sm md:text-base">
@@ -573,12 +717,43 @@ const ProductReviews = ({ productId }) => {
                     {imageModal.review.text}
                   </p>
 
+                  {/* Pickora Response in Modal */}
+                  {imageModal.review.response && (
+                    <div className="mt-3 mb-3 bg-blue-600/20 p-2 rounded-lg border border-blue-400/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-blue-300 flex items-center">
+                          <MdVerified
+                            className="text-blue-300 mr-1"
+                            size={12}
+                          />
+                          Pickora
+                        </span>
+                        <span className="text-xs text-white/60">
+                          {new Date(
+                            imageModal.review.response.respondedAt
+                          ).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-xs md:text-sm text-white/90">
+                        {imageModal.review.response.text}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4 md:gap-6 pt-2 border-t border-white/10">
                     <button
                       onClick={() =>
                         handleLikeDislike(imageModal.review._id, "like")
                       }
-                      className="flex items-center gap-2 text-white/70 hover:text-blue-400 transition-colors"
+                      className={`flex items-center gap-2 ${
+                        userLikes.has(imageModal.review._id)
+                          ? "text-blue-400"
+                          : "text-white/70 hover:text-blue-400"
+                      } transition-colors`}
                     >
                       <FaThumbsUp size={14} />
                       <span className="text-xs md:text-sm">
@@ -589,7 +764,11 @@ const ProductReviews = ({ productId }) => {
                       onClick={() =>
                         handleLikeDislike(imageModal.review._id, "dislike")
                       }
-                      className="flex items-center gap-2 text-white/70 hover:text-red-400 transition-colors"
+                      className={`flex items-center gap-2 ${
+                        userDislikes.has(imageModal.review._id)
+                          ? "text-red-400"
+                          : "text-white/70 hover:text-red-400"
+                      } transition-colors`}
                     >
                       <FaThumbsDown size={14} />
                       <span className="text-xs md:text-sm">

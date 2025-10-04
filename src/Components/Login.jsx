@@ -101,11 +101,6 @@ const Login = () => {
           ? data.phone
           : `+91${data.phone}`;
 
-        console.log("Submitting registration data:", {
-          ...data,
-          password: "[HIDDEN]",
-        });
-
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
           data,

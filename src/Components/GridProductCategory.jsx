@@ -219,7 +219,7 @@ const GridProductCategory = ({
     try {
       let endpoint = `${
         import.meta.env.VITE_BACKEND_URL
-      }/api/v1/product/getAllProducts`;
+      }/api/v1/product/getAllProductsForClient`;
       const params = new URLSearchParams();
 
       params.append("page", "1");
@@ -412,20 +412,41 @@ const GridProductCategory = ({
       return;
     }
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams); // START WITH CURRENT PARAMS
+
+    // Preserve search parameter
+    const currentSearch = params.get("search");
+
+    // Clear existing filter params before setting new ones
+    params.delete("category");
+    params.delete("sub");
+    params.delete("rating");
+    params.delete("discount");
+    params.delete("brand");
+    params.delete("color");
+    params.delete("minPrice");
+    params.delete("maxPrice");
+    params.delete("view");
+    params.delete("sort");
+
+    // Set new filter params
     if (selectedCategory) params.set("category", selectedCategory);
     selectedSubs.forEach((s) => params.append("sub", s));
     selectedRating.forEach((r) => params.append("rating", r));
     selectedDiscount.forEach((d) => params.append("discount", d));
-    selectedBrands.forEach((b) => params.append("brand", b));
+    if (selectedBrands && selectedBrands.length > 0) {
+      params.set("brand", selectedBrands.join(","));
+    }
     selectedColors.forEach((c) => params.append("color", c));
     if (selectedPrice.min > 0) params.set("minPrice", selectedPrice.min);
     if (selectedPrice.max !== Infinity)
       params.set("maxPrice", selectedPrice.max);
     if (viewType) params.set("view", viewType);
     if (sortOption) params.set("sort", sortOption);
+
     setSearchParams(params, { replace: true });
   }, [
+    searchParams, // Add searchParams to dependencies
     selectedCategory,
     selectedSubs,
     selectedRating,
@@ -1101,7 +1122,7 @@ const GridProductCategory = ({
                             <img
                               src={productImage}
                               alt={`${product.name} - ${variant.color}`}
-                              className="w-full h-full object-cover p-1 rounded-lg"
+                              className="w-full h-full object-top object-cover p-1 rounded-lg"
                               onError={(e) => {
                                 e.target.src = "/placeholder-image.jpg";
                               }}

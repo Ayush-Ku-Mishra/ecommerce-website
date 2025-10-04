@@ -239,6 +239,7 @@ const ForgotPassword = ({ onBack }) => {
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
+          timeout: 15000, // 15-second timeout
         }
       );
 
@@ -246,10 +247,54 @@ const ForgotPassword = ({ onBack }) => {
         setEmail(data.email);
         setStep("otp");
         setCountdown(30);
-        toast.success(response.data.message || "OTP sent to your email!");
+        toast.success(
+          response.data.message ||
+            "Verification code sent! Please check your email and spam folder."
+        );
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      // Handle specific HTTP status codes
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            toast.error("Please provide a valid email address.");
+            break;
+          case 404:
+            toast.error("We couldn't find an account with this email address.");
+            break;
+          case 403:
+            toast.error(
+              "This account has been suspended. Please contact support for assistance."
+            );
+            break;
+          case 429:
+            toast.error(
+              "Too many attempts. Please try again in a few minutes."
+            );
+            break;
+          case 500:
+            toast.error(
+              "Our system is experiencing issues. Please try again later."
+            );
+            break;
+          default:
+            toast.error("Something went wrong. Please try again.");
+        }
+      }
+      // Handle network errors
+      else if (error.code === "ECONNABORTED") {
+        toast.error(
+          "Request timed out. Please check your internet connection and try again."
+        );
+      } else if (error.message && error.message.includes("Network Error")) {
+        toast.error(
+          "Network error. Please check your connection and try again."
+        );
+      } else {
+        toast.error(
+          "We're having trouble sending the verification code. Please try again."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -269,16 +314,77 @@ const ForgotPassword = ({ onBack }) => {
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
+          timeout: 15000, // 15-second timeout
         }
       );
 
       if (response.data.success) {
-        toast.success("Password reset successful!");
+        toast.success(
+          "Password reset successful! You can now log in with your new password."
+        );
         reset();
         onBack();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to reset password");
+      // Handle specific HTTP status codes
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            if (error.response.data.message?.includes("expired")) {
+              toast.error(
+                "The verification code has expired. Please request a new one."
+              );
+            } else if (error.response.data.message?.includes("match")) {
+              toast.error("Passwords don't match. Please check and try again.");
+            } else {
+              toast.error("Please check your information and try again.");
+            }
+            break;
+          case 401:
+            toast.error(
+              "Invalid verification code. Please try again or request a new code."
+            );
+            break;
+          case 404:
+            toast.error(
+              "Account not found. Please start over with the password reset process."
+            );
+            break;
+          case 403:
+            toast.error(
+              "This action is not allowed for your account. Please contact support."
+            );
+            break;
+          case 409:
+            toast.error(
+              "You cannot use a previous password. Please choose a new one."
+            );
+            break;
+          case 500:
+            toast.error(
+              "Our system is experiencing issues. Please try again later."
+            );
+            break;
+          default:
+            toast.error(
+              "Something went wrong while resetting your password. Please try again."
+            );
+        }
+      }
+      // Handle network errors
+      else if (error.code === "ECONNABORTED") {
+        toast.error(
+          "Request timed out. Please check your internet connection and try again."
+        );
+      } else if (error.message && error.message.includes("Network Error")) {
+        toast.error(
+          "Network error. Please check your connection and try again."
+        );
+      } else {
+        toast.error(
+          "Something went wrong while resetting your password. Please try again."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -294,15 +400,58 @@ const ForgotPassword = ({ onBack }) => {
           {
             withCredentials: true,
             headers: { "Content-Type": "application/json" },
+            timeout: 15000, // 15-second timeout
           }
         );
 
         if (response.data.success) {
           setCountdown(30);
-          toast.success("New OTP sent to your email!");
+          toast.success(
+            "New verification code sent! Please check your email and spam folder."
+          );
         }
       } catch (error) {
-        toast.error("Failed to resend OTP");
+        // Handle specific HTTP status codes
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              toast.error(
+                "There was a problem with your request. Please try again."
+              );
+              break;
+            case 404:
+              toast.error(
+                "We couldn't find your account. Please start over with the reset process."
+              );
+              break;
+            case 429:
+              toast.error(
+                "You've requested too many codes. Please wait before trying again."
+              );
+              break;
+            case 500:
+              toast.error(
+                "Our system is experiencing issues. Please try again later."
+              );
+              break;
+            default:
+              toast.error("Couldn't send a new code. Please try again.");
+          }
+        }
+        // Handle network errors
+        else if (error.code === "ECONNABORTED") {
+          toast.error(
+            "Request timed out. Please check your internet connection."
+          );
+        } else if (error.message && error.message.includes("Network Error")) {
+          toast.error(
+            "Network error. Please check your connection and try again."
+          );
+        } else {
+          toast.error(
+            "We couldn't send a new code right now. Please try again soon."
+          );
+        }
       } finally {
         setIsLoading(false);
       }

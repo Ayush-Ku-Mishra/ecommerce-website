@@ -28,12 +28,12 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
         { credentials: "include" }
       );
       const data = await response.json();
-      
+
       if (data.success && data.reviews) {
         const userReview = data.reviews.find(
           (review) => review.userId?._id && review.orderId === orderId
         );
-        
+
         if (userReview) {
           setExistingReview(userReview);
           setRating(userReview.rating);
@@ -120,6 +120,51 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
   };
 
   const handleSubmit = async () => {
+    const isEditing = !!existingReview && isEditMode;
+    const isEmpty = !reviewText.trim();
+
+    // If editing an existing review and text is emptied, delete the entire review
+    if (isEditing && isEmpty) {
+      try {
+        setSubmitting(true);
+
+        // Call delete API endpoint
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/reviews/${existingReview._id}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+          toast.success("Review deleted successfully!");
+
+          // Reset component state
+          setExistingReview(null);
+          setRating(0);
+          setReviewTitle("");
+          setReviewText("");
+          setSelectedFiles([]);
+          setIsEditMode(false);
+
+          if (onReviewSubmitted) {
+            onReviewSubmitted();
+          }
+        } else {
+          throw new Error(data.message || "Failed to delete review");
+        }
+      } catch (error) {
+        console.error("Error deleting review:", error);
+        toast.error(error.message || "Failed to delete review");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     if (!rating) {
       toast.error("Please select a rating");
       return;
@@ -205,10 +250,10 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
             ? "Review updated successfully!"
             : "Review submitted successfully!"
         );
-        
+
         // Update existing review state
         setExistingReview(data.review);
-        
+
         // Update selected files with new structure
         setSelectedFiles(
           data.review.images?.map((img) => ({
@@ -270,7 +315,9 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
             type="text"
             placeholder="Review Title (optional)"
             value={reviewTitle}
-            onChange={(e) => setReviewTitle(e.target.value.slice(0, MAX_TITLE_LENGTH))}
+            onChange={(e) =>
+              setReviewTitle(e.target.value.slice(0, MAX_TITLE_LENGTH))
+            }
             className="w-full p-2 border border-gray-300 rounded-md mb-3"
             disabled={existingReview && !isEditMode}
           />
@@ -278,7 +325,9 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
           <textarea
             placeholder="Write your review here..."
             value={reviewText}
-            onChange={(e) => setReviewText(e.target.value.slice(0, MAX_TEXT_LENGTH))}
+            onChange={(e) =>
+              setReviewText(e.target.value.slice(0, MAX_TEXT_LENGTH))
+            }
             className="w-full p-2 border border-gray-300 rounded-md mb-3 min-h-[100px]"
             disabled={existingReview && !isEditMode}
           />
@@ -327,14 +376,22 @@ const OrderProductReview = ({ product, orderId, onReviewSubmitted }) => {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full ${
+                existingReview && !reviewText.trim()
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {submitting
                 ? existingReview
-                  ? "Updating..."
+                  ? reviewText.trim()
+                    ? "Updating..."
+                    : "Deleting..."
                   : "Submitting..."
                 : existingReview
-                ? "Update Review"
+                ? reviewText.trim()
+                  ? "Update Review"
+                  : "Delete Review"
                 : "Submit Review"}
             </button>
           ) : (

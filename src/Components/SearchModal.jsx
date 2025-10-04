@@ -123,7 +123,7 @@ const SearchModal = ({ isOpen, onClose }) => {
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/v1/product/getAllProducts?search=${query}&page=1&perPage=20`
+        }/api/v1/product/getAllProductsForClient?search=${query}&page=1&perPage=20`
       );
 
       if (response.data.success) {

@@ -296,7 +296,7 @@ const modalContents = {
           Free Shipping
         </h4>
         <p className="text-green-700">
-          Enjoy free standard shipping on all orders over $100. No coupon code
+          Enjoy free standard shipping on all orders over $10. No coupon code
           required - discount automatically applied at checkout.
         </p>
       </div>

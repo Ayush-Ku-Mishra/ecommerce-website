@@ -35,10 +35,6 @@ const MobileBottomNav = ({
 
   const openFilterModal = () => {
     setFilterModalOpen(true);
-    // Call the onFilterClick if provided
-    if (onFilterClick) {
-      onFilterClick();
-    }
   };
 
   const closeFilterModal = () => setFilterModalOpen(false);

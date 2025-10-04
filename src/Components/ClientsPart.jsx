@@ -13,7 +13,7 @@ const testimonials = [
   },
   {
     name: "Ayush Kumar Mishra",
-    role: "Manager",
+    role: "CEO",
     image: "/MyPhoto.jpg",
     feedback: "Galley of type and scrambled it to make a type specimen book."
   },

@@ -30,12 +30,32 @@ const API_BASE_URL =
 // Helper function to check if a pincode is in Odisha
 const isPincodeInOdisha = (pincode) => {
   if (!pincode || pincode.length !== 6) return false;
-  
+
   // Odisha pincode prefixes
-  const odishaPrefixes = ["751", "752", "753", "754", "755", "756", "757", "758", "759", "760", "761", "762", "764", "765", "766", "767", "768", "769", "770"];
-  
+  const odishaPrefixes = [
+    "751",
+    "752",
+    "753",
+    "754",
+    "755",
+    "756",
+    "757",
+    "758",
+    "759",
+    "760",
+    "761",
+    "762",
+    "764",
+    "765",
+    "766",
+    "767",
+    "768",
+    "769",
+    "770",
+  ];
+
   // Check if pincode starts with any Odisha prefix
-  return odishaPrefixes.some(prefix => pincode.startsWith(prefix));
+  return odishaPrefixes.some((prefix) => pincode.startsWith(prefix));
 };
 
 const SingleProductDetails = () => {
@@ -56,6 +76,10 @@ const SingleProductDetails = () => {
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressPincodeWarning, setAddressPincodeWarning] = useState(false);
+  const [reviewStats, setReviewStats] = useState({
+    rating: 0,
+    totalReviews: 0,
+  });
 
   // Image Gallery Modal State
   const [imageModal, setImageModal] = useState({
@@ -169,14 +193,14 @@ const SingleProductDetails = () => {
         );
         if (defaultAddr) {
           setSelectedAddress(defaultAddr);
-          
+
           // Auto-fill pincode checker with the default address pincode
           if (defaultAddr.pincode) {
             setPincode(defaultAddr.pincode);
           }
         } else if (data.addresses.length > 0) {
           setSelectedAddress(data.addresses[0]);
-          
+
           // Auto-fill pincode checker with the first address pincode
           if (data.addresses[0].pincode) {
             setPincode(data.addresses[0].pincode);
@@ -314,13 +338,13 @@ const SingleProductDetails = () => {
   const handleAddressSelect = (addr) => {
     setSelectedAddress(addr);
     setShowAddressDropdown(false);
-    
+
     // Check if the address pincode is valid for delivery
     if (addr.pincode) {
       // If pincode checker hasn't been used yet, update it with the address pincode
       if (isDeliverable === null) {
         setPincode(addr.pincode);
-      } 
+      }
       // Otherwise, validate if the address pincode matches our delivery area
       else if (!isPincodeInOdisha(addr.pincode)) {
         setAddressPincodeWarning(true);
@@ -481,6 +505,7 @@ const SingleProductDetails = () => {
             isDeliverable={isDeliverable}
             onOpenGallery={openImageGallery}
             addressPincodeWarning={addressPincodeWarning}
+            reviewStats={reviewStats}
           />
         </div>
 
@@ -611,12 +636,13 @@ const SingleProductDetails = () => {
 
             {/* Address Pincode Warning */}
             {addressPincodeWarning && (
-              <Alert 
-                severity="warning" 
+              <Alert
+                severity="warning"
                 className="mb-3"
                 icon={<IoWarning className="text-amber-500" size={24} />}
               >
-                Selected address pincode may not be deliverable. Please verify with the pincode checker above.
+                Selected address pincode may not be deliverable. Please verify
+                with the pincode checker above.
               </Alert>
             )}
 
@@ -630,7 +656,9 @@ const SingleProductDetails = () => {
                 </div>
               ) : (
                 <div
-                  className={`w-full p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${addressPincodeWarning ? "border-amber-400" : ""}`}
+                  className={`w-full p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
+                    addressPincodeWarning ? "border-amber-400" : ""
+                  }`}
                   onClick={() => setShowAddressDropdown(!showAddressDropdown)}
                 >
                   <div className="flex justify-between items-start">
@@ -716,7 +744,11 @@ const SingleProductDetails = () => {
                           selectedAddress?._id === addr._id
                             ? "bg-blue-50 border border-blue-200"
                             : "hover:shadow-sm"
-                        } ${!isPincodeInOdisha(addr.pincode) ? "border-l-4 border-l-amber-400" : ""}`}
+                        } ${
+                          !isPincodeInOdisha(addr.pincode)
+                            ? "border-l-4 border-l-amber-400"
+                            : ""
+                        }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 space-y-1">
@@ -823,7 +855,10 @@ const SingleProductDetails = () => {
           </div>
 
           <div className={`mt-5 ${isMobile ? "mb-8" : ""}`}>
-            <ProductReviews productId={product.id} />
+            <ProductReviews
+              productId={product.id}
+              onStatsUpdate={setReviewStats}
+            />
           </div>
         </div>
       </div>

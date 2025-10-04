@@ -441,7 +441,9 @@ const OrderDetailPage = () => {
           </div>
         )}
 
-        {(currentStatus === "pending" || currentStatus === "processing") && (
+        {(currentStatus === "pending" ||
+          currentStatus === "processing" ||
+          currentStatus === "paid") && (
           <div className="mt-3">
             <button
               onClick={openCancelDialog}
@@ -455,7 +457,6 @@ const OrderDetailPage = () => {
                 </>
               ) : (
                 <>
-                  {/* Use an icon that's already available in the scope */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 text-red-600"

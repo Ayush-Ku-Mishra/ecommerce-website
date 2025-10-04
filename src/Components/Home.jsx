@@ -28,13 +28,10 @@ const Home = () => {
             <h3 className="text-md sm:text-[20px] font-[600] font-custom">
               Popular Products
             </h3>
-            <p className="text-sm sm:text-[14px] font-[400]">
-              Do not miss the current offers until the end of March.
-            </p>
           </div>
         </div>
 
-        <div className="ml-0 md:ml-8 lg:ml-12 mt-5 overflow-x-hidden">
+        <div className="ml-0 md:ml-8 lg:ml-12 mt-3 overflow-x-hidden">
           <ProductSlider />
         </div>
 

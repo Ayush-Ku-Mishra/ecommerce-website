@@ -18,6 +18,7 @@ const ReturnReason = () => {
   const [availableSizes, setAvailableSizes] = useState({});
   const [selectedSizes, setSelectedSizes] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [otherReason, setOtherReason] = useState("");
 
   // Fetch order details
   useEffect(() => {
@@ -143,6 +144,11 @@ const ReturnReason = () => {
       return;
     }
 
+    if (returnReason === "Other" && !otherReason.trim()) {
+      toast.error("Please specify your reason for the return");
+      return;
+    }
+
     // For exchange, make sure sizes are selected
     if (returnOption === "exchange") {
       const selectedProductsWithoutSize = selectedProducts
@@ -203,7 +209,10 @@ const ReturnReason = () => {
       const returnData = {
         orderId,
         returnType: returnOption,
-        reason: returnReason,
+        reason:
+          returnReason === "Other"
+            ? `Other: ${otherReason.trim()}`
+            : returnReason,
         products: selectedProducts
           .filter((p) => p.selected)
           .map((p) => {
@@ -496,6 +505,8 @@ const ReturnReason = () => {
               {returnReason === "Other" && (
                 <textarea
                   placeholder="Please specify the reason"
+                  value={otherReason}
+                  onChange={(e) => setOtherReason(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg mt-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={3}
                 ></textarea>

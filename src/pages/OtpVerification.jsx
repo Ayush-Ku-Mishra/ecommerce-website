@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  MdEmail,
-  MdArrowBack,
-  MdSms,
-} from "react-icons/md";
+import { MdEmail, MdArrowBack, MdSms } from "react-icons/md";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { CircularProgress } from "@mui/material";
@@ -269,7 +265,14 @@ const OtpVerification = ({
 
       {/* Resend OTP */}
       <div className="text-center">
-        <p className="text-sm text-gray-600 mb-3">Didn't receive the code?</p>
+        <p className="text-sm text-gray-600 mb-1">Didn't receive the code?</p>
+
+        {/* Add the spam folder notice here */}
+        <p className="text-xs text-amber-600 mb-3">
+          ⚠️ Verification codes may be delivered to your spam/junk folder.
+          Please check there if you don't see the email in your inbox.
+        </p>
+
         <button
           onClick={handleResendOTP}
           disabled={countdown > 0 || isLoading || isVerifying}

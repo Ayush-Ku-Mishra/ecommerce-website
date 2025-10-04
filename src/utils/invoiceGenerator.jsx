@@ -510,7 +510,7 @@ export const generateInvoicePDF = async (
     doc.setFontSize(8);
     doc.setTextColor(...darkColor);
     doc.text(
-      isCancelled ? "Order Cancelled - Refund processed as per policy" : "Thank you for your business!",
+      isCancelled ? "Order Cancelled - Refund processed as per policy" : "Thanks for shopping! Visit our app again!",
       pageWidth / 2,
       footerY + 18,
       { align: "center" }
