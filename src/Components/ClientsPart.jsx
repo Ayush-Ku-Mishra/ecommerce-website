@@ -39,7 +39,7 @@ const ClientsPart = () => {
   return (
     <div className='mt-10 border-t mx-4 sm:mx-8 md:mx-16'>
       <div className='mt-6 text-center'>
-        <h3 className='text-xl sm:text-2xl font-semibold mb-6'>What Our Clients Say</h3>
+        <h3 className='text-xl sm:text-2xl font-semibold mb-6'>Our Team</h3>
 
         <div className='w-full flex justify-center'>
           <div className='w-full max-w-xs sm:max-w-sm md:max-w-md'>
